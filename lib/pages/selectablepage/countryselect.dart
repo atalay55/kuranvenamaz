@@ -12,43 +12,93 @@ class CountrySelectPage extends StatefulWidget {
 }
 
 class _CountrySelectPageState extends State<CountrySelectPage> {
+  late Future<List<Country>> countries; // Future nesnesini tanımla
+  late TextEditingController controller;
+  List<Country> _filteredCountries = [];
 
-  late Future<List<Country>> countries;  // Future nesnesini tanımla
   @override
   void initState() {
     super.initState();
+    controller = TextEditingController();
     countries = HttpController().fetchCountryJSONData();
   }
 
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return  Scaffold(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Ülke Seç'),
+        backgroundColor: Colors.black54,
+      ),
       body: FutureBuilder<List<Country>>(
         future: countries,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return CircularProgressIndicator(); // Veri beklenirken yükleniyor göster
+            return Center(
+              child: CircularProgressIndicator(),
+            ); // Veri beklenirken yükleniyor göster
           } else if (snapshot.hasError) {
             print("${snapshot.error}");
-            return Text('Hata: ${snapshot.error}');
+            return Center(
+              child: Text('Hata: ${snapshot.error}'),
+            );
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Text('Veri bulunamadı.');
+            return Center(
+              child: Text('Veri bulunamadı.'),
+            );
           } else {
-            return ListView.builder(
-              itemCount: snapshot.data!.length,
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: (){
-                    Get.to(CitySelectPage(snapshot.data![index].name));
+            final countryList = snapshot.data!;
 
-                  },
-                  child: ListTile(
-                    title: Text(snapshot.data![index].name),
-                    subtitle: Text(snapshot.data![index].code),
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: TextField(
+                    controller: controller,
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.search),
+                      hintText: 'Ülke ara...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    onChanged: (String query) {
+                      final suggestions = countryList.where((country) {
+                        final countryName = country.name.toLowerCase();
+                        final input = query.toLowerCase();
+                        return countryName.contains(input);
+                      }).toList();
+                      setState(() {
+                        _filteredCountries = suggestions;
+                      });
+                    },
                   ),
-                );
-              },
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: _filteredCountries.isEmpty ? countryList.length : _filteredCountries.length,
+                    itemBuilder: (context, index) {
+                      final country = _filteredCountries.isEmpty ?countryList[index]: _filteredCountries[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Get.to(CitySelectPage(country.name));
+                          print(country.name);
+                        },
+                        child: ListTile(
+                          title: Text(country.name),
+                          subtitle: Text(country.code),
+                        ),
+                      );
+                    },
+                  ),
+                )
+              ],
             );
           }
         },

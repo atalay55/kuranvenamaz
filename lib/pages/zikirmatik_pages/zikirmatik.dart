@@ -1,8 +1,8 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:kuranvenamaz/core/notificationservice.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vibration/vibration.dart';
 
@@ -23,14 +23,14 @@ class _ZikirmatikState extends State<Zikirmatik> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setInt("count", count.toInt());
     prefs.setInt("pieceCount", pieceCount.toInt());
-
   }
 
-  void reset(){
-    pieceCount.value=0;
-    count.value=0;
+  void reset() {
+    pieceCount.value = 0;
+    count.value = 0;
     saveCounter();
   }
+
   Future<void> getCounter() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int savedCount =
@@ -39,11 +39,13 @@ class _ZikirmatikState extends State<Zikirmatik> {
 
     int savedPiecCount =
         prefs.getInt("pieceCount") ?? 0; // Get the saved count or default to 0
-    count.value = savedPiecCount;// Update the count with the saved value
+    count.value = savedPiecCount; // Update the count with the saved value
   }
+
   void vibratePhone() {
     Vibration.vibrate(duration: 1000); // Telefonu 1 saniye boyunca titret
   }
+
   @override
   void initState() {
     getCounter().then((_) {
@@ -57,12 +59,136 @@ class _ZikirmatikState extends State<Zikirmatik> {
       vibratePhone();
     }
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.green,
-        title:  Text("ZikirMatik" ,style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),),
-        toolbarHeight: height/14,
-      ),
-      body: Padding(
+        appBar: AppBar(
+          backgroundColor: Colors.black54,
+          title: Text(
+            "ZikirMatik",
+            style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+          ),
+          toolbarHeight: height / 14,
+        ),
+        backgroundColor: Colors.white10,
+        body: Container(
+       decoration: BoxDecoration(
+         image: DecorationImage(
+           image: AssetImage('assets/kabe.jpg'), // Resmin yolunu belirtin
+           fit: BoxFit.cover,
+           opacity: 0.4 // Resmin nasıl doldurulacağını seçin
+         ),
+       ),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                height: Get.height/1.3 ,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(50),
+              color: Colors.white38,
+                ),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding:  EdgeInsets.only(top: height/22,),
+                        child: Text(" Toplam : $pieceCount  * 99  = ${pieceCount.value*99}",style:TextStyle(fontSize: 25, color: Colors.black87,)),
+                      ),
+                      Padding(
+                        padding:  EdgeInsets.only(top: Get.height/14),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(width: 1,color: Colors.black54),
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(75),
+                              topRight: Radius.circular(75),
+                              bottomLeft: Radius.circular(75),
+                              bottomRight: Radius.circular(75),
+                            ),
+                          ),
+                          width: Get.width / 1.5,
+                          height: Get.height / 5,
+                          child: Center(child: Text("${count.value} / 99" ,style: TextStyle(color: Colors.black, fontSize: 45),)),
+                        ),
+                      ),
+
+                      Padding(
+                        padding: EdgeInsets.only(top: Get.height/16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [  Padding(
+                            padding:  EdgeInsets.only(left:Get.width/15 ),
+                            child: ElevatedButton(
+                              onPressed: (){
+                                setState(() {
+                                  if (count.value > 0) {
+                                    count--;
+                                    saveCounter();
+                                  }
+
+                                });
+                              },
+                              style: ElevatedButton.styleFrom(
+                                fixedSize:Size.fromRadius(30) ,
+                                shape: CircleBorder(),
+                                primary: Colors.red, // Azaltma düğmesinin arkaplan rengini ayarlayın
+                              ),
+                              child: Icon(Icons.remove,size:35,),
+                            ),
+                          ),
+                            Padding(
+                              padding:  EdgeInsets.only(right:Get.width/15 ),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  fixedSize:Size.fromRadius(30) ,
+                                  shape: CircleBorder(),
+                                  primary: Colors.black38, // Artırma düğmesinin arkaplan rengini ayarlayın
+                                ),
+                                child:Icon(Icons.refresh_rounded,size:35) ,
+                                onPressed:(){
+                                  setState(() {
+                                    count.value=0;
+                                    pieceCount.value=0;
+                                    saveCounter();
+
+
+                                  });
+                                } ,),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(top: Get.height/12),
+                        child: ElevatedButton(
+                          onPressed: (){
+                            setState(() {
+                              if (count.value==99)
+                              {
+                                pieceCount++; count.value=0;
+                              }
+                              count++;
+                              saveCounter();
+                            });
+
+                          },
+                          style: ElevatedButton.styleFrom(
+                            fixedSize:Size.fromRadius(40) ,
+                            shape: CircleBorder(),
+                            primary: Colors.green, // Artırma düğmesinin arkaplan rengini ayarlayın
+                          ),
+                          child: Icon(Icons.add,size:35),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        )
+
+        /* Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -264,9 +390,10 @@ class _ZikirmatikState extends State<Zikirmatik> {
             ),*/
           ],
         ),
-      ),
-    );
+      ),*/
+        );
   }
+
   aboutDialog() {
     showDialog(
       context: context,
@@ -296,13 +423,14 @@ class _ZikirmatikState extends State<Zikirmatik> {
               style: ElevatedButton.styleFrom(
                 primary: Colors.red, // Düğme rengi
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.0), // Düğme köşe yarıçapı
+                  borderRadius:
+                      BorderRadius.circular(10.0), // Düğme köşe yarıçapı
                 ),
               ),
               child: Text("Hayır"),
             ),
             ElevatedButton(
-              onPressed: (){
+              onPressed: () {
                 setState(() {
                   reset();
                   Navigator.of(context).pop();
@@ -311,7 +439,8 @@ class _ZikirmatikState extends State<Zikirmatik> {
               style: ElevatedButton.styleFrom(
                 primary: Colors.green, // Düğme rengi
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.0), // Düğme köşe yarıçapı
+                  borderRadius:
+                      BorderRadius.circular(10.0), // Düğme köşe yarıçapı
                 ),
               ),
               child: Text("Evet"),
@@ -321,6 +450,4 @@ class _ZikirmatikState extends State<Zikirmatik> {
       },
     );
   }
-
 }
-

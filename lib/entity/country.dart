@@ -1,4 +1,6 @@
-class Country {
+import 'package:kuranvenamaz/entity/entity.dart';
+
+class Country implements Entity {
   final String code;
   final String name;
 
