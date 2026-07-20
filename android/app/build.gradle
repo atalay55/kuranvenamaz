@@ -12,6 +12,12 @@ if (localPropertiesFile.exists()) {
     }
 }
 
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
 if (flutterVersionCode == null) {
     flutterVersionCode = '1'
@@ -23,7 +29,7 @@ if (flutterVersionName == null) {
 }
 
 android {
-    namespace "com.example.kuranvenamaz"
+    namespace "com.fatihatalay.kuranvenamaz"
     compileSdkVersion 36
     ndkVersion flutter.ndkVersion
 
@@ -42,22 +48,31 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.example.kuranvenamaz"
+        applicationId "com.fatihatalay.kuranvenamaz"
         minSdkVersion flutter.minSdkVersion
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
 
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties['alias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+            storePassword keystoreProperties['storePassword']
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
         }
     }
 
     packagingOptions {
         jniLibs {
-            keepDebugSymbols += "**/*.so"
+            doNotStrip "**/*.so"
         }
     }
 }
