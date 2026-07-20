@@ -209,7 +209,7 @@ class _ZikirmatikState extends State<Zikirmatik> {
                   child: Text(
                     item.title,
                     style: const TextStyle(
-                      color: AppTheme.goldAccent,
+                      color: AppTheme.primaryEmerald,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -229,8 +229,8 @@ class _ZikirmatikState extends State<Zikirmatik> {
           Text(
             selectedZikir.arabic,
             style: const TextStyle(
-              color: AppTheme.goldLight,
-              fontSize: 24,
+              color: AppTheme.primaryEmerald,
+              fontSize: 26,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -259,10 +259,10 @@ class _ZikirmatikState extends State<Zikirmatik> {
           child: ChoiceChip(
             label: Text(label),
             selected: isSelected,
-            selectedColor: AppTheme.goldAccent,
+            selectedColor: AppTheme.primaryEmerald,
             backgroundColor: AppTheme.surfaceDark,
             labelStyle: TextStyle(
-              color: isSelected ? Colors.black : Colors.white,
+              color: isSelected ? Colors.white : AppTheme.textPrimaryDark,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
             onSelected: (selected) {
@@ -291,7 +291,7 @@ class _ZikirmatikState extends State<Zikirmatik> {
                 const SizedBox(height: 4),
                 Obx(() => Text(
                       "${tourCount.value}",
-                      style: const TextStyle(color: AppTheme.goldAccent, fontSize: 22, fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: AppTheme.primaryEmerald, fontSize: 22, fontWeight: FontWeight.bold),
                     )),
               ],
             ),
@@ -308,7 +308,7 @@ class _ZikirmatikState extends State<Zikirmatik> {
                 const SizedBox(height: 4),
                 Obx(() => Text(
                       "${count.value}",
-                      style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: AppTheme.textPrimaryDark, fontSize: 22, fontWeight: FontWeight.bold),
                     )),
               ],
             ),

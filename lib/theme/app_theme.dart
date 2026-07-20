@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Color Palette
+  // Color Palette (#FAF6EE Warm Parchment System)
   static const Color primaryEmerald = Color(0xFF0F4C3A);
   static const Color primaryDark = Color(0xFF072A20);
   static const Color primaryLight = Color(0xFF1B6B53);
-  static const Color goldAccent = Color(0xFFD4AF37);
+  static const Color goldAccent = Color(0xFFC5A059);
   static const Color goldLight = Color(0xFFF5E6AD);
-  static const Color bgDark = Color(0xFF0B131F);
-  static const Color surfaceDark = Color(0xFF162232);
-  static const Color cardDark = Color(0xFF1E2D42);
-  static const Color textPrimaryDark = Color(0xFFF8FAFC);
-  static const Color textSecondaryDark = Color(0xFF94A3B8);
+  static const Color bgDark = Color(0xFFFAF6EE);
+  static const Color surfaceDark = Color(0xFFF3EDDF);
+  static const Color cardDark = Color(0xFFF8F4EA);
+  static const Color textPrimaryDark = Color(0xFF2C221E);
+  static const Color textSecondaryDark = Color(0xFF7A6855);
+
+  // Book Parchment Theme Palette
+  static const Color bgBookParchment = Color(0xFFFAF6EE);
+  static const Color surfaceBookParchment = Color(0xFFF3EDDF);
+  static const Color textBookPrimary = Color(0xFF2C221E);
+  static const Color textBookSecondary = Color(0xFF7A6855);
+  static const Color goldBookBorder = Color(0xFFC5A059);
 
   // Card Decoration Helper
   static BoxDecoration cardDecoration({
@@ -58,34 +65,34 @@ class AppTheme {
     );
   }
 
-  // Dark Theme Definition
+  // Theme Definition (#FAF6EE Warm Parchment)
   static ThemeData get darkTheme {
-    return ThemeData.dark().copyWith(
+    return ThemeData.light().copyWith(
       scaffoldBackgroundColor: bgDark,
       primaryColor: primaryEmerald,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: const ColorScheme.light(
         primary: primaryEmerald,
         secondary: goldAccent,
         surface: surfaceDark,
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: primaryDark,
+        backgroundColor: primaryEmerald,
         elevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
-          color: goldAccent,
-          fontSize: 20,
+          color: Colors.white,
+          fontSize: 19,
           fontWeight: FontWeight.bold,
           letterSpacing: 0.5,
         ),
-        iconTheme: IconThemeData(color: goldAccent),
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       cardTheme: CardThemeData(
         color: cardDark,
-        elevation: 4,
+        elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: goldAccent.withOpacity(0.2)),
+          side: const BorderSide(color: goldAccent, width: 0.8),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(

@@ -71,7 +71,7 @@ class _SurahListPageState extends State<SurahListPage> {
               children: [
                 TextField(
                   controller: searchController,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: AppTheme.textPrimaryDark),
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.goldAccent),
                     hintText: 'Sûre ara (Örn: Yâsîn, Fâtiha, 36)...',
@@ -153,14 +153,14 @@ class _SurahListPageState extends State<SurahListPage> {
                       height: 42,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppTheme.primaryEmerald.withOpacity(0.4),
-                        border: Border.all(color: AppTheme.goldAccent.withOpacity(0.4)),
+                        color: AppTheme.primaryEmerald,
+                        border: Border.all(color: AppTheme.goldAccent),
                       ),
                       child: Center(
                         child: Text(
                           "${surah.number}",
                           style: const TextStyle(
-                            color: AppTheme.goldAccent,
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
@@ -173,7 +173,7 @@ class _SurahListPageState extends State<SurahListPage> {
                         Text(
                           surah.turkishName,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppTheme.textPrimaryDark,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -182,7 +182,7 @@ class _SurahListPageState extends State<SurahListPage> {
                           surah.name,
                           textDirection: TextDirection.rtl,
                           style: const TextStyle(
-                            color: AppTheme.goldLight,
+                            color: AppTheme.primaryEmerald,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),

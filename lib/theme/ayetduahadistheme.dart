@@ -51,7 +51,7 @@ class AyetDuaHadisTheme extends StatelessWidget {
                   Text(
                     title,
                     style: const TextStyle(
-                      color: AppTheme.goldAccent,
+                      color: AppTheme.primaryEmerald,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.3,
@@ -83,18 +83,18 @@ class AyetDuaHadisTheme extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.black26,
+                color: AppTheme.bgDark,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppTheme.goldAccent.withOpacity(0.15)),
+                border: Border.all(color: AppTheme.goldAccent.withOpacity(0.3)),
               ),
               child: Text(
                 arabicText!,
                 textAlign: TextAlign.center,
                 textDirection: TextDirection.rtl,
                 style: const TextStyle(
-                  color: AppTheme.goldLight,
+                  color: AppTheme.primaryEmerald,
                   fontSize: 22,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.bold,
                   height: 1.6,
                 ),
               ),

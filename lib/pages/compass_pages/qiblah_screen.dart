@@ -416,7 +416,7 @@ class _PureQiblaFinderViewState extends State<PureQiblaFinderView> {
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: AppTheme.textPrimaryDark, fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ],
     );

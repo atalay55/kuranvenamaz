@@ -164,7 +164,7 @@ class _HijriCalendarWidgetState extends State<HijriCalendarWidget> {
                             Text(
                               item.title,
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: AppTheme.textPrimaryDark,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14.5,
                               ),
@@ -173,7 +173,8 @@ class _HijriCalendarWidgetState extends State<HijriCalendarWidget> {
                             Text(
                               item.hijriDate,
                               style: const TextStyle(
-                                color: AppTheme.goldLight,
+                                color: AppTheme.primaryEmerald,
+                                fontWeight: FontWeight.w500,
                                 fontSize: 12.5,
                               ),
                             ),
