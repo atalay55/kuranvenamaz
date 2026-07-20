@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kuranvenamaz/pages/selectablepage/cityselect.dart';
+import 'package:kuranvenamaz/theme/app_theme.dart';
 import '../../core/httpcontroller.dart';
 import '../../entity/country.dart';
 
@@ -12,9 +13,10 @@ class CountrySelectPage extends StatefulWidget {
 }
 
 class _CountrySelectPageState extends State<CountrySelectPage> {
-  late Future<List<Country>> countries; // Future nesnesini tanımla
+  late Future<List<Country>> countries;
   late TextEditingController controller;
   List<Country> _filteredCountries = [];
+  List<Country> _allCountries = [];
 
   @override
   void initState() {
@@ -33,27 +35,29 @@ class _CountrySelectPageState extends State<CountrySelectPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Ülke Seç'),
-        backgroundColor: Colors.black54,
+        title: const Text('Ülke Seç'),
       ),
       body: FutureBuilder<List<Country>>(
         future: countries,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: CircularProgressIndicator(),
-            ); // Veri beklenirken yükleniyor göster
+            return const Center(
+              child: CircularProgressIndicator(color: AppTheme.goldAccent),
+            );
           } else if (snapshot.hasError) {
-            print("${snapshot.error}");
             return Center(
-              child: Text('Hata: ${snapshot.error}'),
+              child: Text('Hata: ${snapshot.error}', style: const TextStyle(color: Colors.white70)),
             );
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-              child: Text('Veri bulunamadı.'),
+            return const Center(
+              child: Text('Ülke verisi bulunamadı.', style: TextStyle(color: Colors.white70)),
             );
           } else {
-            final countryList = snapshot.data!;
+            _allCountries = snapshot.data!;
+
+            final displayList = _filteredCountries.isEmpty && controller.text.isEmpty
+                ? _allCountries
+                : _filteredCountries;
 
             return Column(
               children: [
@@ -61,15 +65,28 @@ class _CountrySelectPageState extends State<CountrySelectPage> {
                   padding: const EdgeInsets.all(16.0),
                   child: TextField(
                     controller: controller,
+                    style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.search),
+                      prefixIcon: const Icon(Icons.search, color: AppTheme.goldAccent),
                       hintText: 'Ülke ara...',
+                      hintStyle: const TextStyle(color: AppTheme.textSecondaryDark),
+                      filled: true,
+                      fillColor: AppTheme.surfaceDark,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(color: AppTheme.goldAccent.withOpacity(0.3)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(color: AppTheme.goldAccent.withOpacity(0.3)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: AppTheme.goldAccent),
                       ),
                     ),
                     onChanged: (String query) {
-                      final suggestions = countryList.where((country) {
+                      final suggestions = _allCountries.where((country) {
                         final countryName = country.name.toLowerCase();
                         final input = query.toLowerCase();
                         return countryName.contains(input);
@@ -82,17 +99,30 @@ class _CountrySelectPageState extends State<CountrySelectPage> {
                 ),
                 Expanded(
                   child: ListView.builder(
-                    itemCount: _filteredCountries.isEmpty ? countryList.length : _filteredCountries.length,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: displayList.length,
                     itemBuilder: (context, index) {
-                      final country = _filteredCountries.isEmpty ?countryList[index]: _filteredCountries[index];
-                      return GestureDetector(
-                        onTap: () {
-                          Get.to(CitySelectPage(country.name));
-                          print(country.name);
-                        },
+                      final country = displayList[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: AppTheme.cardDecoration(color: AppTheme.surfaceDark),
                         child: ListTile(
-                          title: Text(country.name),
-                          subtitle: Text(country.code),
+                          leading: const CircleAvatar(
+                            backgroundColor: AppTheme.primaryEmerald,
+                            child: Icon(Icons.flag_rounded, color: AppTheme.goldAccent, size: 20),
+                          ),
+                          title: Text(
+                            country.name,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            country.code,
+                            style: const TextStyle(color: AppTheme.textSecondaryDark),
+                          ),
+                          trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.goldAccent),
+                          onTap: () {
+                            Get.to(() => CitySelectPage(country.name));
+                          },
                         ),
                       );
                     },

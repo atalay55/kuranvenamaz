@@ -3,20 +3,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:kuranvenamaz/core/notificationservice.dart';
-import 'package:kuranvenamaz/hijricalendar/hijricalendar.dart';
 import 'package:kuranvenamaz/pages/selectablepage/countryselect.dart';
-import 'package:kuranvenamaz/pages/zikirmatik_pages/zikirmatik.dart';
-
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:kuranvenamaz/theme/app_theme.dart';
+import 'package:kuranvenamaz/pages/home.dart';
 
-import 'pages/home.dart';
-
-void main()async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations(
     [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown],
   );
-  NotificationService().initNotification();
+  await NotificationService().initNotification();
   SharedPreferences prefs = await SharedPreferences.getInstance();
   bool isFirstRun = prefs.getBool('isFirstRun') ?? false;
   runApp(MyApp(isFirstRun));
@@ -28,23 +25,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-   return GetMaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Quran and Namaz',
-       localizationsDelegates: [
-         GlobalMaterialLocalizations.delegate,
-         GlobalWidgetsLocalizations.delegate,
-         GlobalCupertinoLocalizations.delegate,
-       ],
-       supportedLocales: [
-         Locale('en'),
-         Locale('tr'),
-       ],
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: isFirstRun?HomePage(): CountrySelectPage(),
+      title: 'Namaz ve Kuran',
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('tr'),
+        Locale('en'),
+      ],
+      theme: AppTheme.darkTheme,
+      home: isFirstRun ? const HomePage() : const CountrySelectPage(),
     );
   }
 }
