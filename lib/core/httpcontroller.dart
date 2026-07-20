@@ -151,4 +151,89 @@ class HttpController {
     }
     return null;
   }
+
+  // Dynamic Hadith API (HadeethEnc Turkish API - Nebevi Hadisler / Diyanet Çevirileri)
+  Future<List<Map<String, dynamic>>> fetchHadithCategories() async {
+    try {
+      final url = 'https://hadeethenc.com/api/v1/categories/list/?language=tr';
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 6));
+      if (response.statusCode == 200) {
+        final List<dynamic> list = json.decode(response.body);
+        return list.map((item) => {
+          'id': item['id'].toString(),
+          'title': item['title'].toString(),
+          'count': item['hadeeths_count'] ?? 0,
+          'parent_id': item['parent_id']?.toString(),
+        }).toList();
+      }
+    } catch (e) {
+      debugPrint("Hadis kategori çekme hatası: $e");
+    }
+    return [];
+  }
+
+  Future<List<Map<String, dynamic>>> fetchHadithsByCategory(String categoryId, {int perPage = 20, int page = 1}) async {
+    try {
+      final url = 'https://hadeethenc.com/api/v1/hadeeths/list/?language=tr&category_id=$categoryId&per_page=$perPage&page=$page';
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 6));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonMap = json.decode(response.body);
+        if (jsonMap['data'] != null && jsonMap['data'] is List) {
+          final List<dynamic> items = jsonMap['data'];
+          return items.map((item) => {
+            'id': item['id'].toString(),
+            'title': item['title'].toString(),
+          }).toList();
+        }
+      }
+    } catch (e) {
+      debugPrint("Hadis listesi çekme hatası: $e");
+    }
+    return [];
+  }
+
+  Future<Map<String, dynamic>?> fetchHadithDetail(String hadithId) async {
+    try {
+      final url = 'https://hadeethenc.com/api/v1/hadeeths/one/?language=tr&id=$hadithId';
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 6));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> item = json.decode(response.body);
+        return {
+          'id': item['id'].toString(),
+          'turkish': item['title'] ?? item['hadeeth'] ?? '',
+          'arabic': item['hadeeth_ar'] ?? item['hadeeth'] ?? '',
+          'source': item['attribution'] ?? 'Hadis-i Şerif',
+          'explanation': item['explanation'] ?? '',
+          'grade': item['grade'] ?? '',
+        };
+      }
+    } catch (e) {
+      debugPrint("Hadis detay çekme hatası: $e");
+    }
+    return null;
+  }
+
+  // Canlı Hadis Çekme (Günün Hadisi için API entegrasyonu)
+  Future<Map<String, String>?> fetchLiveHadis() async {
+    try {
+      final now = DateTime.now();
+      final dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays;
+      // Popüler ve bilinen Türkçe hadis ID'leri
+      final sampleIds = ["5913", "5907", "6208", "6274", "6275", "8402", "3410", "6258", "15"];
+      final targetId = sampleIds[dayOfYear % sampleIds.length];
+
+      final detail = await fetchHadithDetail(targetId);
+      if (detail != null && detail['turkish']!.toString().isNotEmpty) {
+        return {
+          'title': "Günün Hadisi",
+          'arabic': detail['arabic'].toString(),
+          'turkish': detail['turkish'].toString(),
+          'source': "${detail['source']} (${detail['grade']})",
+        };
+      }
+    } catch (e) {
+      debugPrint("Canlı Hadis API hatası: $e");
+    }
+    return null;
+  }
 }

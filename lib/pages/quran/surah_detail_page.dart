@@ -45,7 +45,9 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
 
   Future<void> _checkBookmarkStatus() async {
     final lastRead = await QuranService.getLastReadSurah();
-    if (mounted && lastRead != null && lastRead['number'] == widget.surah.number) {
+    if (mounted &&
+        lastRead != null &&
+        lastRead['number'] == widget.surah.number) {
       setState(() {
         isBookmarked = true;
       });
@@ -53,13 +55,16 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
   }
 
   Future<void> _toggleBookmark() async {
-    await QuranService.saveLastReadSurah(widget.surah.number, widget.surah.turkishName);
+    await QuranService.saveLastReadSurah(
+        widget.surah.number, widget.surah.turkishName);
     setState(() {
-      isBookmarked = true;
+      isBookmarked = !isBookmarked;
     });
     Get.snackbar(
-      'Kaldığınız Yer Kaydedildi',
-      '${widget.surah.turkishName} Sûresi son okunan olarak işaretlendi.',
+      isBookmarked ? 'Kaldığınız Yer Kaydedildi' : 'Kaldığınız Yer Silindi',
+      isBookmarked
+          ? '${widget.surah.turkishName} Sûresi son okunan olarak işaretlendi.'
+          : '${widget.surah.turkishName} Sûresi son okunan olarak kaldırıldı.',
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: AppTheme.primaryEmerald,
       colorText: Colors.white,
@@ -102,26 +107,38 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
   @override
   Widget build(BuildContext context) {
     // Dynamic Theme Colors (Warm Book Parchment Cream #FAF6EE as default)
-    final Color bgColor = isBookTheme ? AppTheme.bgBookParchment : AppTheme.bgDark;
-    final Color cardBgColor = isBookTheme ? AppTheme.surfaceBookParchment : AppTheme.surfaceDark;
-    final Color primaryTextColor = isBookTheme ? AppTheme.textBookPrimary : AppTheme.textPrimaryDark;
-    final Color secondaryTextColor = isBookTheme ? AppTheme.textBookSecondary : AppTheme.textSecondaryDark;
-    final Color borderColor = isBookTheme ? AppTheme.goldBookBorder : AppTheme.goldAccent.withOpacity(0.3);
+    final Color bgColor =
+        isBookTheme ? AppTheme.bgBookParchment : AppTheme.bgDark;
+    final Color cardBgColor =
+        isBookTheme ? AppTheme.surfaceBookParchment : AppTheme.surfaceDark;
+    final Color primaryTextColor =
+        isBookTheme ? AppTheme.textBookPrimary : AppTheme.textPrimaryDark;
+    final Color secondaryTextColor =
+        isBookTheme ? AppTheme.textBookSecondary : AppTheme.textSecondaryDark;
+    final Color borderColor = isBookTheme
+        ? AppTheme.goldBookBorder
+        : AppTheme.goldAccent.withOpacity(0.3);
 
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
         backgroundColor: isBookTheme ? AppTheme.surfaceBookParchment : null,
-        iconTheme: IconThemeData(color: isBookTheme ? AppTheme.textBookPrimary : Colors.white),
+        iconTheme: IconThemeData(
+            color: isBookTheme ? AppTheme.textBookPrimary : Colors.white),
         title: Column(
           children: [
             Text(
               "${widget.surah.number}. ${widget.surah.turkishName} Sûresi",
-              style: TextStyle(color: isBookTheme ? AppTheme.textBookPrimary : Colors.white),
+              style: TextStyle(
+                  color: isBookTheme ? AppTheme.textBookPrimary : Colors.white),
             ),
             Text(
               "${widget.surah.numberOfAyahs} Âyet • ${widget.surah.revelationType}",
-              style: TextStyle(fontSize: 11, color: isBookTheme ? AppTheme.textBookSecondary : AppTheme.goldLight),
+              style: TextStyle(
+                  fontSize: 11,
+                  color: isBookTheme
+                      ? AppTheme.textBookSecondary
+                      : AppTheme.goldLight),
             ),
           ],
         ),
@@ -129,10 +146,15 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
           // Layout Switcher (Sayfa Sayfa Kitap vs Dikey Liste)
           IconButton(
             icon: Icon(
-              isPageViewMode ? Icons.auto_stories_rounded : Icons.view_day_rounded,
-              color: isBookTheme ? AppTheme.goldBookBorder : AppTheme.goldAccent,
+              isPageViewMode
+                  ? Icons.auto_stories_rounded
+                  : Icons.view_day_rounded,
+              color:
+                  isBookTheme ? AppTheme.goldBookBorder : AppTheme.goldAccent,
             ),
-            tooltip: isPageViewMode ? 'Dikey Listeye Geç' : 'Sayfa Çevirme Moduna Geç',
+            tooltip: isPageViewMode
+                ? 'Dikey Listeye Geç'
+                : 'Sayfa Çevirme Moduna Geç',
             onPressed: () {
               setState(() {
                 isPageViewMode = !isPageViewMode;
@@ -143,7 +165,8 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
           IconButton(
             icon: Icon(
               isBookTheme ? Icons.menu_book_rounded : Icons.dark_mode_rounded,
-              color: isBookTheme ? AppTheme.goldBookBorder : AppTheme.goldAccent,
+              color:
+                  isBookTheme ? AppTheme.goldBookBorder : AppTheme.goldAccent,
             ),
             tooltip: isBookTheme ? 'Gece Moduna Geç' : 'Kitap Temasına Geç',
             onPressed: () {
@@ -155,9 +178,13 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
           // Bookmark Icon
           IconButton(
             icon: Icon(
-              isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+              isBookmarked
+                  ? Icons.bookmark_rounded
+                  : Icons.bookmark_border_rounded,
               color: isBookmarked
-                  ? (isBookTheme ? AppTheme.goldBookBorder : AppTheme.goldAccent)
+                  ? (isBookTheme
+                      ? AppTheme.goldBookBorder
+                      : AppTheme.goldAccent)
                   : (isBookTheme ? AppTheme.textBookSecondary : Colors.white60),
             ),
             tooltip: 'Kaldığım Yere Ekle',
@@ -168,7 +195,8 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
       body: Column(
         children: [
           // Top Control Toolbar
-          _buildTopToolbar(cardBgColor, primaryTextColor, secondaryTextColor, borderColor),
+          _buildTopToolbar(
+              cardBgColor, primaryTextColor, secondaryTextColor, borderColor),
 
           // Main Reading Area: Continuous PageView vs ListView
           Expanded(
@@ -180,7 +208,10 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        CircularProgressIndicator(color: isBookTheme ? AppTheme.goldBookBorder : AppTheme.goldAccent),
+                        CircularProgressIndicator(
+                            color: isBookTheme
+                                ? AppTheme.goldBookBorder
+                                : AppTheme.goldAccent),
                         const SizedBox(height: 14),
                         Text(
                           "Sûre Âyetleri Yükleniyor...",
@@ -193,7 +224,8 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
 
                 if (snapshot.hasError) {
                   return Center(
-                    child: Text("Hata: ${snapshot.error}", style: TextStyle(color: secondaryTextColor)),
+                    child: Text("Hata: ${snapshot.error}",
+                        style: TextStyle(color: secondaryTextColor)),
                   );
                 }
 
@@ -240,7 +272,8 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
     required Color secondaryTextColor,
     required Color borderColor,
   }) {
-    final bool hasBismillah = (widget.surah.number != 9 && widget.surah.number != 1);
+    final bool hasBismillah =
+        (widget.surah.number != 9 && widget.surah.number != 1);
     final int totalPages = ayahPages.length + (hasBismillah ? 1 : 0);
 
     return Column(
@@ -281,7 +314,9 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                     border: Border.all(color: borderColor, width: 1.5),
                     boxShadow: [
                       BoxShadow(
-                        color: isBookTheme ? AppTheme.goldBookBorder.withOpacity(0.15) : Colors.black38,
+                        color: isBookTheme
+                            ? AppTheme.goldBookBorder.withOpacity(0.15)
+                            : Colors.black38,
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -311,11 +346,14 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 3),
                                   decoration: BoxDecoration(
                                     color: AppTheme.primaryEmerald,
                                     borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: AppTheme.goldBookBorder, width: 0.8),
+                                    border: Border.all(
+                                        color: AppTheme.goldBookBorder,
+                                        width: 0.8),
                                   ),
                                   child: Text(
                                     "Âyet ${ayah.numberInSurah}",
@@ -327,13 +365,16 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                                   ),
                                 ),
                                 IconButton(
-                                  icon: Icon(Icons.copy_rounded, color: secondaryTextColor, size: 18),
+                                  icon: Icon(Icons.copy_rounded,
+                                      color: secondaryTextColor, size: 18),
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(),
                                   tooltip: 'Âyeti Kopyala',
                                   onPressed: () {
-                                    final textToCopy = "${widget.surah.turkishName} Sûresi, ${ayah.numberInSurah}. Âyet:\n\n${ayah.arabicText}\n\nMeali: ${ayah.turkishTranslation}";
-                                    Clipboard.setData(ClipboardData(text: textToCopy));
+                                    final textToCopy =
+                                        "${widget.surah.turkishName} Sûresi, ${ayah.numberInSurah}. Âyet:\n\n${ayah.arabicText}\n\nMeali: ${ayah.turkishTranslation}";
+                                    Clipboard.setData(
+                                        ClipboardData(text: textToCopy));
                                     Get.snackbar(
                                       'Kopyalandı',
                                       '${widget.surah.turkishName} ${ayah.numberInSurah}. Ayet panoya kopyalandı.',
@@ -349,21 +390,27 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                             const SizedBox(height: 8),
 
                             // Arabic Uthmani Text
-                            if (viewMode == QuranViewMode.combined || viewMode == QuranViewMode.arabicOnly) ...[
+                            if (viewMode == QuranViewMode.combined ||
+                                viewMode == QuranViewMode.arabicOnly) ...[
                               Container(
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: isBookTheme ? Colors.white.withOpacity(0.65) : Colors.black26,
+                                  color: isBookTheme
+                                      ? Colors.white.withOpacity(0.65)
+                                      : Colors.black26,
                                   borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: borderColor.withOpacity(0.4)),
+                                  border: Border.all(
+                                      color: borderColor.withOpacity(0.4)),
                                 ),
                                 child: Text(
                                   ayah.arabicText,
                                   textAlign: TextAlign.center,
                                   textDirection: TextDirection.rtl,
                                   style: TextStyle(
-                                    color: isBookTheme ? AppTheme.primaryEmerald : AppTheme.goldLight,
+                                    color: isBookTheme
+                                        ? AppTheme.primaryEmerald
+                                        : AppTheme.goldLight,
                                     fontSize: arabicFontSize,
                                     fontWeight: FontWeight.bold,
                                     height: 1.8,
@@ -372,10 +419,12 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                               ),
                             ],
 
-                            if (viewMode == QuranViewMode.combined) const SizedBox(height: 10),
+                            if (viewMode == QuranViewMode.combined)
+                              const SizedBox(height: 10),
 
                             // Diyanet Turkish Translation
-                            if (viewMode == QuranViewMode.combined || viewMode == QuranViewMode.turkishOnly) ...[
+                            if (viewMode == QuranViewMode.combined ||
+                                viewMode == QuranViewMode.turkishOnly) ...[
                               Text(
                                 ayah.turkishTranslation,
                                 style: TextStyle(
@@ -419,7 +468,9 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                   Icons.arrow_back_ios_rounded,
                   size: 14,
                   color: currentPageIndex > 0
-                      ? (isBookTheme ? AppTheme.primaryEmerald : AppTheme.goldAccent)
+                      ? (isBookTheme
+                          ? AppTheme.primaryEmerald
+                          : AppTheme.goldAccent)
                       : Colors.grey,
                 ),
                 label: Text(
@@ -427,15 +478,19 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                   style: TextStyle(
                     fontSize: 12,
                     color: currentPageIndex > 0
-                        ? (isBookTheme ? AppTheme.primaryEmerald : AppTheme.goldAccent)
+                        ? (isBookTheme
+                            ? AppTheme.primaryEmerald
+                            : AppTheme.goldAccent)
                         : Colors.grey,
                   ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
-                  color: isBookTheme ? AppTheme.bgBookParchment : Colors.black26,
+                  color:
+                      isBookTheme ? AppTheme.bgBookParchment : Colors.black26,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: borderColor.withOpacity(0.5)),
                 ),
@@ -462,7 +517,9 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                   style: TextStyle(
                     fontSize: 12,
                     color: currentPageIndex < totalPages - 1
-                        ? (isBookTheme ? AppTheme.primaryEmerald : AppTheme.goldAccent)
+                        ? (isBookTheme
+                            ? AppTheme.primaryEmerald
+                            : AppTheme.goldAccent)
                         : Colors.grey,
                   ),
                 ),
@@ -470,7 +527,9 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                   Icons.arrow_forward_ios_rounded,
                   size: 14,
                   color: currentPageIndex < totalPages - 1
-                      ? (isBookTheme ? AppTheme.primaryEmerald : AppTheme.goldAccent)
+                      ? (isBookTheme
+                          ? AppTheme.primaryEmerald
+                          : AppTheme.goldAccent)
                       : Colors.grey,
                 ),
               ),
@@ -492,13 +551,18 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
     return ListView.builder(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      itemCount: ayahs.length + (widget.surah.number != 9 && widget.surah.number != 1 ? 1 : 0),
+      itemCount: ayahs.length +
+          (widget.surah.number != 9 && widget.surah.number != 1 ? 1 : 0),
       itemBuilder: (context, index) {
-        if (widget.surah.number != 9 && widget.surah.number != 1 && index == 0) {
+        if (widget.surah.number != 9 &&
+            widget.surah.number != 1 &&
+            index == 0) {
           return _buildBismillahHeader(cardBgColor, borderColor);
         }
 
-        final ayahIndex = (widget.surah.number != 9 && widget.surah.number != 1) ? index - 1 : index;
+        final ayahIndex = (widget.surah.number != 9 && widget.surah.number != 1)
+            ? index - 1
+            : index;
         final ayah = ayahs[ayahIndex];
 
         return Container(
@@ -510,7 +574,9 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
             border: Border.all(color: borderColor),
             boxShadow: [
               BoxShadow(
-                color: isBookTheme ? Colors.black.withOpacity(0.04) : Colors.black26,
+                color: isBookTheme
+                    ? Colors.black.withOpacity(0.04)
+                    : Colors.black26,
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -523,11 +589,15 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppTheme.primaryEmerald,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: isBookTheme ? AppTheme.goldBookBorder : AppTheme.goldAccent.withOpacity(0.4)),
+                      border: Border.all(
+                          color: isBookTheme
+                              ? AppTheme.goldBookBorder
+                              : AppTheme.goldAccent.withOpacity(0.4)),
                     ),
                     child: Text(
                       "Âyet ${ayah.numberInSurah}",
@@ -539,10 +609,12 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.copy_rounded, color: secondaryTextColor, size: 18),
+                    icon: Icon(Icons.copy_rounded,
+                        color: secondaryTextColor, size: 18),
                     tooltip: 'Âyeti Kopyala',
                     onPressed: () {
-                      final textToCopy = "${widget.surah.turkishName} Sûresi, ${ayah.numberInSurah}. Âyet:\n\n${ayah.arabicText}\n\nMeali: ${ayah.turkishTranslation}";
+                      final textToCopy =
+                          "${widget.surah.turkishName} Sûresi, ${ayah.numberInSurah}. Âyet:\n\n${ayah.arabicText}\n\nMeali: ${ayah.turkishTranslation}";
                       Clipboard.setData(ClipboardData(text: textToCopy));
                       Get.snackbar(
                         'Kopyalandı',
@@ -557,13 +629,15 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                 ],
               ),
               const SizedBox(height: 10),
-
-              if (viewMode == QuranViewMode.combined || viewMode == QuranViewMode.arabicOnly) ...[
+              if (viewMode == QuranViewMode.combined ||
+                  viewMode == QuranViewMode.arabicOnly) ...[
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isBookTheme ? Colors.white.withOpacity(0.65) : Colors.black26,
+                    color: isBookTheme
+                        ? Colors.white.withOpacity(0.65)
+                        : Colors.black26,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: borderColor.withOpacity(0.5)),
                   ),
@@ -572,7 +646,9 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                     textAlign: TextAlign.center,
                     textDirection: TextDirection.rtl,
                     style: TextStyle(
-                      color: isBookTheme ? AppTheme.primaryEmerald : AppTheme.goldLight,
+                      color: isBookTheme
+                          ? AppTheme.primaryEmerald
+                          : AppTheme.goldLight,
                       fontSize: arabicFontSize,
                       fontWeight: FontWeight.bold,
                       height: 1.8,
@@ -580,10 +656,10 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                   ),
                 ),
               ],
-
-              if (viewMode == QuranViewMode.combined) const SizedBox(height: 12),
-
-              if (viewMode == QuranViewMode.combined || viewMode == QuranViewMode.turkishOnly) ...[
+              if (viewMode == QuranViewMode.combined)
+                const SizedBox(height: 12),
+              if (viewMode == QuranViewMode.combined ||
+                  viewMode == QuranViewMode.turkishOnly) ...[
                 Text(
                   ayah.turkishTranslation,
                   style: TextStyle(
@@ -601,7 +677,8 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
   }
 
   // Top Toolbar Widget
-  Widget _buildTopToolbar(Color cardBgColor, Color primaryTextColor, Color secondaryTextColor, Color borderColor) {
+  Widget _buildTopToolbar(Color cardBgColor, Color primaryTextColor,
+      Color secondaryTextColor, Color borderColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -613,9 +690,9 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildModeChip("Kombine", QuranViewMode.combined),
-              _buildModeChip("Sadece Arapça", QuranViewMode.arabicOnly),
-              _buildModeChip("Sadece Meal", QuranViewMode.turkishOnly),
+              _buildModeChip("Arapça+Meal", QuranViewMode.combined),
+              _buildModeChip("Arapça", QuranViewMode.arabicOnly),
+              _buildModeChip("Meal", QuranViewMode.turkishOnly),
             ],
           ),
           const SizedBox(height: 6),
@@ -626,11 +703,15 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                 children: [
                   Icon(
                     Icons.format_size_rounded,
-                    color: isBookTheme ? AppTheme.goldBookBorder : AppTheme.goldAccent,
+                    color: isBookTheme
+                        ? AppTheme.goldBookBorder
+                        : AppTheme.goldAccent,
                     size: 18,
                   ),
                   const SizedBox(width: 6),
-                  Text("Metin Boyutu", style: TextStyle(color: secondaryTextColor, fontSize: 12)),
+                  Text("Metin Boyutu",
+                      style:
+                          TextStyle(color: secondaryTextColor, fontSize: 12)),
                 ],
               ),
               Row(
@@ -638,7 +719,9 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                   IconButton(
                     icon: Icon(
                       Icons.remove_circle_outline_rounded,
-                      color: isBookTheme ? AppTheme.goldBookBorder : AppTheme.goldAccent,
+                      color: isBookTheme
+                          ? AppTheme.goldBookBorder
+                          : AppTheme.goldAccent,
                       size: 20,
                     ),
                     padding: EdgeInsets.zero,
@@ -649,13 +732,18 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                   const SizedBox(width: 12),
                   Text(
                     "${arabicFontSize.toInt()} pt",
-                    style: TextStyle(color: primaryTextColor, fontSize: 13, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        color: primaryTextColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(width: 12),
                   IconButton(
                     icon: Icon(
                       Icons.add_circle_outline_rounded,
-                      color: isBookTheme ? AppTheme.goldBookBorder : AppTheme.goldAccent,
+                      color: isBookTheme
+                          ? AppTheme.goldBookBorder
+                          : AppTheme.goldAccent,
                       size: 20,
                     ),
                     padding: EdgeInsets.zero,
@@ -676,7 +764,8 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
     final bool isSelected = viewMode == mode;
     final Color activeColor = AppTheme.primaryEmerald;
     final Color activeText = Colors.white;
-    final Color inactiveText = isBookTheme ? AppTheme.textBookSecondary : AppTheme.textSecondaryDark;
+    final Color inactiveText =
+        isBookTheme ? AppTheme.textBookSecondary : AppTheme.textSecondaryDark;
 
     return ChoiceChip(
       label: Text(
@@ -689,7 +778,8 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
       ),
       selected: isSelected,
       selectedColor: activeColor,
-      backgroundColor: isBookTheme ? Colors.black.withOpacity(0.05) : Colors.black26,
+      backgroundColor:
+          isBookTheme ? Colors.black.withOpacity(0.05) : Colors.black26,
       side: BorderSide(
         color: isSelected
             ? (isBookTheme ? AppTheme.goldBookBorder : AppTheme.goldAccent)
@@ -710,12 +800,19 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isBookTheme ? AppTheme.surfaceBookParchment : AppTheme.primaryDark,
+        color:
+            isBookTheme ? AppTheme.surfaceBookParchment : AppTheme.primaryDark,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isBookTheme ? AppTheme.goldBookBorder : AppTheme.goldAccent.withOpacity(0.4), width: 1.2),
+        border: Border.all(
+            color: isBookTheme
+                ? AppTheme.goldBookBorder
+                : AppTheme.goldAccent.withOpacity(0.4),
+            width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: isBookTheme ? AppTheme.goldBookBorder.withOpacity(0.15) : Colors.black26,
+            color: isBookTheme
+                ? AppTheme.goldBookBorder.withOpacity(0.15)
+                : Colors.black26,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

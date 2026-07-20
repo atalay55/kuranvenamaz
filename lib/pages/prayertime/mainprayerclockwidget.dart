@@ -104,7 +104,6 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: <Widget>[
-          // Header Row: City / Location Selection
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

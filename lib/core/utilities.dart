@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:kuranvenamaz/core/notificationservice.dart';
+import 'package:kuranvenamaz/core/settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../entity/namazvakitleri.dart';
 import 'httpcontroller.dart';
@@ -64,7 +65,7 @@ class PrayerUtilities {
       );
     }
 
-    // Vakitler alındığında bildirimleri otomatik zamanla
+    // Vakitler alındığında bildirimleri kullanıcı ayarlarına göre zamanla
     if (namazVakitleri.isNotEmpty) {
       scheduleTodayPrayerNotifications(namazVakitleri);
     }
@@ -74,16 +75,31 @@ class PrayerUtilities {
 
   Future<void> scheduleTodayPrayerNotifications(
       List<NamazVakitleri> vakitler) async {
-    final now = DateTime.now();
+    final settings = SettingsService();
+    await settings.initSettings();
+
     final notificationService = NotificationService();
+    await notificationService.cancelAllNotifications();
+
+    if (!settings.notificationsEnabled) {
+      debugPrint("Bildirimler kapalı.");
+      return;
+    }
+
+    final now = DateTime.now();
+    final timingMinutes = settings.notificationTimingMinutes;
+    final isEzan = settings.soundType == 'ezan';
 
     for (int i = 0; i < vakitler.length; i++) {
       final item = vakitler[i];
+      // Güneş vakti için ezan/bildirim çalmayalım
+      if (item.vakitIsmi == "Güneş") continue;
+
       try {
         final parts = item.namazSaati.split(':').map(int.parse).toList();
         if (parts.length < 2) continue;
 
-        final scheduledDate = DateTime(
+        final exactPrayerTime = DateTime(
           now.year,
           now.month,
           now.day,
@@ -91,15 +107,27 @@ class PrayerUtilities {
           parts[1],
         );
 
-        if (scheduledDate.isAfter(now)) {
-          final id = (scheduledDate.day * 100 + i);
-          await notificationService.schedulePrayerNotification(
-            id: id,
-            title: "⏰ ${item.vakitIsmi} Vakti Geldi",
-            body: "${item.vakitIsmi} namazı vakti girdi (${item.namazSaati}).",
-            scheduledDate: scheduledDate,
-          );
+        DateTime targetDate = exactPrayerTime.subtract(Duration(minutes: timingMinutes));
+        if (targetDate.isBefore(now)) {
+          targetDate = targetDate.add(const Duration(days: 1));
         }
+
+        final id = (targetDate.day * 100 + i);
+
+        final title = timingMinutes == 0
+            ? (isEzan ? "🕌 ${item.vakitIsmi} Ezanı Okunuyor" : "🔔 ${item.vakitIsmi} Vakti Geldi")
+            : (isEzan
+                ? "🕌 ${item.vakitIsmi} Namazına $timingMinutes Dakika Kaldı!"
+                : "🔔 ${item.vakitIsmi} Namazına $timingMinutes Dakika Kaldı!");
+
+        final body = "${item.vakitIsmi} namazı vakti: ${item.namazSaati}. Haydi namaza!";
+
+        await notificationService.schedulePrayerNotification(
+          id: id,
+          title: title,
+          body: body,
+          scheduledDate: targetDate,
+        );
       } catch (e) {
         debugPrint("Bildirim zamanlama hatası (${item.vakitIsmi}): $e");
       }
@@ -141,7 +169,6 @@ class PrayerUtilities {
       kalanSure = Duration(seconds: (saatSaat - suankiSaat).toInt());
       return kalanSure;
     } else {
-      // Bugünkü tüm vakitler geçtiyse ilk vakite (İmsak) ertesi güne hesapla
       try {
         final ilkVakit = saatler.first.namazSaati.split(':').map((e) => int.tryParse(e) ?? 0).toList();
         final ertesiGuneSaniye = (24 * 3600 - suankiSaat) + (ilkVakit[0] * 3600 + ilkVakit[1] * 60);

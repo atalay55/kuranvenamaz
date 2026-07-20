@@ -133,6 +133,21 @@ class ContentData {
     return hadisler[dayOfYear % hadisler.length];
   }
 
+  static Future<ContentItem> fetchLiveHadis() async {
+    try {
+      final liveData = await HttpController().fetchLiveHadis();
+      if (liveData != null && liveData['turkish']!.isNotEmpty) {
+        return ContentItem(
+          title: liveData['title'] ?? "Günün Hadisi",
+          arabic: liveData['arabic'] ?? '',
+          turkish: liveData['turkish'] ?? '',
+          source: liveData['source'] ?? '',
+        );
+      }
+    } catch (_) {}
+    return getRandomHadis();
+  }
+
   static ContentItem getRandomDua() {
     final dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays;
     return dualar[dayOfYear % dualar.length];
