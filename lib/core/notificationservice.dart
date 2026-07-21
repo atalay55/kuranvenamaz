@@ -71,7 +71,11 @@ class NotificationService {
               AndroidFlutterLocalNotificationsPlugin>();
 
       if (androidPlugin != null) {
-        await androidPlugin.requestNotificationsPermission();
+        try {
+          await androidPlugin.requestNotificationsPermission();
+        } catch (e) {
+          debugPrint("Notifications permission request failed: $e");
+        }
         try {
           await androidPlugin.requestExactAlarmsPermission();
         } catch (e) {
@@ -175,9 +179,9 @@ class NotificationService {
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
       );
-      debugPrint("Zamanlanmış bildirim kuruldu: $title - $scheduledDate (ID: $id)");
+      debugPrint("Zamanlanmış bildirim kuruldu (alarmClock): $title - $scheduledDate (ID: $id)");
     } catch (e) {
-      debugPrint("alarmClock hatası, inexact zamanlamaya geçiliyor: $e");
+      debugPrint("alarmClock hatası, exactAllowWhileIdle deneniyor: $e");
       try {
         await notificationsPlugin.zonedSchedule(
           id,
@@ -189,8 +193,24 @@ class NotificationService {
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.absoluteTime,
         );
+        debugPrint("Zamanlanmış bildirim kuruldu (exactAllowWhileIdle): $title - $scheduledDate (ID: $id)");
       } catch (err) {
-        debugPrint("Bildirim zamanlama başarısız: $err");
+        debugPrint("exactAllowWhileIdle hatası, inexactAllowWhileIdle deneniyor: $err");
+        try {
+          await notificationsPlugin.zonedSchedule(
+            id,
+            title,
+            body,
+            scheduledTZ,
+            _getNotificationDetails(),
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+          );
+          debugPrint("Zamanlanmış bildirim kuruldu (inexactAllowWhileIdle): $title - $scheduledDate (ID: $id)");
+        } catch (finalErr) {
+          debugPrint("Bildirim zamanlama başarısız: $finalErr");
+        }
       }
     }
   }

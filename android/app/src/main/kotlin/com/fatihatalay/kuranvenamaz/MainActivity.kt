@@ -1,4 +1,4 @@
-package com.example.kuranvenamaz
+package com.fatihatalay.kuranvenamaz
 
 import io.flutter.embedding.android.FlutterActivity
 

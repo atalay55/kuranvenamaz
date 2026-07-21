@@ -13,9 +13,21 @@ void main() async {
   SystemChrome.setPreferredOrientations(
     [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown],
   );
-  await NotificationService().initNotification();
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool isFirstRun = prefs.getBool('isFirstRun') ?? false;
+
+  try {
+    await NotificationService().initNotification();
+  } catch (e, s) {
+    debugPrint("Notification init error on startup: $e\n$s");
+  }
+
+  bool isFirstRun = false;
+  try {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    isFirstRun = prefs.getBool('isFirstRun') ?? false;
+  } catch (e) {
+    debugPrint("SharedPreferences error: $e");
+  }
+
   runApp(MyApp(isFirstRun));
 }
 
