@@ -71,17 +71,55 @@ class HttpController {
     final cleanCity = city.isEmpty ? 'Istanbul' : city;
     final cleanCountry = country.isEmpty ? 'Turkey' : country;
 
+    // 1. Öncelik: Tüm ayın takvim verisini çekme
     try {
-      // Diyanet takvimi hesabı için method=13 kullanılıyor
-      final url = 'https://api.aladhan.com/v1/timingsByCity?city=$cleanCity&country=$cleanCountry&method=13';
+      final url = 'https://api.aladhan.com/v1/calendarByCity?city=$cleanCity&country=$cleanCountry&method=13&month=${now.month}&year=${now.year}';
       final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 8));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        if (jsonData['data'] != null && jsonData['data'] is List) {
+          final List<dynamic> daysList = jsonData['data'];
+          Map<String, List<String>> timesByDate = {};
+
+          for (var dayData in daysList) {
+            final timings = dayData['timings'];
+            final dateObj = dayData['date']?['gregorian']?['date']; // DD-MM-YYYY
+            if (timings != null && dateObj != null) {
+              final parts = dateObj.toString().split('-'); // [DD, MM, YYYY]
+              if (parts.length == 3) {
+                final dateStr = "${parts[2]}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}";
+                timesByDate[dateStr] = [
+                  _cleanTime(timings['Fajr']),
+                  _cleanTime(timings['Sunrise']),
+                  _cleanTime(timings['Dhuhr']),
+                  _cleanTime(timings['Asr']),
+                  _cleanTime(timings['Maghrib']),
+                  _cleanTime(timings['Isha']),
+                ];
+              }
+            }
+          }
+
+          if (timesByDate.isNotEmpty) {
+            return Times(timesByDate: timesByDate);
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Diyanet Aylık Namaz Vakti API hatası: $e");
+    }
+
+    // 2. Öncelik: Tek günlük vakit çekme fallback
+    try {
+      final url = 'https://api.aladhan.com/v1/timingsByCity?city=$cleanCity&country=$cleanCountry&method=13';
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
         if (jsonData['data'] != null && jsonData['data']['timings'] != null) {
           final Map<String, dynamic> timings = jsonData['data']['timings'];
 
-          // [İmsak, Güneş, Öğle, İkindi, Akşam, Yatsı]
           final List<String> prayerTimes = [
             _cleanTime(timings['Fajr']),
             _cleanTime(timings['Sunrise']),
@@ -91,17 +129,14 @@ class HttpController {
             _cleanTime(timings['Isha']),
           ];
 
-          Map<String, List<String>> timesByDate = {};
-          timesByDate[todayStr] = prayerTimes;
-
-          return Times(timesByDate: timesByDate);
+          return Times(timesByDate: {todayStr: prayerTimes});
         }
       }
     } catch (e) {
-      debugPrint("Diyanet Namaz Vakti API hatası: $e");
+      debugPrint("Diyanet Tek Günlük Namaz Vakti API hatası: $e");
     }
 
-    // İnternet olmaması durumunda güvenli Diyanet ortalama vakitleri fallback
+    // 3. Fallback varsayılan vakitler
     debugPrint("Fallback varsayılan vakitler kullanılıyor.");
     Map<String, List<String>> fallbackTimes = {
       todayStr: ["04:15", "05:52", "13:12", "16:58", "20:21", "21:51"]

@@ -46,18 +46,21 @@ class _CountrySelectPageState extends State<CountrySelectPage> {
             );
           } else if (snapshot.hasError) {
             return Center(
-              child: Text('Hata: ${snapshot.error}', style: const TextStyle(color: Colors.white70)),
+              child: Text('Hata: ${snapshot.error}',
+                  style: const TextStyle(color: Colors.white70)),
             );
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(
-              child: Text('Ülke verisi bulunamadı.', style: TextStyle(color: Colors.white70)),
+              child: Text('Ülke verisi bulunamadı.',
+                  style: TextStyle(color: Colors.white70)),
             );
           } else {
             _allCountries = snapshot.data!;
 
-            final displayList = _filteredCountries.isEmpty && controller.text.isEmpty
-                ? _allCountries
-                : _filteredCountries;
+            final displayList =
+                _filteredCountries.isEmpty && controller.text.isEmpty
+                    ? _allCountries
+                    : _filteredCountries;
 
             return Column(
               children: [
@@ -65,24 +68,29 @@ class _CountrySelectPageState extends State<CountrySelectPage> {
                   padding: const EdgeInsets.all(16.0),
                   child: TextField(
                     controller: controller,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.black),
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.search, color: AppTheme.goldAccent),
+                      prefixIcon:
+                          const Icon(Icons.search, color: AppTheme.goldAccent),
                       hintText: 'Ülke ara...',
-                      hintStyle: const TextStyle(color: AppTheme.textSecondaryDark),
+                      hintStyle:
+                          const TextStyle(color: AppTheme.textSecondaryDark),
                       filled: true,
                       fillColor: AppTheme.surfaceDark,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: AppTheme.goldAccent.withOpacity(0.3)),
+                        borderSide: BorderSide(
+                            color: AppTheme.goldAccent.withOpacity(0.3)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: AppTheme.goldAccent.withOpacity(0.3)),
+                        borderSide: BorderSide(
+                            color: AppTheme.goldAccent.withOpacity(0.3)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
-                        borderSide: const BorderSide(color: AppTheme.goldAccent),
+                        borderSide:
+                            const BorderSide(color: AppTheme.goldAccent),
                       ),
                     ),
                     onChanged: (String query) {
@@ -105,21 +113,27 @@ class _CountrySelectPageState extends State<CountrySelectPage> {
                       final country = displayList[index];
                       return Container(
                         margin: const EdgeInsets.only(bottom: 8),
-                        decoration: AppTheme.cardDecoration(color: AppTheme.surfaceDark),
+                        decoration: AppTheme.cardDecoration(
+                            color: AppTheme.surfaceDark),
                         child: ListTile(
                           leading: const CircleAvatar(
                             backgroundColor: AppTheme.primaryEmerald,
-                            child: Icon(Icons.flag_rounded, color: AppTheme.goldAccent, size: 20),
+                            child: Icon(Icons.flag_rounded,
+                                color: AppTheme.goldAccent, size: 20),
                           ),
                           title: Text(
                             country.name,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold),
                           ),
                           subtitle: Text(
                             country.code,
-                            style: const TextStyle(color: AppTheme.textSecondaryDark),
+                            style: const TextStyle(
+                                color: AppTheme.textSecondaryDark),
                           ),
-                          trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.goldAccent),
+                          trailing: const Icon(Icons.chevron_right_rounded,
+                              color: AppTheme.goldAccent),
                           onTap: () {
                             Get.to(() => CitySelectPage(country.name));
                           },

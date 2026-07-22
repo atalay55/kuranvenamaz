@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kuranvenamaz/core/device_settings_service.dart';
 import 'package:kuranvenamaz/core/content_data.dart';
 import 'package:kuranvenamaz/core/settings_service.dart';
 import 'package:kuranvenamaz/hijricalendar/hijricalendar.dart';
@@ -20,18 +21,68 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   ContentItem currentAyet = ContentData.getRandomAyet();
   ContentItem currentHadis = ContentData.getRandomHadis();
   ContentItem currentDua = ContentData.getRandomDua();
+  bool _showOEMWarningBanner = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _refreshContent();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkFirstTimeNotificationPrompt();
+      _checkOEMBatteryOptimization();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkOEMBatteryOptimization();
+    }
+  }
+
+  Future<void> _checkOEMBatteryOptimization() async {
+    try {
+      final settings = SettingsService();
+      await settings.initSettings();
+      if (settings.oemBannerDismissed) {
+        if (mounted) {
+          setState(() {
+            _showOEMWarningBanner = false;
+          });
+        }
+        return;
+      }
+
+      final manufacturer = (await DeviceSettingsService.getDeviceManufacturer()).toLowerCase();
+      final isIgnoring = await DeviceSettingsService.isIgnoringBatteryOptimizations();
+
+      final isOEM = manufacturer.contains("xiaomi") ||
+          manufacturer.contains("redmi") ||
+          manufacturer.contains("poco") ||
+          manufacturer.contains("samsung") ||
+          manufacturer.contains("huawei") ||
+          manufacturer.contains("oppo") ||
+          manufacturer.contains("vivo");
+
+      if (mounted) {
+        setState(() {
+          _showOEMWarningBanner = isOEM && !isIgnoring;
+        });
+      }
+    } catch (e) {
+      debugPrint("OEM check error: $e");
+    }
   }
 
   void _refreshContent() async {
@@ -126,11 +177,13 @@ class _HomePageState extends State<HomePage> {
                     final s = SettingsService();
                     await s.setNotificationsEnabled(true);
                     await s.setSoundType('ezan');
-                    await s.setNotificationTiming(1);
+                    await s.setNotificationTiming(15);
                     await s.setAskedPrompt(true);
                     if (!context.mounted) return;
                     Navigator.pop(context);
-                    Get.to(() => const SettingsPage());
+                    await DeviceSettingsService.openBatteryOptimizationSettings();
+                    if (!context.mounted) return;
+                    _showOEMPermissionDialog(context);
                   },
                 ),
                 const SizedBox(height: 8),
@@ -145,18 +198,18 @@ class _HomePageState extends State<HomePage> {
                   ),
                   icon: const Text("🔔 ", style: TextStyle(fontSize: 16)),
                   label: const Text(
-                    "Evet, Standart Bildirim Ver (1 Dk Önce)",
+                    "Evet, Standart Bildirim Ver (15 Dk Önce)",
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                   ),
                   onPressed: () async {
                     final s = SettingsService();
                     await s.setNotificationsEnabled(true);
                     await s.setSoundType('notification');
-                    await s.setNotificationTiming(1);
+                    await s.setNotificationTiming(15);
                     await s.setAskedPrompt(true);
                     if (!context.mounted) return;
                     Navigator.pop(context);
-                    Get.to(() => const SettingsPage());
+                    _showOEMPermissionDialog(context);
                   },
                 ),
                 const SizedBox(height: 6),
@@ -175,6 +228,95 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showOEMPermissionDialog(BuildContext context) async {
+    final manufacturer = await DeviceSettingsService.getDeviceManufacturer();
+    if (!context.mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppTheme.surfaceDark,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: AppTheme.goldAccent, width: 1.5),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.amber.shade400, size: 28),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  "$manufacturer Arka Plan İzni",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Cihazınız ($manufacturer) uygulama kapalıyken arka plan ezanlarını engelleyebilir.",
+                style: const TextStyle(color: AppTheme.textPrimaryDark, fontSize: 13, height: 1.4),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                "Ezanın vakti geldiğinde kesin olarak okunabilmesi için aşağıdaki 2 izin butonuna sırayla dokunun:",
+                style: TextStyle(color: AppTheme.goldLight, fontSize: 12, height: 1.3),
+              ),
+              const SizedBox(height: 14),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryEmerald,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 42),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                icon: const Icon(Icons.autorenew_rounded, size: 18, color: AppTheme.goldAccent),
+                label: const Text("1. Otomatik Başlatmayı Aç", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                onPressed: () async {
+                  await DeviceSettingsService.openAutostartSettings();
+                },
+              ),
+              const SizedBox(height: 8),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryEmerald,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 42),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                icon: const Icon(Icons.battery_charging_full_rounded, size: 18, color: AppTheme.goldAccent),
+                label: const Text("2. Pil Kısıtlamasını Kaldır (Kısıtlama Yok)", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                onPressed: () async {
+                  await DeviceSettingsService.openBatteryOptimizationSettings();
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                final s = SettingsService();
+                await s.setOemBannerDismissed(true);
+                _checkOEMBatteryOptimization();
+              },
+              child: const Text("Tamam, Anladım", style: TextStyle(color: AppTheme.goldAccent, fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -209,6 +351,54 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (_showOEMWarningBanner) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade900.withOpacity(0.35),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.amber.shade600, width: 1.2),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: Colors.amber.shade400, size: 20),
+                    const SizedBox(width: 6),
+                    const Expanded(
+                      child: Text(
+                        "Ezan bildirimlerinin aksamaması için izin verin.",
+                        style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () => _showOEMPermissionDialog(context),
+                      child: const Text("İzin Ver", style: TextStyle(color: AppTheme.goldAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: Colors.white60, size: 18),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Kapat',
+                      onPressed: () async {
+                        final s = SettingsService();
+                        await s.setOemBannerDismissed(true);
+                        if (mounted) {
+                          setState(() {
+                            _showOEMWarningBanner = false;
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+
             // Main Prayer Clock Dashboard
             const MainPrayerClockWidget(),
             const SizedBox(height: 16),

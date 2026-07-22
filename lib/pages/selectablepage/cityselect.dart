@@ -60,17 +60,20 @@ class _CitySelectPageState extends State<CitySelectPage> {
             );
           } else if (snapshot.hasError) {
             return Center(
-              child: Text('Hata: ${snapshot.error}', style: const TextStyle(color: Colors.white70)),
+              child: Text('Hata: ${snapshot.error}',
+                  style: const TextStyle(color: Colors.white70)),
             );
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(
-              child: Text('Şehir verisi bulunamadı.', style: TextStyle(color: Colors.white70)),
+              child: Text('Şehir verisi bulunamadı.',
+                  style: TextStyle(color: Colors.white70)),
             );
           } else {
             _allCities = snapshot.data!;
-            final displayList = _filteredCities.isEmpty && controller.text.isEmpty
-                ? _allCities
-                : _filteredCities;
+            final displayList =
+                _filteredCities.isEmpty && controller.text.isEmpty
+                    ? _allCities
+                    : _filteredCities;
 
             return Column(
               children: [
@@ -78,24 +81,29 @@ class _CitySelectPageState extends State<CitySelectPage> {
                   padding: const EdgeInsets.all(16.0),
                   child: TextField(
                     controller: controller,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.black),
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.search, color: AppTheme.goldAccent),
+                      prefixIcon:
+                          const Icon(Icons.search, color: AppTheme.goldAccent),
                       hintText: 'Şehir ara...',
-                      hintStyle: const TextStyle(color: AppTheme.textSecondaryDark),
+                      hintStyle:
+                          const TextStyle(color: AppTheme.textSecondaryDark),
                       filled: true,
                       fillColor: AppTheme.surfaceDark,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: AppTheme.goldAccent.withOpacity(0.3)),
+                        borderSide: BorderSide(
+                            color: AppTheme.goldAccent.withOpacity(0.3)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: AppTheme.goldAccent.withOpacity(0.3)),
+                        borderSide: BorderSide(
+                            color: AppTheme.goldAccent.withOpacity(0.3)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
-                        borderSide: const BorderSide(color: AppTheme.goldAccent),
+                        borderSide:
+                            const BorderSide(color: AppTheme.goldAccent),
                       ),
                     ),
                     onChanged: (String query) {
@@ -118,17 +126,23 @@ class _CitySelectPageState extends State<CitySelectPage> {
                       final city = displayList[index];
                       return Container(
                         margin: const EdgeInsets.only(bottom: 8),
-                        decoration: AppTheme.cardDecoration(color: AppTheme.surfaceDark),
+                        decoration: AppTheme.cardDecoration(
+                            color: AppTheme.surfaceDark),
                         child: ListTile(
                           leading: const CircleAvatar(
                             backgroundColor: AppTheme.primaryEmerald,
-                            child: Icon(Icons.location_city_rounded, color: AppTheme.goldAccent, size: 20),
+                            child: Icon(Icons.location_city_rounded,
+                                color: AppTheme.goldAccent, size: 20),
                           ),
                           title: Text(
                             city.cityName,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold),
                           ),
-                          trailing: const Icon(Icons.check_circle_outline_rounded, color: AppTheme.goldAccent),
+                          trailing: const Icon(
+                              Icons.check_circle_outline_rounded,
+                              color: AppTheme.goldAccent),
                           onTap: () async {
                             _updateIsFirstRun();
                             await setInformation(city.cityName, widget.country);

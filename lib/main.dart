@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:kuranvenamaz/core/notificationservice.dart';
+import 'package:kuranvenamaz/core/utilities.dart';
 import 'package:kuranvenamaz/pages/selectablepage/countryselect.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kuranvenamaz/theme/app_theme.dart';
@@ -16,6 +17,8 @@ void main() async {
 
   try {
     await NotificationService().initNotification();
+    // Namaz vakitlerini ve 7 günlük bildirim zamanlamalarını uygulama açılışında otomatik yenile
+    PrayerUtilities().getNamazVakitleri();
   } catch (e, s) {
     debugPrint("Notification init error on startup: $e\n$s");
   }

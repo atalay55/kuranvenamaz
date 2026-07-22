@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:intl/intl.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -82,9 +83,9 @@ class NotificationService {
           debugPrint("Exact alarm permission request failed: $e");
         }
 
-        // 1. Ezan Kanali (v2: ses önbelleğini tazelemek için)
+        // 1. Ezan Kanali (v3)
         final AndroidNotificationChannel ezanChannel = AndroidNotificationChannel(
-          'namaz_vakitleri_ezan_v2',
+          'namaz_vakitleri_ezan_v3',
           'Ezan Vakti Bildirimleri',
           description: 'Namaz vakitlerinde ezan sesi ile hatırlatma.',
           importance: Importance.max,
@@ -92,7 +93,18 @@ class NotificationService {
           sound: const RawResourceAndroidNotificationSound('ezan'),
           enableVibration: true,
         );
-        // 2. Standart Bildirim Kanali
+
+        // 2. Vakit Öncesi Hatırlatma Kanali
+        final AndroidNotificationChannel hatirlatmaChannel = AndroidNotificationChannel(
+          'namaz_vakitleri_hatirlatma',
+          'Vakit Öncesi Hatırlatma Bildirimleri',
+          description: 'Namaz vaktinden önce gelen hatırlatma bildirimleri.',
+          importance: Importance.high,
+          playSound: true,
+          enableVibration: true,
+        );
+
+        // 3. Standart Bildirim Kanali
         final AndroidNotificationChannel standartChannel = AndroidNotificationChannel(
           'namaz_vakitleri_standart',
           'Standart Namaz Bildirimleri',
@@ -103,6 +115,7 @@ class NotificationService {
         );
 
         await androidPlugin.createNotificationChannel(ezanChannel);
+        await androidPlugin.createNotificationChannel(hatirlatmaChannel);
         await androidPlugin.createNotificationChannel(standartChannel);
       }
     }
@@ -111,54 +124,114 @@ class NotificationService {
     debugPrint("NotificationService başarıyla başlatıldı.");
   }
 
-  NotificationDetails _getNotificationDetails() {
-    final soundType = SettingsService().soundType;
-    final isEzan = soundType == 'ezan';
-
-    return NotificationDetails(
-      android: AndroidNotificationDetails(
-        isEzan ? 'namaz_vakitleri_ezan_v2' : 'namaz_vakitleri_standart',
-        isEzan ? 'Ezan Vakti Bildirimleri' : 'Standart Namaz Bildirimleri',
-        channelDescription: isEzan
-            ? 'Namaz vakitlerinde ezan sesi ile hatırlatma.'
-            : 'Namaz vakitlerinde standart bildirim sesi.',
-        importance: isEzan ? Importance.max : Importance.high,
-        priority: isEzan ? Priority.max : Priority.high,
-        playSound: true,
-        sound: isEzan ? const RawResourceAndroidNotificationSound('ezan') : null,
-        audioAttributesUsage: AudioAttributesUsage.notification,
-        enableVibration: true,
-        showWhen: true,
-      ),
-      iOS: DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-        sound: isEzan ? 'ezan.mp3' : null,
-      ),
-    );
+  NotificationDetails _getNotificationDetails(String channelType) {
+    if (channelType == 'ezan') {
+      return const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'namaz_vakitleri_ezan_v3',
+          'Ezan Vakti Bildirimleri',
+          channelDescription: 'Namaz vakitlerinde ezan sesi ile hatırlatma.',
+          importance: Importance.max,
+          priority: Priority.max,
+          playSound: true,
+          sound: RawResourceAndroidNotificationSound('ezan'),
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+          fullScreenIntent: true,
+          category: AndroidNotificationCategory.alarm,
+          visibility: NotificationVisibility.public,
+          enableVibration: true,
+          showWhen: true,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+          sound: 'ezan.mp3',
+          interruptionLevel: InterruptionLevel.timeSensitive,
+        ),
+      );
+    } else if (channelType == 'hatirlatma') {
+      return const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'namaz_vakitleri_hatirlatma',
+          'Vakit Öncesi Hatırlatma Bildirimleri',
+          channelDescription: 'Namaz vaktinden önce gelen hatırlatma bildirimleri.',
+          importance: Importance.high,
+          priority: Priority.high,
+          playSound: true,
+          audioAttributesUsage: AudioAttributesUsage.notification,
+          category: AndroidNotificationCategory.reminder,
+          visibility: NotificationVisibility.public,
+          enableVibration: true,
+          showWhen: true,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+          interruptionLevel: InterruptionLevel.timeSensitive,
+        ),
+      );
+    } else {
+      return const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'namaz_vakitleri_standart',
+          'Standart Namaz Bildirimleri',
+          channelDescription: 'Namaz vakitlerinde standart bildirim sesi.',
+          importance: Importance.high,
+          priority: Priority.high,
+          playSound: true,
+          audioAttributesUsage: AudioAttributesUsage.notification,
+          category: AndroidNotificationCategory.event,
+          visibility: NotificationVisibility.public,
+          enableVibration: true,
+          showWhen: true,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      );
+    }
   }
 
   /// Anında Test Bildirimi Gönder (Ayarlar sayfasında test etmek için)
   Future<void> showTestNotification() async {
-    final isEzan = SettingsService().soundType == 'ezan';
-    final timing = SettingsService().notificationTimingMinutes;
-    final timingStr = timing == 0 ? "Tam Vaktinde" : "$timing Dakika Önce";
+    final settings = SettingsService();
+    final isEzan = settings.soundType == 'ezan';
+    final timing = settings.notificationTimingMinutes;
 
     await notificationsPlugin.show(
       999,
       isEzan ? "🕌 Ezan Vakti Bildirim Testi" : "🔔 Namaz Vakti Bildirim Testi",
-      "Bildirim tercihiniz: $timingStr. Bildirimler ve ses başarıyla çalışıyor!",
-      _getNotificationDetails(),
+      "Bildirim tercihiniz: ${settings.preNotificationEnabled ? '$timing dk önce hatırlatma +' : ''} ${settings.ezanEnabled ? 'vaktinde ezan' : ''}. Ses ve bildirimler başarıyla çalışıyor!",
+      _getNotificationDetails(isEzan ? 'ezan' : 'standart'),
     );
   }
 
-  /// Namaz vakti için zamanlanmış bildirim
+  /// Gelecekteki X saniye sonrasına zamanlanmış test ezanı/bildirimi kurma (Uygulama kapalıyken test etmek için)
+  Future<void> scheduleTestNotificationInSeconds(int seconds) async {
+    final settings = SettingsService();
+    final isEzan = settings.soundType == 'ezan';
+    final scheduledDate = DateTime.now().add(Duration(seconds: seconds));
+
+    await schedulePrayerNotification(
+      id: 998,
+      title: isEzan ? "🕌 Ezan Testi ($seconds Saniye Sonra)" : "🔔 Bildirim Testi ($seconds Saniye Sonra)",
+      body: "Uygulama kapalıyken zamanlanmış ezan ve bildirim testi başarıyla çalıştı!",
+      scheduledDate: scheduledDate,
+      channelType: isEzan ? 'ezan' : 'standart',
+    );
+  }
+
+  /// Tekil zamanlanmış bildirim ekleme
   Future<void> schedulePrayerNotification({
     required int id,
     required String title,
     required String body,
     required DateTime scheduledDate,
+    String channelType = 'ezan',
   }) async {
     final now = DateTime.now();
     if (scheduledDate.isBefore(now)) return;
@@ -168,18 +241,20 @@ class NotificationService {
       scheduledDate.millisecondsSinceEpoch,
     );
 
+    final details = _getNotificationDetails(channelType);
+
     try {
       await notificationsPlugin.zonedSchedule(
         id,
         title,
         body,
         scheduledTZ,
-        _getNotificationDetails(),
+        details,
         androidScheduleMode: AndroidScheduleMode.alarmClock,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
       );
-      debugPrint("Zamanlanmış bildirim kuruldu (alarmClock): $title - $scheduledDate (ID: $id)");
+      debugPrint("Zamanlanmış bildirim kuruldu (alarmClock): $title - $scheduledDate (ID: $id, Kanal: $channelType)");
     } catch (e) {
       debugPrint("alarmClock hatası, exactAllowWhileIdle deneniyor: $e");
       try {
@@ -188,21 +263,20 @@ class NotificationService {
           title,
           body,
           scheduledTZ,
-          _getNotificationDetails(),
+          details,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.absoluteTime,
         );
         debugPrint("Zamanlanmış bildirim kuruldu (exactAllowWhileIdle): $title - $scheduledDate (ID: $id)");
       } catch (err) {
-        debugPrint("exactAllowWhileIdle hatası, inexactAllowWhileIdle deneniyor: $err");
         try {
           await notificationsPlugin.zonedSchedule(
             id,
             title,
             body,
             scheduledTZ,
-            _getNotificationDetails(),
+            details,
             androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
             uiLocalNotificationDateInterpretation:
                 UILocalNotificationDateInterpretation.absoluteTime,
@@ -215,57 +289,92 @@ class NotificationService {
     }
   }
 
-  /// Günlük Namaz Vakitlerini Otomatik Zamanlama
+  /// Çok Günlük Namaz Vakitlerini Otomatik Zamanlama (Önümüzdeki 7 gün)
   Future<void> reschedulePrayerNotifications(Times times) async {
     await cancelAllNotifications();
 
-    if (!SettingsService().notificationsEnabled) {
+    final settings = SettingsService();
+    await settings.initSettings();
+
+    if (!settings.notificationsEnabled) {
       debugPrint("Bildirimler kapalı, zamanlama yapılmadı.");
       return;
     }
 
     final now = DateTime.now();
-    final todayStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
-    final todayList = times.timesByDate[todayStr];
-
-    if (todayList == null || todayList.length < 6) return;
-
-    // Namaz vakit isimleri: [İmsak, Güneş, Öğle, İkindi, Akşam, Yatsı]
     final names = ["İmsak", "Güneş", "Öğle", "İkindi", "Akşam", "Yatsı"];
-    final timingMinutes = SettingsService().notificationTimingMinutes;
-    final isEzan = SettingsService().soundType == 'ezan';
+    final timingMinutes = settings.notificationTimingMinutes;
+    final isEzanSound = settings.soundType == 'ezan';
 
-    for (int i = 0; i < names.length; i++) {
-      // Güneş vakti hariç diğer vakitlere bildirim kuralım
-      if (i == 1) continue; 
+    int totalScheduled = 0;
 
-      final timeParts = todayList[i].split(':');
-      if (timeParts.length < 2) continue;
+    // Önümüzdeki 7 gün için bildirimleri kur
+    for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
+      final targetDay = now.add(Duration(days: dayOffset));
+      final dateStr = DateFormat('yyyy-MM-dd').format(targetDay);
+      final dayList = times.timesByDate[dateStr];
 
-      final hour = int.tryParse(timeParts[0]) ?? 0;
-      final minute = int.tryParse(timeParts[1]) ?? 0;
+      if (dayList == null || dayList.length < 6) continue;
 
-      final exactPrayerTime = DateTime(now.year, now.month, now.day, hour, minute);
-      final scheduledTime = exactPrayerTime.subtract(Duration(minutes: timingMinutes));
+      for (int i = 0; i < names.length; i++) {
+        // Güneş vakti hariç (0: İmsak, 2: Öğle, 3: İkindi, 4: Akşam, 5: Yatsı)
+        if (i == 1) continue;
 
-      if (scheduledTime.isAfter(now)) {
         final vakitName = names[i];
-        final title = timingMinutes == 0
-            ? (isEzan ? "🕌 $vakitName Ezanı Okunuyor" : "🔔 $vakitName Namazı Vakti Geldi")
-            : (isEzan
-                ? "🕌 $vakitName Namazına $timingMinutes Dakika Kaldı!"
-                : "🔔 $vakitName Namazına $timingMinutes Dakika Kaldı!");
+        final timeParts = dayList[i].split(':');
+        if (timeParts.length < 2) continue;
 
-        final body = "$vakitName vakti saati: ${todayList[i]}. Haydi namaza!";
+        final hour = int.tryParse(timeParts[0]) ?? 0;
+        final minute = int.tryParse(timeParts[1]) ?? 0;
 
-        await schedulePrayerNotification(
-          id: 100 + i,
-          title: title,
-          body: body,
-          scheduledDate: scheduledTime,
+        final exactPrayerTime = DateTime(
+          targetDay.year,
+          targetDay.month,
+          targetDay.day,
+          hour,
+          minute,
         );
+
+        // 1. Tam Namaz Vakti Ezanı / Bildirimi (1000 + ID)
+        if (settings.ezanEnabled && exactPrayerTime.isAfter(now)) {
+          final title = isEzanSound
+              ? "🕌 $vakitName Ezanı Okunuyor"
+              : "🔔 $vakitName Namazı Vakti Geldi";
+          final body = "$vakitName vakti girdi (${dayList[i]}). Haydi namaza!";
+          final id = 1000 + (dayOffset * 10) + i;
+
+          await schedulePrayerNotification(
+            id: id,
+            title: title,
+            body: body,
+            scheduledDate: exactPrayerTime,
+            channelType: isEzanSound ? 'ezan' : 'standart',
+          );
+          totalScheduled++;
+        }
+
+        // 2. Vaktinden Önce Hatırlatma Bildirimi (2000 + ID)
+        if (settings.preNotificationEnabled && timingMinutes > 0) {
+          final preTime = exactPrayerTime.subtract(Duration(minutes: timingMinutes));
+          if (preTime.isAfter(now)) {
+            final title = "🔔 $vakitName Namazına $timingMinutes Dakika Kaldı!";
+            final body = "$vakitName vakti saati: ${dayList[i]}. Hazırlık yapmayı unutmayın.";
+            final id = 2000 + (dayOffset * 10) + i;
+
+            await schedulePrayerNotification(
+              id: id,
+              title: title,
+              body: body,
+              scheduledDate: preTime,
+              channelType: 'hatirlatma',
+            );
+            totalScheduled++;
+          }
+        }
       }
     }
+
+    debugPrint("Toplam $totalScheduled adet namaz vakti bildirimi zamanlandı (7 günlük).");
   }
 
   Future<void> cancelAllNotifications() async {
