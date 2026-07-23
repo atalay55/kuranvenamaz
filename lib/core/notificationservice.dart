@@ -291,33 +291,34 @@ class NotificationService {
 
   /// Çok Günlük Namaz Vakitlerini Otomatik Zamanlama (Önümüzdeki 7 gün)
   Future<void> reschedulePrayerNotifications(Times times) async {
-    await cancelAllNotifications();
+    try {
+      await cancelAllNotifications();
 
-    final settings = SettingsService();
-    await settings.initSettings();
+      final settings = SettingsService();
+      await settings.initSettings();
 
-    if (!settings.notificationsEnabled) {
-      debugPrint("Bildirimler kapalı, zamanlama yapılmadı.");
-      return;
-    }
+      if (!settings.notificationsEnabled) {
+        debugPrint("Bildirimler kapalı, zamanlama yapılmadı.");
+        return;
+      }
 
-    final now = DateTime.now();
-    final names = ["İmsak", "Güneş", "Öğle", "İkindi", "Akşam", "Yatsı"];
-    final timingMinutes = settings.notificationTimingMinutes;
-    final isEzanSound = settings.soundType == 'ezan';
+      final now = DateTime.now();
+      final names = ["İmsak", "Güneş", "Öğle", "İkindi", "Akşam", "Yatsı"];
+      final timingMinutes = settings.notificationTimingMinutes;
+      final isEzanSound = settings.soundType == 'ezan';
 
-    int totalScheduled = 0;
+      int totalScheduled = 0;
 
-    // Önümüzdeki 7 gün için bildirimleri kur
-    for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
-      final targetDay = now.add(Duration(days: dayOffset));
-      final dateStr = DateFormat('yyyy-MM-dd').format(targetDay);
-      final dayList = times.timesByDate[dateStr];
+      // Önümüzdeki 7 gün için bildirimleri kur
+      for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
+        final targetDay = now.add(Duration(days: dayOffset));
+        final dateStr = DateFormat('yyyy-MM-dd').format(targetDay);
+        final dayList = times.timesByDate[dateStr];
 
-      if (dayList == null || dayList.length < 6) continue;
+        if (dayList == null || dayList.length < 6) continue;
 
-      for (int i = 0; i < names.length; i++) {
-        // Güneş vakti hariç (0: İmsak, 2: Öğle, 3: İkindi, 4: Akşam, 5: Yatsı)
+        for (int i = 0; i < names.length; i++) {
+          // Güneş vakti hariç (0: İmsak, 2: Öğle, 3: İkindi, 4: Akşam, 5: Yatsı)
         if (i == 1) continue;
 
         final vakitName = names[i];
@@ -375,6 +376,9 @@ class NotificationService {
     }
 
     debugPrint("Toplam $totalScheduled adet namaz vakti bildirimi zamanlandı (7 günlük).");
+    } catch (e) {
+      debugPrint("reschedulePrayerNotifications hatası: $e");
+    }
   }
 
   Future<void> cancelAllNotifications() async {

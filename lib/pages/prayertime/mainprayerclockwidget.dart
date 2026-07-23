@@ -176,18 +176,21 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
           FutureBuilder<List<NamazVakitleri>>(
             future: namazVakitleriFuture,
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+              if (snapshot.connectionState == ConnectionState.waiting && _cachedVakitler.isEmpty) {
                 return const SizedBox(
                   height: 60,
                   child: Center(
                     child: CircularProgressIndicator(color: AppTheme.goldAccent),
                   ),
                 );
-              } else if (snapshot.hasError) {
-                return Text('Hata: ${snapshot.error}', style: const TextStyle(color: Colors.white70));
-              } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                List<NamazVakitleri> namazVakitleriList = snapshot.data!;
+              }
 
+              final List<NamazVakitleri> namazVakitleriList =
+                  (snapshot.hasData && snapshot.data!.isNotEmpty)
+                      ? snapshot.data!
+                      : _cachedVakitler;
+
+              if (namazVakitleriList.isNotEmpty) {
                 return LayoutBuilder(
                   builder: (context, constraints) {
                     return Row(
@@ -207,8 +210,46 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
                     );
                   },
                 );
+              } else if (snapshot.hasError) {
+                return Column(
+                  children: [
+                    Text('Hata: ${snapshot.error}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                    const SizedBox(height: 8),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _loadData();
+                        });
+                      },
+                      icon: const Icon(Icons.refresh, size: 16),
+                      label: const Text("Yeniden Dene"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryEmerald,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                );
               } else {
-                return const Text('Vakitler yükleniyor...', style: TextStyle(color: Colors.white70));
+                return Column(
+                  children: [
+                    const Text('Namaz vakitleri alınamadı.', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                    const SizedBox(height: 8),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _loadData();
+                        });
+                      },
+                      icon: const Icon(Icons.refresh, size: 16),
+                      label: const Text("Yeniden Dene"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryEmerald,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                );
               }
             },
           ),

@@ -17,12 +17,14 @@ class QiblahCompass extends StatefulWidget {
 }
 
 class _QiblahCompassState extends State<QiblahCompass> {
-  final _locationStreamController = StreamController<LocationStatus>.broadcast();
+  final _locationStreamController =
+      StreamController<LocationStatus>.broadcast();
   Stream<LocationStatus> get stream => _locationStreamController.stream;
 
   Future<void> _checkLocationStatus() async {
     final locationStatus = await FlutterQiblah.checkLocationStatus();
-    if (locationStatus.enabled && locationStatus.status == LocationPermission.denied) {
+    if (locationStatus.enabled &&
+        locationStatus.status == LocationPermission.denied) {
       await FlutterQiblah.requestPermissions();
       final s = await FlutterQiblah.checkLocationStatus();
       _locationStreamController.sink.add(s);
@@ -64,7 +66,8 @@ class _QiblahCompassState extends State<QiblahCompass> {
             }
             if (snapshot.data?.enabled == true) {
               final status = snapshot.data!.status;
-              if (status == LocationPermission.always || status == LocationPermission.whileInUse) {
+              if (status == LocationPermission.always ||
+                  status == LocationPermission.whileInUse) {
                 return const PureQiblaFinderView();
               } else {
                 String errorMessage = status == LocationPermission.denied
@@ -130,15 +133,16 @@ class _PureQiblaFinderViewState extends State<PureQiblaFinderView> {
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-      
+
       double lat = position.latitude;
       double lng = position.longitude;
 
       // Calculate Qibla Bearing mathematically from GPS
       double bearing = _calculateQiblaBearing(lat, lng);
-      
+
       // Calculate Distance to Kaaba (21.422487, 39.826206) in KM
-      double distMeters = Geolocator.distanceBetween(lat, lng, 21.422487, 39.826206);
+      double distMeters =
+          Geolocator.distanceBetween(lat, lng, 21.422487, 39.826206);
 
       if (mounted) {
         setState(() {
@@ -186,7 +190,8 @@ class _PureQiblaFinderViewState extends State<PureQiblaFinderView> {
       stream: FlutterQiblah.qiblahStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: AppTheme.goldAccent));
+          return const Center(
+              child: CircularProgressIndicator(color: AppTheme.goldAccent));
         }
 
         if (snapshot.hasError) {
@@ -200,10 +205,11 @@ class _PureQiblaFinderViewState extends State<PureQiblaFinderView> {
         }
 
         final qiblahDirection = snapshot.data!;
-        
+
         // Use mathematical bearing if GPS calculated, otherwise fall back to package bearing
         final double targetQibla = qiblaBearingDeg ?? qiblahDirection.qiblah;
-        final double phoneHeading = qiblahDirection.direction; // 0..360° from North
+        final double phoneHeading =
+            qiblahDirection.direction; // 0..360° from North
 
         // Screen angle calculation: (Qibla - Heading)
         double screenAngleDeg = (targetQibla - phoneHeading);
@@ -213,7 +219,7 @@ class _PureQiblaFinderViewState extends State<PureQiblaFinderView> {
 
         // Normalize to [-180, 180] for checking alignment with top of phone
         double normalizedDiff = (screenAngleDeg + 180) % 360 - 180;
-        
+
         final double dialRotation = -phoneHeading * (pi / 180.0);
         final double arrowRotation = screenAngleDeg * (pi / 180.0);
 
@@ -243,14 +249,22 @@ class _PureQiblaFinderViewState extends State<PureQiblaFinderView> {
                 TextButton.icon(
                   onPressed: _toggleReversedSensor,
                   icon: Icon(
-                    isReversedSensor ? Icons.check_box_rounded : Icons.swap_vert_rounded,
-                    color: isReversedSensor ? Colors.orangeAccent : AppTheme.goldAccent,
+                    isReversedSensor
+                        ? Icons.check_box_rounded
+                        : Icons.swap_vert_rounded,
+                    color: isReversedSensor
+                        ? Colors.orangeAccent
+                        : AppTheme.goldAccent,
                     size: 18,
                   ),
                   label: Text(
-                    isReversedSensor ? "Ters Sensör Modu Aktif (Değiştir)" : "İbre Yönünü Tersle / Değiştir",
+                    isReversedSensor
+                        ? "Ters Sensör Modu Aktif (Değiştir)"
+                        : "İbre Yönünü Tersle / Değiştir",
                     style: TextStyle(
-                      color: isReversedSensor ? Colors.orangeAccent : AppTheme.goldAccent,
+                      color: isReversedSensor
+                          ? Colors.orangeAccent
+                          : AppTheme.goldAccent,
                       fontSize: 12,
                     ),
                   ),
@@ -277,12 +291,16 @@ class _PureQiblaFinderViewState extends State<PureQiblaFinderView> {
         color: isAligned ? AppTheme.primaryEmerald : AppTheme.surfaceDark,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isAligned ? AppTheme.goldAccent : AppTheme.goldAccent.withOpacity(0.3),
+          color: isAligned
+              ? AppTheme.goldAccent
+              : AppTheme.goldAccent.withOpacity(0.3),
           width: isAligned ? 2 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isAligned ? AppTheme.primaryEmerald.withOpacity(0.5) : Colors.black26,
+            color: isAligned
+                ? AppTheme.primaryEmerald.withOpacity(0.5)
+                : Colors.black26,
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -300,7 +318,9 @@ class _PureQiblaFinderViewState extends State<PureQiblaFinderView> {
               ),
               const SizedBox(width: 10),
               Text(
-                isAligned ? "KIBLE YÖNÜNDESİNİZ ✓" : "KÂBE AÇISI: ${targetQibla.toStringAsFixed(0)}°",
+                isAligned
+                    ? "KIBLE YÖNÜNDESİNİZ ✓"
+                    : "KÂBE AÇISI: ${targetQibla.toStringAsFixed(0)}°",
                 style: TextStyle(
                   color: isAligned ? Colors.white : AppTheme.goldAccent,
                   fontSize: 18,
@@ -315,12 +335,13 @@ class _PureQiblaFinderViewState extends State<PureQiblaFinderView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.near_me_rounded, color: AppTheme.goldLight, size: 14),
+                const Icon(Icons.near_me_rounded,
+                    color: AppTheme.goldLight, size: 14),
                 const SizedBox(width: 4),
                 Text(
                   "Kâbe'ye Uzaklık: ${distanceKm!.toStringAsFixed(0)} km",
                   style: const TextStyle(
-                    color: AppTheme.goldLight,
+                    color: AppTheme.goldAccent,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
@@ -333,7 +354,8 @@ class _PureQiblaFinderViewState extends State<PureQiblaFinderView> {
     );
   }
 
-  Widget _buildCompassStack(double dialRotation, double arrowRotation, bool isAligned) {
+  Widget _buildCompassStack(
+      double dialRotation, double arrowRotation, bool isAligned) {
     return Center(
       child: SizedBox(
         width: 300,
@@ -348,9 +370,13 @@ class _PureQiblaFinderViewState extends State<PureQiblaFinderView> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isAligned ? AppTheme.primaryEmerald.withOpacity(0.18) : Colors.transparent,
+                color: isAligned
+                    ? AppTheme.primaryEmerald.withOpacity(0.18)
+                    : Colors.transparent,
                 border: Border.all(
-                  color: isAligned ? AppTheme.goldAccent : AppTheme.goldAccent.withOpacity(0.2),
+                  color: isAligned
+                      ? AppTheme.goldAccent
+                      : AppTheme.goldAccent.withOpacity(0.2),
                   width: isAligned ? 3 : 1,
                 ),
                 boxShadow: isAligned
@@ -400,7 +426,11 @@ class _PureQiblaFinderViewState extends State<PureQiblaFinderView> {
           Container(width: 1, height: 30, color: Colors.white12),
           _buildStatItem("Cihaz Yönü", "${phoneHeading.toStringAsFixed(0)}°"),
           Container(width: 1, height: 30, color: Colors.white12),
-          _buildStatItem("Mesafe", distanceKm != null ? "${distanceKm!.toStringAsFixed(0)} km" : "-"),
+          _buildStatItem(
+              "Mesafe",
+              distanceKm != null
+                  ? "${distanceKm!.toStringAsFixed(0)} km"
+                  : "-"),
         ],
       ),
     );
@@ -411,12 +441,16 @@ class _PureQiblaFinderViewState extends State<PureQiblaFinderView> {
       children: [
         Text(
           label,
-          style: const TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12),
+          style:
+              const TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12),
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(color: AppTheme.textPrimaryDark, fontSize: 16, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+              color: AppTheme.textPrimaryDark,
+              fontSize: 16,
+              fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -451,8 +485,10 @@ class QiblaCompassDialPainter extends CustomPainter {
     canvas.drawCircle(center, radius - 36, innerRingPaint);
 
     // Cardinal Labels (K, D, G, B)
-    const textStyleN = TextStyle(color: Colors.redAccent, fontSize: 18, fontWeight: FontWeight.bold);
-    const textStyleOther = TextStyle(color: Colors.white70, fontSize: 15, fontWeight: FontWeight.w600);
+    const textStyleN = TextStyle(
+        color: Colors.redAccent, fontSize: 18, fontWeight: FontWeight.bold);
+    const textStyleOther = TextStyle(
+        color: Colors.white70, fontSize: 15, fontWeight: FontWeight.w600);
 
     _drawText(canvas, center, "K", 0, radius - 24, textStyleN);
     _drawText(canvas, center, "D", 90, radius - 24, textStyleOther);
@@ -481,7 +517,8 @@ class QiblaCompassDialPainter extends CustomPainter {
     }
   }
 
-  void _drawText(Canvas canvas, Offset center, String text, double angleDeg, double dist, TextStyle style) {
+  void _drawText(Canvas canvas, Offset center, String text, double angleDeg,
+      double dist, TextStyle style) {
     final angleRad = (angleDeg - 90) * (pi / 180);
     final textPainter = TextPainter(
       text: TextSpan(text: text, style: style),
@@ -569,5 +606,6 @@ class QiblaArrowPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant QiblaArrowPainter oldDelegate) => oldDelegate.isAligned != isAligned;
+  bool shouldRepaint(covariant QiblaArrowPainter oldDelegate) =>
+      oldDelegate.isAligned != isAligned;
 }

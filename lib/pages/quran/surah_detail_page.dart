@@ -762,8 +762,8 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
 
   Widget _buildModeChip(String label, QuranViewMode mode) {
     final bool isSelected = viewMode == mode;
-    final Color activeColor = AppTheme.primaryEmerald;
-    final Color activeText = Colors.white;
+    const Color activeColor = AppTheme.primaryEmerald;
+    const Color activeText = Colors.white;
     final Color inactiveText =
         isBookTheme ? AppTheme.textBookSecondary : AppTheme.textSecondaryDark;
 
@@ -778,12 +778,11 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
       ),
       selected: isSelected,
       selectedColor: activeColor,
-      backgroundColor:
-          isBookTheme ? Colors.black.withOpacity(0.05) : Colors.black26,
+      backgroundColor: AppTheme.surfaceBookParchment.withOpacity(0.75),
       side: BorderSide(
         color: isSelected
-            ? (isBookTheme ? AppTheme.goldBookBorder : AppTheme.goldAccent)
-            : Colors.transparent,
+            ? (isBookTheme ? Colors.black38 : Colors.black38)
+            : Colors.black26,
       ),
       onSelected: (selected) {
         if (selected) {

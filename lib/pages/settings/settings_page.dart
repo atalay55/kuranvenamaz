@@ -61,7 +61,8 @@ class _SettingsPageState extends State<SettingsPage> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Ayarlarınız başarıyla kaydedildi ve ezan bildirimleri güncellendi!"),
+          content: Text(
+              "Ayarlarınız başarıyla kaydedildi ve ezan bildirimleri güncellendi!"),
           backgroundColor: AppTheme.primaryEmerald,
           duration: Duration(seconds: 3),
         ),
@@ -82,13 +83,14 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.amber.shade400, size: 28),
+              const Icon(Icons.warning_amber_rounded,
+                  color: AppTheme.goldAccent, size: 28),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   "Xiaomi / Samsung / $_manufacturer Bildirim Rehberi",
-                  style: TextStyle(
-                    color: Colors.amber.shade300,
+                  style: const TextStyle(
+                    color: Colors.black,
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
                   ),
@@ -97,9 +99,9 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             "Xiaomi (MIUI/HyperOS), Samsung, Huawei vb. cihazlarda uygulamanız kapalıyken ezanın arka planda tam vaktinde okunabilmesi için sistem kısıtlamalarını kaldırmalısınız:",
-            style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12, height: 1.4),
+            style: TextStyle(color: Colors.black, fontSize: 12, height: 1.4),
           ),
           const SizedBox(height: 14),
           Row(
@@ -109,11 +111,16 @@ class _SettingsPageState extends State<SettingsPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryEmerald,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
-                  icon: const Icon(Icons.autorenew_rounded, size: 16, color: AppTheme.goldAccent),
-                  label: const Text("1. Otomatik Başlatma", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  icon: const Icon(Icons.autorenew_rounded,
+                      size: 16, color: AppTheme.goldAccent),
+                  label: const Text("1. Otomatik Başlatma",
+                      style:
+                          TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                   onPressed: () async {
                     await DeviceSettingsService.openAutostartSettings();
                   },
@@ -125,13 +132,19 @@ class _SettingsPageState extends State<SettingsPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryEmerald,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
-                  icon: const Icon(Icons.battery_charging_full_rounded, size: 16, color: AppTheme.goldAccent),
-                  label: const Text("2. Pil: Kısıtlama Yok", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  icon: const Icon(Icons.battery_charging_full_rounded,
+                      size: 16, color: AppTheme.goldAccent),
+                  label: const Text("2. Pil: Kısıtlama Yok",
+                      style:
+                          TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                   onPressed: () async {
-                    await DeviceSettingsService.openBatteryOptimizationSettings();
+                    await DeviceSettingsService
+                        .openBatteryOptimizationSettings();
                   },
                 ),
               ),
@@ -142,12 +155,22 @@ class _SettingsPageState extends State<SettingsPage> {
             width: double.infinity,
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.amber.shade300,
-                side: BorderSide(color: Colors.amber.shade400.withOpacity(0.6)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                backgroundColor: Colors.white30,
+                side: const BorderSide(color: Colors.white),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
-              icon: const Icon(Icons.alarm_on_rounded, size: 16),
-              label: const Text("3. Hassas Alarm İzni", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              icon: const Icon(
+                Icons.alarm_on_rounded,
+                size: 16,
+                color: AppTheme.goldAccent,
+              ),
+              label: const Text("3. Hassas Alarm İzni",
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black)),
               onPressed: () async {
                 await DeviceSettingsService.openExactAlarmSettings();
               },
@@ -177,15 +200,15 @@ class _SettingsPageState extends State<SettingsPage> {
               decoration: AppTheme.headerGradientDecoration(
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Row(
+              child: const Row(
                 children: [
-                  const Icon(Icons.notifications_active_rounded,
+                  Icon(Icons.notifications_active_rounded,
                       color: AppTheme.goldAccent, size: 36),
-                  const SizedBox(width: 14),
+                  SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
                           "Namaz Vakti Bildirimleri",
                           style: TextStyle(
@@ -233,7 +256,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 subtitle: const Text(
                   "Tüm ezan ve hatırlatma bildirimlerini aktif/pasif yapın.",
-                  style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12),
+                  style: TextStyle(
+                      color: AppTheme.textSecondaryDark, fontSize: 12),
                 ),
                 value: _notificationsEnabled,
                 activeColor: AppTheme.goldAccent,
@@ -262,11 +286,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
               Container(
-                decoration: AppTheme.cardDecoration(color: AppTheme.surfaceDark),
+                decoration:
+                    AppTheme.cardDecoration(color: AppTheme.surfaceDark),
                 child: Column(
                   children: [
                     SwitchListTile(
-                      secondary: const Icon(Icons.mosque_rounded, color: AppTheme.goldAccent),
+                      secondary: const Icon(Icons.mosque_rounded,
+                          color: AppTheme.goldAccent),
                       title: const Text(
                         "Tam Namaz Vaktinde Bildirim / Ezan",
                         style: TextStyle(
@@ -276,7 +302,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       subtitle: const Text(
                         "Namaz vakti tam girdiğinde bildirim gönderilsin veya ezan okunsun.",
-                        style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12),
+                        style: TextStyle(
+                            color: AppTheme.textSecondaryDark, fontSize: 12),
                       ),
                       value: _ezanEnabled,
                       activeColor: AppTheme.goldAccent,
@@ -307,7 +334,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                         subtitle: const Text(
                           "Namaz vaktinde sesli ezan okunur.",
-                          style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12),
+                          style: TextStyle(
+                              color: AppTheme.textSecondaryDark, fontSize: 12),
                         ),
                         onChanged: (value) {
                           if (value != null) {
@@ -336,7 +364,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                         subtitle: const Text(
                           "Namaz vaktinde kısa bildirim sesi verilir.",
-                          style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12),
+                          style: TextStyle(
+                              color: AppTheme.textSecondaryDark, fontSize: 12),
                         ),
                         onChanged: (value) {
                           if (value != null) {
@@ -366,11 +395,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
               Container(
-                decoration: AppTheme.cardDecoration(color: AppTheme.surfaceDark),
+                decoration:
+                    AppTheme.cardDecoration(color: AppTheme.surfaceDark),
                 child: Column(
                   children: [
                     SwitchListTile(
-                      secondary: const Icon(Icons.alarm_rounded, color: AppTheme.goldAccent),
+                      secondary: const Icon(Icons.alarm_rounded,
+                          color: AppTheme.goldAccent),
                       title: const Text(
                         "Vaktinden Önce Hatırlatma Al",
                         style: TextStyle(
@@ -380,7 +411,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       subtitle: const Text(
                         "Namaz vakti girmeden önce hazırlık bildirimi gönderilir.",
-                        style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12),
+                        style: TextStyle(
+                            color: AppTheme.textSecondaryDark, fontSize: 12),
                       ),
                       value: _preNotificationEnabled,
                       activeColor: AppTheme.goldAccent,
@@ -399,14 +431,18 @@ class _SettingsPageState extends State<SettingsPage> {
                         activeColor: AppTheme.goldAccent,
                         title: const Text(
                           "5 Dakika Önce",
-                          style: TextStyle(color: AppTheme.textPrimaryDark, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                              color: AppTheme.textPrimaryDark,
+                              fontWeight: FontWeight.w600),
                         ),
                         subtitle: const Text(
                           "Namaz vaktine 5 dakika kala hatırlatılır.",
-                          style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12),
+                          style: TextStyle(
+                              color: AppTheme.textSecondaryDark, fontSize: 12),
                         ),
                         onChanged: (val) {
-                          if (val != null) setState(() => _notificationTiming = val);
+                          if (val != null)
+                            setState(() => _notificationTiming = val);
                         },
                       ),
                       const Divider(color: Colors.white12, height: 1),
@@ -416,14 +452,18 @@ class _SettingsPageState extends State<SettingsPage> {
                         activeColor: AppTheme.goldAccent,
                         title: const Text(
                           "10 Dakika Önce",
-                          style: TextStyle(color: AppTheme.textPrimaryDark, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                              color: AppTheme.textPrimaryDark,
+                              fontWeight: FontWeight.w600),
                         ),
                         subtitle: const Text(
                           "Namaz vaktine 10 dakika kala hatırlatılır.",
-                          style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12),
+                          style: TextStyle(
+                              color: AppTheme.textSecondaryDark, fontSize: 12),
                         ),
                         onChanged: (val) {
-                          if (val != null) setState(() => _notificationTiming = val);
+                          if (val != null)
+                            setState(() => _notificationTiming = val);
                         },
                       ),
                       const Divider(color: Colors.white12, height: 1),
@@ -433,14 +473,18 @@ class _SettingsPageState extends State<SettingsPage> {
                         activeColor: AppTheme.goldAccent,
                         title: const Text(
                           "15 Dakika Önce (Önerilen)",
-                          style: TextStyle(color: AppTheme.textPrimaryDark, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                              color: AppTheme.textPrimaryDark,
+                              fontWeight: FontWeight.w600),
                         ),
                         subtitle: const Text(
                           "Abdest ve hazırlık için 15 dakika öncesinde hatırlatır.",
-                          style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12),
+                          style: TextStyle(
+                              color: AppTheme.textSecondaryDark, fontSize: 12),
                         ),
                         onChanged: (val) {
-                          if (val != null) setState(() => _notificationTiming = val);
+                          if (val != null)
+                            setState(() => _notificationTiming = val);
                         },
                       ),
                       const Divider(color: Colors.white12, height: 1),
@@ -450,14 +494,18 @@ class _SettingsPageState extends State<SettingsPage> {
                         activeColor: AppTheme.goldAccent,
                         title: const Text(
                           "30 Dakika Önce",
-                          style: TextStyle(color: AppTheme.textPrimaryDark, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                              color: AppTheme.textPrimaryDark,
+                              fontWeight: FontWeight.w600),
                         ),
                         subtitle: const Text(
                           "Namaz vaktine 30 dakika kala hatırlatılır.",
-                          style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12),
+                          style: TextStyle(
+                              color: AppTheme.textSecondaryDark, fontSize: 12),
                         ),
                         onChanged: (val) {
-                          if (val != null) setState(() => _notificationTiming = val);
+                          if (val != null)
+                            setState(() => _notificationTiming = val);
                         },
                       ),
                       const Divider(color: Colors.white12, height: 1),
@@ -467,14 +515,18 @@ class _SettingsPageState extends State<SettingsPage> {
                         activeColor: AppTheme.goldAccent,
                         title: const Text(
                           "45 Dakika Önce",
-                          style: TextStyle(color: AppTheme.textPrimaryDark, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                              color: AppTheme.textPrimaryDark,
+                              fontWeight: FontWeight.w600),
                         ),
                         subtitle: const Text(
                           "Namaz vaktine 45 dakika kala hatırlatılır.",
-                          style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12),
+                          style: TextStyle(
+                              color: AppTheme.textSecondaryDark, fontSize: 12),
                         ),
                         onChanged: (val) {
-                          if (val != null) setState(() => _notificationTiming = val);
+                          if (val != null)
+                            setState(() => _notificationTiming = val);
                         },
                       ),
                     ],
@@ -497,7 +549,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     side: const BorderSide(color: AppTheme.goldAccent),
                   ),
                 ),
-                icon: const Icon(Icons.save_rounded, color: AppTheme.goldAccent),
+                icon:
+                    const Icon(Icons.save_rounded, color: AppTheme.goldAccent),
                 label: const Text(
                   "Ayarları Kaydet",
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -506,66 +559,69 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.goldAccent,
-                  side: BorderSide(color: AppTheme.goldAccent.withOpacity(0.5)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                icon: const Icon(Icons.timer_rounded, size: 20),
-                label: const Text(
-                  "⏱️ Kapalıyken Test Et (10 Saniye Sonraya Kur)",
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                ),
-                onPressed: () async {
-                  await NotificationService().scheduleTestNotificationInSeconds(10);
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("⏱️ 10 saniye sonraya test ezanı kuruldu! Lütfen uygulamayı hemen kapatıp/arka plana alıp bekleyin."),
-                        backgroundColor: AppTheme.primaryEmerald,
-                        duration: Duration(seconds: 4),
-                      ),
-                    );
-                  }
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.goldAccent,
-                  side: BorderSide(color: AppTheme.goldAccent.withOpacity(0.5)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                icon: const Icon(Icons.volume_up_rounded, size: 20),
-                label: const Text(
-                  "Anında Bildirimi & Ezanı Test Et",
-                  style: TextStyle(fontSize: 14),
-                ),
-                onPressed: () async {
-                  await NotificationService().showTestNotification();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Test bildirimi gönderildi! Lütfen bildirim panelinizi kontrol edin."),
-                        backgroundColor: AppTheme.primaryEmerald,
-                      ),
-                    );
-                  }
-                },
-              ),
-            ),
+            // SizedBox(
+            //   width: double.infinity,
+            //   height: 44,
+            //   child: OutlinedButton.icon(
+            //     style: OutlinedButton.styleFrom(
+            //       foregroundColor: AppTheme.goldAccent,
+            //       side: BorderSide(color: AppTheme.goldAccent.withOpacity(0.5)),
+            //       shape: RoundedRectangleBorder(
+            //         borderRadius: BorderRadius.circular(12),
+            //       ),
+            //     ),
+            //     icon: const Icon(Icons.timer_rounded, size: 20),
+            //     label: const Text(
+            //       "⏱️ Kapalıyken Test Et (10 Saniye Sonraya Kur)",
+            //       style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            //     ),
+            //     onPressed: () async {
+            //       await NotificationService()
+            //           .scheduleTestNotificationInSeconds(10);
+            //       if (mounted) {
+            //         ScaffoldMessenger.of(context).showSnackBar(
+            //           const SnackBar(
+            //             content: Text(
+            //                 "⏱️ 10 saniye sonraya test ezanı kuruldu! Lütfen uygulamayı hemen kapatıp/arka plana alıp bekleyin."),
+            //             backgroundColor: AppTheme.primaryEmerald,
+            //             duration: Duration(seconds: 4),
+            //           ),
+            //         );
+            //       }
+            //     },
+            //   ),
+            // ),
+            // const SizedBox(height: 12),
+            // SizedBox(
+            //   width: double.infinity,
+            //   height: 44,
+            //   child: OutlinedButton.icon(
+            //     style: OutlinedButton.styleFrom(
+            //       foregroundColor: AppTheme.goldAccent,
+            //       side: BorderSide(color: AppTheme.goldAccent.withOpacity(0.5)),
+            //       shape: RoundedRectangleBorder(
+            //         borderRadius: BorderRadius.circular(12),
+            //       ),
+            //     ),
+            //     icon: const Icon(Icons.volume_up_rounded, size: 20),
+            //     label: const Text(
+            //       "Anında Bildirimi & Ezanı Test Et",
+            //       style: TextStyle(fontSize: 14),
+            //     ),
+            //     onPressed: () async {
+            //       await NotificationService().showTestNotification();
+            //       if (mounted) {
+            //         ScaffoldMessenger.of(context).showSnackBar(
+            //           const SnackBar(
+            //             content: Text(
+            //                 "Test bildirimi gönderildi! Lütfen bildirim panelinizi kontrol edin."),
+            //             backgroundColor: AppTheme.primaryEmerald,
+            //           ),
+            //         );
+            //       }
+            //     },
+            //   ),
+            // ),
           ],
         ),
       ),

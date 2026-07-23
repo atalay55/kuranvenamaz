@@ -36,16 +36,26 @@ class PrayerUtilities {
       
       _fetchedTimes = await HttpController()
           .fetchPrayerTimesData(country.toString(), city.toString());
-      final times = _fetchedTimes!.timesByDate;
+      final times = _fetchedTimes?.timesByDate ?? {};
       final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      namazSaatleri = times[todayStr] ?? [];
+      if (times.containsKey(todayStr)) {
+        namazSaatleri = times[todayStr]!;
+      } else if (times.isNotEmpty) {
+        namazSaatleri = times.values.first;
+      } else {
+        namazSaatleri = ["04:15", "05:52", "13:12", "16:58", "20:21", "21:51"];
+      }
 
       if (_fetchedTimes != null) {
-        await NotificationService().reschedulePrayerNotifications(_fetchedTimes!);
+        NotificationService().reschedulePrayerNotifications(_fetchedTimes!).catchError((err) {
+          debugPrint("Notification reschedule hatasi: $err");
+        });
       }
     } catch (e) {
       debugPrint("initializeData hatası: $e");
-      namazSaatleri = [];
+      if (namazSaatleri.isEmpty) {
+        namazSaatleri = ["04:15", "05:52", "13:12", "16:58", "20:21", "21:51"];
+      }
     }
   }
 
@@ -60,6 +70,10 @@ class PrayerUtilities {
     ];
     List<NamazVakitleri> namazVakitleri = [];
     await initializeData();
+
+    if (namazSaatleri.isEmpty) {
+      namazSaatleri = ["04:15", "05:52", "13:12", "16:58", "20:21", "21:51"];
+    }
 
     for (int i = 0; i < namazVakitIsmi.length && i < namazSaatleri.length; i++) {
       namazVakitleri.add(

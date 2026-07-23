@@ -16,17 +16,20 @@ class HadithData {
     HadithItem(
       id: 1,
       category: 'İman & Niyet',
-      arabic: 'إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى',
-      turkish: 'Ameller ancak niyetlere göredir ve herkes için ancak niyet ettiğinin karşılığı vardır.',
-      source: 'Buhârî, Bed\'ü\'l-Vahy 1; Müslim, İmâret 155',
+      arabic:
+          'إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى',
+      turkish:
+          'Ameller ancak niyetlere göredir ve herkes için ancak niyet ettiğinin karşılığı vardır.',
+      source: 'Buhârî, Bed\'ü\'l-Vahy 1; Müslim, İmâret 155 (Diyanet Meali)',
       topic: 'İhlas ve Niyet',
     ),
     HadithItem(
       id: 2,
       category: 'İlim & Kur\'an',
       arabic: 'خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ',
-      turkish: 'Sizin en hayırlınız, Kur\'an-ı Kerim\'i öğrenen ve öğreteninizdir.',
-      source: 'Buhârî, Fezâilü\'l-Kur\'ân 21',
+      turkish:
+          'Sizin en hayırlınız, Kur\'an-ı Kerim\'i öğrenen ve öğreteninizdir.',
+      source: 'Buhârî, Fezâilü\'l-Kur\'ân 21 (Diyanet Meali)',
       topic: 'Kur\'an Öğrenimi',
     ),
     HadithItem(
@@ -34,7 +37,8 @@ class HadithData {
       category: 'Ahlak & Güzel Huylar',
       arabic: 'إِنَّمَا بُعِثْتُ لِأُتَمِّمَ صَالِحَ الْأَخْلَاقِ',
       turkish: 'Ben ancak güzel ahlakı tamamlamak için gönderildim.',
-      source: 'Muvatta\', Hüsnü\'l-Huluk 8; Ahmed b. Hanbel, II, 381',
+      source:
+          'Muvatta\', Hüsnü\'l-Huluk 8; Ahmed b. Hanbel, II, 381 (Diyanet Meali)',
       topic: 'Güzel Ahlak',
     ),
     HadithItem(
@@ -42,31 +46,35 @@ class HadithData {
       category: 'Ahlak & Güzel Huylar',
       arabic: 'تَبَسُّمُكَ فِي وَجْهِ أَخِيكَ لَكَ صَدَقَةٌ',
       turkish: 'Din kardeşine tebessüm etmen senin için bir sadakadır.',
-      source: 'Tirmizî, Birr 36',
+      source: 'Tirmizî, Birr 36 (Diyanet Meali)',
       topic: 'Tebessüm ve Güler Yüz',
     ),
     HadithItem(
       id: 5,
       category: 'Kardeşlik & Sevgi',
-      arabic: 'لَا يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لِأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ',
-      turkish: 'Sizden biriniz, kendisi için istediğini din kardeşi için de istemedikçe hakiki manada iman etmiş olamaz.',
-      source: 'Buhârî, Îmân 7; Müslim, Îmân 71',
+      arabic:
+          'لَا يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لِأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ',
+      turkish:
+          'Sizden biriniz, kendisi için istediğini din kardeşi için de istemedikçe hakiki manada iman etmiş olamaz.',
+      source: 'Buhârî, Îmân 7; Müslim, Îmân 71 (Diyanet Meali)',
       topic: 'Kardeşlik Hukuku',
     ),
     HadithItem(
       id: 6,
       category: 'İbadet & Namaz',
       arabic: 'الصَّلَاةُ عِمَادُ الدِّينِ',
-      turkish: 'Namaz dinin direğidir. Kim onu kılarsa dinini ayakta tutmuş olur.',
-      source: 'Tirmizî, Îmân 8',
+      turkish:
+          'Namaz dinin direğidir. Kim onu kılarsa dinini ayakta tutmuş olur.',
+      source: 'Tirmizî, Îmân 8 (Diyanet Meali)',
       topic: 'Namazın Önemi',
     ),
     HadithItem(
       id: 7,
       category: 'İbadet & Namaz',
-      arabic: 'مَفَاتِيحُ الْجَنَّةِ الصَّلَاةُ وَمَفَاتِيحُ الصَّلَاةِ الطُّهُورُ',
+      arabic:
+          'مَفَاتِيحُ الْجَنَّةِ الصَّلَاةُ وَمَفَاتِيحُ الصَّلَاةِ الطُّهُورُ',
       turkish: 'Cennetin anahtarı namaz, namazın anahtarı ise abdesttir.',
-      source: 'Tirmizî, Tahâret 1',
+      source: 'Tirmizî, Tahâret 1 (Diyanet Meali)',
       topic: 'Abdest ve Namaz',
     ),
     HadithItem(
@@ -74,23 +82,26 @@ class HadithData {
       category: 'Dua & Zikir',
       arabic: 'الدُّعَاءُ هُوَ الْعِبَادَةُ',
       turkish: 'Dua ibadetin ta kendisidir.',
-      source: 'Tirmizî, Deavât 1; Ebû Dâvûd, Vitir 26',
+      source: 'Tirmizî, Deavât 1; Ebû Dâvûd, Vitir 26 (Diyanet Meali)',
       topic: 'Duânın Özü',
     ),
     HadithItem(
       id: 9,
       category: 'Kardeşlik & Sevgi',
       arabic: 'الْمُسْلِمُ مَنْ سَلِمَ الْمُسْلِمُونَ مِنْ لِسَانِهِ وَيَدِهِ',
-      turkish: 'Müslüman, diğer Müslümanların elinden ve dilinden güvende olduğu kimsedir.',
-      source: 'Buhârî, Îmân 4; Müslim, Îmân 64',
+      turkish:
+          'Müslüman, diğer Müslümanların elinden ve dilinden güvende olduğu kimsedir.',
+      source: 'Buhârî, Îmân 4; Müslim, Îmân 64 (Diyanet Meali)',
       topic: 'Müslümanın Tanımı',
     ),
     HadithItem(
       id: 10,
       category: 'İlim & Kur\'an',
-      arabic: 'مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ',
-      turkish: 'Kim ilim öğrenmek için bir yola girerse, Allah ona cennete giden yolu kolaylaştırır.',
-      source: 'Müslim, Zikir 38; Tirmizî, İlim 2',
+      arabic:
+          'مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ',
+      turkish:
+          'Kim ilim öğrenmek için bir yola girerse, Allah ona cennete giden yolu kolaylaştırır.',
+      source: 'Müslim, Zikir 38; Tirmizî, İlim 2 (Diyanet Meali)',
       topic: 'İlim Öğrenmek',
     ),
     HadithItem(
@@ -98,39 +109,46 @@ class HadithData {
       category: 'Sadaka & Cömertlik',
       arabic: 'الْيَدُ الْعُلْيَا خَيْرٌ مِنَ الْيَدِ السُّفْلَى',
       turkish: 'Veren el, alan elden daha hayırlıdır.',
-      source: 'Buhârî, Zekât 18; Müslim, Zekât 94',
+      source: 'Buhârî, Zekât 18; Müslim, Zekât 94 (Diyanet Meali)',
       topic: 'Cömertlik ve Yardım',
     ),
     HadithItem(
       id: 12,
       category: 'Ahlak & Güzel Huylar',
-      arabic: 'مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ',
-      turkish: 'Allah\'a ve ahiret gününe inanan ya hayır söylesin ya da sussun!',
-      source: 'Buhârî, Edeb 31; Müslim, Îmân 74',
+      arabic:
+          'مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ',
+      turkish:
+          'Allah\'a ve ahiret gününe inanan ya hayır söylesin ya da sussun!',
+      source: 'Buhârî, Edeb 31; Müslim, Îmân 74 (Diyanet Meali)',
       topic: 'Dilin Muhafazası',
     ),
     HadithItem(
       id: 13,
       category: 'Dua & Zikir',
-      arabic: 'كَلِمَتَانِ خَفِيفَتَانِ عَلَى اللِّسَانِ ثَقِيلَتَانِ فِي الْمِيزَانِ حَبِيبَتَانِ إِلَى الرَّحْمَنِ: سُبْحَانَ اللَّهِ وَبِحَمْدِهِ سُبْحَانَ اللَّهِ الْعَظِيمِ',
-      turkish: 'Dile hafif, mizanda ağır, Rahmân olan Allah\'a sevgili olan iki cümle vardır: "Subhânallâhi ve bihamdihî, Subhânallâhil-\'Azîm".',
-      source: 'Buhârî, Daavât 65; Müslim, Zikir 31',
+      arabic:
+          'كَلِمَتَانِ خَفِيفَتَانِ عَلَى اللِّسَانِ ثَقِيلَتَانِ فِي الْمِيزَانِ حَبِيبَتَانِ إِلَى الرَّحْمَنِ: سُبْحَانَ اللَّهِ وَبِحَمْدِهِ سُبْحَانَ اللَّهِ الْعَظِيمِ',
+      turkish:
+          'Dile hafif, mizanda ağır, Rahmân olan Allah\'a sevgili olan iki cümle vardır: "Subhânallâhi ve bihamdihî, Subhânallâhil-\'Azîm".',
+      source: 'Buhârî, Daavât 65; Müslim, Zikir 31 (Diyanet Meali)',
       topic: 'Zikrin Fazileti',
     ),
     HadithItem(
       id: 14,
       category: 'İman & Niyet',
-      arabic: 'مَنْ جَهَّزَ غَازِيًا أَوْ خَلَفَهُ فِي أَهْلِهِ بِخَيْرٍ كَانَ لَهُ مِثْلُ أَجْرِهِ',
-      turkish: 'Kolaylaştırınız, zorlaştırmayınız; müjdeleyiniz, nefret ettirmeyiniz.',
-      source: 'Buhârî, İlim 11; Müslim, Cihâd 6',
+      arabic:
+          'مَنْ جَهَّزَ غَازِيًا أَوْ خَلَفَهُ فِي أَهْلِهِ بِخَيْرٍ كَانَ لَهُ مِثْلُ أَجْرِهِ',
+      turkish:
+          'Kolaylaştırınız, zorlaştırmayınız; müjdeleyiniz, nefret ettirmeyiniz.',
+      source: 'Buhârî, İlim 11; Müslim, Cihâd 6 (Diyanet Meali)',
       topic: 'Kolaylaştırmak',
     ),
     HadithItem(
       id: 15,
       category: 'Ahlak & Güzel Huylar',
       arabic: 'أَكْمَلُ الْمُؤْمِنِينَ إِيمَانًا أَحْسَنُهُمْ خُلُقًا',
-      turkish: 'Müminlerin iman bakımından en mükemmeli, ahlakı en güzel olanıdır.',
-      source: 'Tirmizî, Radâ 11; Ebû Dâvûd, Sünnet 15',
+      turkish:
+          'Müminlerin iman bakımından en mükemmeli, ahlakı en güzel olanıdır.',
+      source: 'Tirmizî, Radâ 11; Ebû Dâvûd, Sünnet 15 (Diyanet Meali)',
       topic: 'İman ve Ahlak',
     ),
   ];

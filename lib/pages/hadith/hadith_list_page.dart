@@ -16,6 +16,7 @@ class HadithListPage extends StatefulWidget {
 class _HadithListPageState extends State<HadithListPage> {
   final HttpController _httpController = HttpController();
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   List<Map<String, dynamic>> _apiCategories = [];
   String _selectedCategoryTitle = 'Tümü';
@@ -24,6 +25,9 @@ class _HadithListPageState extends State<HadithListPage> {
   List<HadithItem> _hadiths = [];
   List<HadithItem> _filteredHadiths = [];
   bool _isLoading = true;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
+  int _currentPage = 1;
   final Set<int> _favoriteHadithIds = {};
 
   @override
@@ -31,12 +35,27 @@ class _HadithListPageState extends State<HadithListPage> {
     super.initState();
     _loadFavorites();
     _fetchCategoriesAndHadiths();
+    _scrollController.addListener(_onScroll);
+    _searchController.addListener(_applyFilter);
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      if (!_isLoading &&
+          !_isLoadingMore &&
+          _hasMore &&
+          _selectedCategoryId != 'fav') {
+        _loadMoreHadiths();
+      }
+    }
   }
 
   Future<void> _loadFavorites() async {
@@ -68,6 +87,8 @@ class _HadithListPageState extends State<HadithListPage> {
   Future<void> _fetchCategoriesAndHadiths() async {
     setState(() {
       _isLoading = true;
+      _currentPage = 1;
+      _hasMore = true;
     });
 
     try {
@@ -84,34 +105,53 @@ class _HadithListPageState extends State<HadithListPage> {
     setState(() {
       _isLoading = true;
       _selectedCategoryId = categoryId;
+      _currentPage = 1;
+      _hasMore = true;
     });
 
     List<HadithItem> loadedList = [];
 
-    if (categoryId != null) {
-      final apiHadithList = await _httpController.fetchHadithsByCategory(categoryId, perPage: 15);
-      if (apiHadithList.isNotEmpty) {
-        for (var item in apiHadithList) {
-          final detail = await _httpController.fetchHadithDetail(item['id']);
-          if (detail != null) {
-            loadedList.add(
-              HadithItem(
-                id: int.tryParse(detail['id']) ?? item['id'].hashCode,
-                category: _selectedCategoryTitle,
-                arabic: detail['arabic'],
-                turkish: detail['turkish'],
-                source: "${detail['source']} (${detail['grade']})",
-                topic: detail['explanation'].isNotEmpty ? detail['explanation'] : null,
-              ),
-            );
-          }
-        }
+    final String targetCatId =
+        (categoryId != null && categoryId != 'all') ? categoryId : '646';
+    final apiHadithList = await _httpController
+        .fetchHadithsByCategory(targetCatId, perPage: 20, page: 1);
+
+    if (apiHadithList.isNotEmpty) {
+      for (var item in apiHadithList) {
+        loadedList.add(
+          HadithItem(
+            id: int.tryParse(item['id'].toString()) ?? item['id'].hashCode,
+            category: _selectedCategoryTitle,
+            arabic: item['arabic'] ?? '',
+            turkish: item['turkish'] ?? item['title'] ?? '',
+            source: item['source'] ?? 'Hadis-i Şerif [Canlı API]',
+            topic: item['explanation'] != null &&
+                    item['explanation'].toString().isNotEmpty
+                ? item['explanation'].toString()
+                : null,
+          ),
+        );
       }
     }
 
-    // Fallback or 'Tümü'
     if (loadedList.isEmpty) {
-      loadedList = HadithData.allHadiths;
+      final popularList =
+          await _httpController.fetchPopularOrAllHadiths(page: 1);
+      for (var detail in popularList) {
+        loadedList.add(
+          HadithItem(
+            id: int.tryParse(detail['id'].toString()) ?? detail.hashCode,
+            category: 'Diyanet',
+            arabic: detail['arabic'] ?? '',
+            turkish: detail['turkish'] ?? '',
+            source: detail['source'] ?? 'Hadis-i Şerif [Canlı API]',
+            topic: detail['explanation'] != null &&
+                    detail['explanation'].toString().isNotEmpty
+                ? detail['explanation'].toString()
+                : null,
+          ),
+        );
+      }
     }
 
     if (mounted) {
@@ -120,6 +160,56 @@ class _HadithListPageState extends State<HadithListPage> {
         _isLoading = false;
       });
       _applyFilter();
+    }
+  }
+
+  Future<void> _loadMoreHadiths() async {
+    if (_isLoadingMore || !_hasMore) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    _currentPage++;
+    final String targetCatId =
+        (_selectedCategoryId != null && _selectedCategoryId != 'all')
+            ? _selectedCategoryId!
+            : '646';
+    final moreApiHadiths = await _httpController
+        .fetchHadithsByCategory(targetCatId, perPage: 20, page: _currentPage);
+
+    if (moreApiHadiths.isNotEmpty) {
+      List<HadithItem> newItems = [];
+      for (var item in moreApiHadiths) {
+        newItems.add(
+          HadithItem(
+            id: int.tryParse(item['id'].toString()) ?? item['id'].hashCode,
+            category: _selectedCategoryTitle,
+            arabic: item['arabic'] ?? '',
+            turkish: item['turkish'] ?? item['title'] ?? '',
+            source: item['source'] ?? 'Hadis-i Şerif [Canlı API]',
+            topic: item['explanation'] != null &&
+                    item['explanation'].toString().isNotEmpty
+                ? item['explanation'].toString()
+                : null,
+          ),
+        );
+      }
+
+      if (mounted) {
+        setState(() {
+          _hadiths.addAll(newItems);
+          _isLoadingMore = false;
+        });
+        _applyFilter();
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _hasMore = false;
+          _isLoadingMore = false;
+        });
+      }
     }
   }
 
@@ -135,7 +225,8 @@ class _HadithListPageState extends State<HadithListPage> {
         final textMatch = query.isEmpty ||
             hadith.turkish.toLowerCase().contains(query) ||
             hadith.source.toLowerCase().contains(query) ||
-            (hadith.topic != null && hadith.topic!.toLowerCase().contains(query));
+            (hadith.topic != null &&
+                hadith.topic!.toLowerCase().contains(query));
 
         return textMatch;
       }).toList();
@@ -199,7 +290,8 @@ class _HadithListPageState extends State<HadithListPage> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text("Kapat", style: TextStyle(color: AppTheme.goldAccent)),
+                  child: const Text("Kapat",
+                      style: TextStyle(color: AppTheme.goldAccent)),
                 ),
               ),
             ],
@@ -217,12 +309,9 @@ class _HadithListPageState extends State<HadithListPage> {
     ];
 
     if (_apiCategories.isNotEmpty) {
-      for (var c in _apiCategories.take(12)) {
-        categoryList.add({'id': c['id'].toString(), 'title': c['title'].toString()});
-      }
-    } else {
-      for (var c in HadithData.categories.sublist(1)) {
-        categoryList.add({'id': 'local', 'title': c});
+      for (var c in _apiCategories.take(15)) {
+        categoryList
+            .add({'id': c['id'].toString(), 'title': c['title'].toString()});
       }
     }
 
@@ -247,19 +336,25 @@ class _HadithListPageState extends State<HadithListPage> {
               controller: _searchController,
               style: const TextStyle(color: AppTheme.textPrimaryDark),
               decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.goldAccent),
-                hintText: 'Diyanet Hadislerinde ara (Örn: Niyet, İlim, İman)...',
-                hintStyle: const TextStyle(color: AppTheme.textSecondaryDark, fontSize: 13),
+                prefixIcon: const Icon(Icons.search_rounded,
+                    color: AppTheme.goldAccent),
+                hintText:
+                    'Diyanet Hadislerinde ara (Örn: Niyet, İlim, İman)...',
+                hintStyle: const TextStyle(
+                    color: AppTheme.textSecondaryDark, fontSize: 13),
                 filled: true,
                 fillColor: AppTheme.surfaceDark,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: AppTheme.goldAccent.withOpacity(0.3)),
+                  borderSide:
+                      BorderSide(color: AppTheme.goldAccent.withOpacity(0.3)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: AppTheme.goldAccent.withOpacity(0.3)),
+                  borderSide:
+                      BorderSide(color: AppTheme.goldAccent.withOpacity(0.3)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -294,7 +389,9 @@ class _HadithListPageState extends State<HadithListPage> {
                       setState(() {
                         _selectedCategoryTitle = cat['title']!;
                       });
-                      if (cat['id'] != 'all' && cat['id'] != 'fav' && cat['id'] != 'local') {
+                      if (cat['id'] != 'all' &&
+                          cat['id'] != 'fav' &&
+                          cat['id'] != 'local') {
                         _loadHadithsForCategory(cat['id']);
                       } else {
                         _loadHadithsForCategory(null);
@@ -304,14 +401,19 @@ class _HadithListPageState extends State<HadithListPage> {
                     selectedColor: AppTheme.primaryEmerald,
                     checkmarkColor: AppTheme.goldAccent,
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : AppTheme.textSecondaryDark,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected
+                          ? Colors.white
+                          : AppTheme.textSecondaryDark,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                       fontSize: 12,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                       side: BorderSide(
-                        color: isSelected ? AppTheme.goldAccent : Colors.transparent,
+                        color: isSelected
+                            ? AppTheme.goldAccent
+                            : Colors.transparent,
                       ),
                     ),
                   ),
@@ -341,21 +443,55 @@ class _HadithListPageState extends State<HadithListPage> {
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.search_off_rounded, size: 48, color: AppTheme.goldAccent),
-                            SizedBox(height: 12),
-                            Text(
-                              "Kriterlere uygun Hadis bulunamadı.",
-                              style: TextStyle(color: AppTheme.textSecondaryDark),
+                          children: [
+                            const Icon(Icons.refresh_rounded,
+                                size: 48, color: AppTheme.goldAccent),
+                            const SizedBox(height: 12),
+                            const Text(
+                              "Hadisler yüklenemedi veya liste boş.",
+                              style:
+                                  TextStyle(color: AppTheme.textSecondaryDark),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                _fetchCategoriesAndHadiths();
+                              },
+                              icon: const Icon(Icons.refresh,
+                                  color: AppTheme.primaryDark),
+                              label: const Text(
+                                "Canlı Verileri Yeniden Yükle",
+                                style: TextStyle(
+                                    color: AppTheme.primaryDark,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.goldAccent,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                              ),
                             ),
                           ],
                         ),
                       )
                     : ListView.builder(
+                        controller: _scrollController,
                         physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                        itemCount: _filteredHadiths.length,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 6),
+                        itemCount:
+                            _filteredHadiths.length + (_isLoadingMore ? 1 : 0),
                         itemBuilder: (context, index) {
+                          if (index == _filteredHadiths.length) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 20),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                    color: AppTheme.goldAccent),
+                              ),
+                            );
+                          }
+
                           final hadith = _filteredHadiths[index];
                           final isFav = _favoriteHadithIds.contains(hadith.id);
 
@@ -370,19 +506,24 @@ class _HadithListPageState extends State<HadithListPage> {
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: AppTheme.primaryEmerald.withOpacity(0.2),
+                                        color: AppTheme.primaryEmerald
+                                            .withOpacity(0.2),
                                         borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: AppTheme.goldAccent.withOpacity(0.4)),
+                                        border: Border.all(
+                                            color: AppTheme.goldAccent
+                                                .withOpacity(0.4)),
                                       ),
                                       child: const Text(
                                         "Diyanet Hadis Kaynağı",
                                         style: TextStyle(
-                                          color: AppTheme.goldLight,
+                                          color: AppTheme.bgDark,
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
                                         ),
@@ -392,12 +533,19 @@ class _HadithListPageState extends State<HadithListPage> {
                                       children: [
                                         IconButton(
                                           icon: Icon(
-                                            isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                                            color: isFav ? Colors.redAccent : AppTheme.textSecondaryDark,
+                                            isFav
+                                                ? Icons.favorite_rounded
+                                                : Icons.favorite_border_rounded,
+                                            color: isFav
+                                                ? Colors.redAccent
+                                                : AppTheme.textSecondaryDark,
                                             size: 22,
                                           ),
-                                          onPressed: () => _toggleFavorite(hadith.id),
-                                          tooltip: isFav ? 'Favorilerden Çıkar' : 'Favorilere Ekle',
+                                          onPressed: () =>
+                                              _toggleFavorite(hadith.id),
+                                          tooltip: isFav
+                                              ? 'Favorilerden Çıkar'
+                                              : 'Favorilere Ekle',
                                         ),
                                         IconButton(
                                           icon: const Icon(
@@ -405,7 +553,8 @@ class _HadithListPageState extends State<HadithListPage> {
                                             color: AppTheme.goldAccent,
                                             size: 20,
                                           ),
-                                          onPressed: () => _copyToClipboard(hadith),
+                                          onPressed: () =>
+                                              _copyToClipboard(hadith),
                                           tooltip: 'Kopyala',
                                         ),
                                       ],
@@ -457,7 +606,8 @@ class _HadithListPageState extends State<HadithListPage> {
                                     ),
                                     if (hadith.topic != null) ...[
                                       InkWell(
-                                        onTap: () => _showHadithExplanation(hadith),
+                                        onTap: () =>
+                                            _showHadithExplanation(hadith),
                                         child: const Padding(
                                           padding: EdgeInsets.all(4.0),
                                           child: Row(
@@ -471,7 +621,8 @@ class _HadithListPageState extends State<HadithListPage> {
                                                 ),
                                               ),
                                               Icon(Icons.info_outline_rounded,
-                                                  size: 14, color: AppTheme.goldAccent),
+                                                  size: 14,
+                                                  color: AppTheme.goldAccent),
                                             ],
                                           ),
                                         ),
