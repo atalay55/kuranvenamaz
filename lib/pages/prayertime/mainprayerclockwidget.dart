@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:kuranvenamaz/pages/selectablepage/countryselect.dart';
 import 'package:kuranvenamaz/theme/app_theme.dart';
 import '../../core/utilities.dart';
+import '../../core/widget_service.dart';
 import '../../entity/namazvakitleri.dart';
 import '../../theme/namazvakitlericard.dart';
 
@@ -45,7 +46,7 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
       if (mounted) {
         setState(() {
           _cachedVakitler = vakitler;
-          _updateTimer();
+          _updateTimer(forceWidgetUpdate: true);
         });
       }
     });
@@ -59,9 +60,20 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
     });
   }
 
-  void _updateTimer() {
+  void _updateTimer({bool forceWidgetUpdate = false}) {
     kalanSure = PrayerUtilities().kalanZamanHesapla(_cachedVakitler, kalanSure);
     sonrakiVakitIsmi = _getSonrakiVakitIsmi(_cachedVakitler);
+
+    // Her saniye widget güncellemek yerine dakikada bir veya ilk yüklemede güncelle
+    if (forceWidgetUpdate || kalanSure.inSeconds % 60 == 0) {
+      WidgetService.updateWidgetData(
+        cityName: cityName,
+        countryName: countryName,
+        vakitler: _cachedVakitler,
+        sonrakiVakitIsmi: sonrakiVakitIsmi,
+        kalanSure: kalanSure,
+      );
+    }
   }
 
   String _getSonrakiVakitIsmi(List<NamazVakitleri> vakitler) {

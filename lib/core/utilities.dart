@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:kuranvenamaz/core/notificationservice.dart';
+import 'package:kuranvenamaz/core/widget_service.dart';
 import 'package:kuranvenamaz/entity/location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../entity/namazvakitleri.dart';
@@ -84,7 +85,37 @@ class PrayerUtilities {
       );
     }
 
+    try {
+      final kalan = kalanZamanHesapla(namazVakitleri, Duration.zero);
+      final sonraki = getSonrakiVakitIsmi(namazVakitleri);
+      WidgetService.updateWidgetData(
+        cityName: city ?? "Istanbul",
+        countryName: country ?? "Turkey",
+        vakitler: namazVakitleri,
+        sonrakiVakitIsmi: sonraki,
+        kalanSure: kalan,
+      );
+    } catch (e) {
+      debugPrint("Widget senkronizasyon hatası: $e");
+    }
+
     return namazVakitleri;
+  }
+
+  String getSonrakiVakitIsmi(List<NamazVakitleri> vakitler) {
+    if (vakitler.isEmpty) return "Vakit";
+    final now = DateTime.now();
+    final currentSeconds = now.hour * 3600 + now.minute * 60 + now.second;
+
+    for (var vakit in vakitler) {
+      final parts = vakit.namazSaati.split(':').map((e) => int.tryParse(e) ?? 0).toList();
+      if (parts.length < 2) continue;
+      final vakitSeconds = parts[0] * 3600 + parts[1] * 60;
+      if (vakitSeconds > currentSeconds) {
+        return vakit.vakitIsmi;
+      }
+    }
+    return vakitler.first.vakitIsmi;
   }
 
   Duration kalanZamanHesapla(

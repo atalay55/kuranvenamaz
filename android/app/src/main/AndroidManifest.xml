@@ -36,6 +36,19 @@
             </intent-filter>
         </receiver>
 
+        <!-- Home Screen Widget Receiver -->
+        <receiver
+            android:name=".NamazWidgetProvider"
+            android:exported="true"
+            android:label="Namaz Vakitleri">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/namaz_widget_info" />
+        </receiver>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
