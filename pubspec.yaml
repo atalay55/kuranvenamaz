@@ -43,6 +43,7 @@ dependencies:
   flutter_timezone: ^3.0.1
   win32: ^5.2.0
   home_widget: ^0.7.0
+  disable_battery_optimization: ^1.1.2
   flutter_localizations:
     sdk: flutter
   # The following adds the Cupertino Icons font to your application.
