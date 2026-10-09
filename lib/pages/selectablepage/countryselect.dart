@@ -72,7 +72,7 @@ class _CountrySelectPageState extends State<CountrySelectPage> {
                     decoration: InputDecoration(
                       prefixIcon:
                           const Icon(Icons.search, color: AppTheme.goldAccent),
-                      hintText: 'Ülke ara...',
+                      hintText: 'Ülke ara (örn: Almanya, Germany)...',
                       hintStyle:
                           const TextStyle(color: AppTheme.textSecondaryDark),
                       filled: true,
@@ -80,12 +80,12 @@ class _CountrySelectPageState extends State<CountrySelectPage> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
                         borderSide: BorderSide(
-                            color: AppTheme.goldAccent.withOpacity(0.3)),
+                            color: AppTheme.goldAccent.withValues(alpha: 0.3)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
                         borderSide: BorderSide(
-                            color: AppTheme.goldAccent.withOpacity(0.3)),
+                            color: AppTheme.goldAccent.withValues(alpha: 0.3)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
@@ -94,10 +94,11 @@ class _CountrySelectPageState extends State<CountrySelectPage> {
                       ),
                     ),
                     onChanged: (String query) {
+                      final input = query.toLowerCase().trim();
                       final suggestions = _allCountries.where((country) {
                         final countryName = country.name.toLowerCase();
-                        final input = query.toLowerCase();
-                        return countryName.contains(input);
+                        final countryCode = country.code.toLowerCase();
+                        return countryName.contains(input) || countryCode.contains(input);
                       }).toList();
                       setState(() {
                         _filteredCountries = suggestions;

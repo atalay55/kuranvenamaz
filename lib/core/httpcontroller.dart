@@ -9,60 +9,524 @@ import '../entity/city.dart';
 import '../entity/country.dart';
 
 class HttpController {
-  // Ülke listesi (Varsayılan olarak Türkiye ve popüler ülkeler)
+  // Ülke listesi (Türkiye, Almanya ve tüm popüler ülkeler)
   Future<List<Country>> fetchCountryJSONData() async {
-    try {
-      final response = await http.get(
-        Uri.parse('https://api.aladhan.com/v1/methods'),
-      ).timeout(const Duration(seconds: 5));
-
-      if (response.statusCode == 200) {
-        return [
-          Country(code: 'TR', name: 'Turkey'),
-          Country(code: 'DE', name: 'Germany'),
-          Country(code: 'FR', name: 'France'),
-          Country(code: 'NL', name: 'Netherlands'),
-          Country(code: 'AZ', name: 'Azerbaijan'),
-          Country(code: 'US', name: 'United States'),
-          Country(code: 'GB', name: 'United Kingdom'),
-          Country(code: 'SA', name: 'Saudi Arabia'),
-        ];
-      }
-    } catch (e) {
-      debugPrint("Country fetch error: $e");
-    }
-
     return [
-      Country(code: 'TR', name: 'Turkey'),
-      Country(code: 'DE', name: 'Germany'),
-      Country(code: 'AZ', name: 'Azerbaijan'),
+      Country(code: 'TR', name: 'Türkiye (Turkey)'),
+      Country(code: 'DE', name: 'Almanya (Germany)'),
+      Country(code: 'FR', name: 'Fransa (France)'),
+      Country(code: 'NL', name: 'Hollanda (Netherlands)'),
+      Country(code: 'AT', name: 'Avusturya (Austria)'),
+      Country(code: 'BE', name: 'Belçika (Belgium)'),
+      Country(code: 'CH', name: 'İsviçre (Switzerland)'),
+      Country(code: 'GB', name: 'İngiltere (United Kingdom)'),
+      Country(code: 'AZ', name: 'Azerbaycan (Azerbaijan)'),
+      Country(code: 'US', name: 'Amerika (United States)'),
+      Country(code: 'SA', name: 'Suudi Arabistan (Saudi Arabia)'),
+      Country(code: 'BA', name: 'Bosna-Hersek (Bosnia)'),
+      Country(code: 'CY', name: 'Kuzey Kıbrıs (North Cyprus)'),
+      Country(code: 'SE', name: 'İsveç (Sweden)'),
+      Country(code: 'NO', name: 'Norveç (Norway)'),
+      Country(code: 'DK', name: 'Danimarka (Denmark)'),
+      Country(code: 'IT', name: 'İtalya (Italy)'),
+      Country(code: 'ES', name: 'İspanya (Spain)'),
+      Country(code: 'RU', name: 'Rusya (Russia)'),
+      Country(code: 'CA', name: 'Kanada (Canada)'),
+      Country(code: 'AU', name: 'Avustralya (Australia)'),
+      Country(code: 'UZ', name: 'Özbekistan (Uzbekistan)'),
+      Country(code: 'KZ', name: 'Kazakistan (Kazakhstan)'),
     ];
   }
 
-  // Şehir listesi
+  // Seçilen ülkeye özel şehir listesi
   Future<List<City>> fetchCities(String country) async {
-    return [
-      City('Istanbul'),
-      City('Ankara'),
-      City('Izmir'),
-      City('Bursa'),
-      City('Antalya'),
-      City('Adana'),
-      City('Konya'),
-      City('Gaziantep'),
-      City('Sanliurfa'),
-      City('Kocaeli'),
-      City('Mersin'),
-      City('Diyarbakir'),
-      City('Samsun'),
-      City('Denizli'),
-      City('Eskisehir'),
-      City('Trabzon'),
-      City('Erzurum'),
-      City('Malatya'),
-      City('Kahramanmaras'),
-      City('Van'),
+    final lower = country.toLowerCase().trim();
+
+    // 1. Almanya Şehirleri
+    if (lower.contains('alman') || lower.contains('german') || lower == 'de') {
+      const germanyCities = [
+        'Berlin',
+        'Köln (Cologne)',
+        'Frankfurt',
+        'München (Munich)',
+        'Hamburg',
+        'Stuttgart',
+        'Düsseldorf',
+        'Dortmund',
+        'Essen',
+        'Bremen',
+        'Hannover',
+        'Leipzig',
+        'Dresden',
+        'Nürnberg',
+        'Duisburg',
+        'Bochum',
+        'Wuppertal',
+        'Bielefeld',
+        'Bonn',
+        'Münster',
+        'Karlsruhe',
+        'Mannheim',
+        'Augsburg',
+        'Wiesbaden',
+        'Gelsenkirchen',
+        'Mönchengladbach',
+        'Braunschweig',
+        'Chemnitz',
+        'Kiel',
+        'Aachen',
+        'Halle',
+        'Magdeburg',
+        'Freiburg',
+        'Krefeld',
+        'Mainz',
+        'Lübeck',
+        'Erfurt',
+        'Oberhausen',
+        'Rostock',
+        'Kassel',
+        'Hagen',
+        'Saarbrücken',
+        'Potsdam',
+        'Ludwigshafen',
+        'Mülheim an der Ruhr',
+        'Oldenburg',
+        'Osnabrück',
+        'Leverkusen',
+        'Heidelberg',
+        'Darmstadt',
+        'Solingen',
+        'Herne',
+        'Neuss',
+        'Regensburg',
+        'Paderborn',
+        'Ingolstadt',
+        'Offenbach am Main',
+        'Würzburg',
+        'Ulm',
+        'Heilbronn',
+        'Pforzheim',
+        'Wolfsburg',
+        'Göttingen',
+        'Bottrop',
+        'Reutlingen',
+        'Koblenz',
+        'Bremerhaven',
+        'Bergisch Gladbach',
+        'Remscheid',
+        'Jena',
+        'Trier',
+        'Erlangen',
+        'Moers',
+        'Siegen',
+        'Hildesheim',
+        'Salzgitter',
+      ];
+      return germanyCities.map((c) => City(c)).toList();
+    }
+
+    // 2. Fransa Şehirleri
+    if (lower.contains('fran') || lower == 'fr') {
+      const franceCities = [
+        'Paris',
+        'Marseille (Marsilya)',
+        'Lyon',
+        'Toulouse',
+        'Nice',
+        'Nantes',
+        'Strasbourg',
+        'Montpellier',
+        'Bordeaux',
+        'Lille',
+        'Rennes',
+        'Reims',
+        'Saint-Étienne',
+        'Toulon',
+        'Le Havre',
+        'Grenoble',
+        'Dijon',
+        'Angers',
+        'Nîmes',
+        'Aix-en-Provence',
+        'Mulhouse',
+        'Clermont-Ferrand',
+        'Tours',
+        'Amiens',
+        'Metz',
+        'Besançon',
+        'Orléans',
+        'Rouen',
+      ];
+      return franceCities.map((c) => City(c)).toList();
+    }
+
+    // 3. Hollanda Şehirleri
+    if (lower.contains('holland') || lower.contains('netherland') || lower == 'nl') {
+      const netherlandsCities = [
+        'Amsterdam',
+        'Rotterdam',
+        'Den Haag (Lahey)',
+        'Utrecht',
+        'Eindhoven',
+        'Groningen',
+        'Tilburg',
+        'Almere',
+        'Breda',
+        'Nijmegen',
+        'Apeldoorn',
+        'Arnhem',
+        'Haarlem',
+        'Enschede',
+        'Amersfoort',
+        'Zaanstad',
+        '\'s-Hertogenbosch',
+        'Zwolle',
+        'Leiden',
+        'Maastricht',
+        'Dordrecht',
+        'Delft',
+        'Alkmaar',
+      ];
+      return netherlandsCities.map((c) => City(c)).toList();
+    }
+
+    // 4. Avusturya Şehirleri
+    if (lower.contains('avustur') || lower.contains('austria') || lower == 'at') {
+      const austriaCities = [
+        'Wien (Viyana)',
+        'Graz',
+        'Linz',
+        'Salzburg',
+        'Innsbruck',
+        'Klagenfurt',
+        'Villach',
+        'Wels',
+        'Sankt Pölten',
+        'Dornbirn',
+        'Wiener Neustadt',
+        'Bregenz',
+        'Baden',
+      ];
+      return austriaCities.map((c) => City(c)).toList();
+    }
+
+    // 5. Belçika Şehirleri
+    if (lower.contains('belç') || lower.contains('belg') || lower == 'be') {
+      const belgiumCities = [
+        'Bruxelles (Brüksel)',
+        'Antwerpen (Anvers)',
+        'Gent',
+        'Charleroi',
+        'Liège',
+        'Brugge',
+        'Namur',
+        'Leuven',
+        'Mons',
+        'Aalst',
+        'Mechelen',
+        'Kortrijk',
+        'Hasselt',
+        'Genk',
+      ];
+      return belgiumCities.map((c) => City(c)).toList();
+    }
+
+    // 6. İsviçre Şehirleri
+    if (lower.contains('isviç') || lower.contains('switz') || lower == 'ch') {
+      const switzerlandCities = [
+        'Zürich',
+        'Genève (Cenevre)',
+        'Basel',
+        'Lausanne (Lozan)',
+        'Bern',
+        'Winterthur',
+        'Luzern',
+        'St. Gallen',
+        'Lugano',
+        'Biel/Bienne',
+        'Thun',
+        'Fribourg',
+        'Schaffhausen',
+      ];
+      return switzerlandCities.map((c) => City(c)).toList();
+    }
+
+    // 7. Birleşik Krallık / İngiltere Şehirleri
+    if (lower.contains('ingil') || lower.contains('united kingdom') || lower.contains('britain') || lower == 'gb' || lower == 'uk') {
+      const ukCities = [
+        'London (Londra)',
+        'Birmingham',
+        'Manchester',
+        'Leeds',
+        'Glasgow',
+        'Liverpool',
+        'Newcastle',
+        'Sheffield',
+        'Bristol',
+        'Belfast',
+        'Edinburgh',
+        'Leicester',
+        'Nottingham',
+        'Southampton',
+        'Cardiff',
+        'Coventry',
+        'Bradford',
+        'Luton',
+        'Cambridge',
+        'Oxford',
+      ];
+      return ukCities.map((c) => City(c)).toList();
+    }
+
+    // 8. Amerika Birleşik Devletleri (ABD) Şehirleri
+    if (lower.contains('amerik') || lower.contains('united states') || lower == 'us' || lower == 'usa') {
+      const usCities = [
+        'New York',
+        'Los Angeles',
+        'Chicago',
+        'Houston',
+        'Phoenix',
+        'Philadelphia',
+        'San Antonio',
+        'San Diego',
+        'Dallas',
+        'San Jose',
+        'Austin',
+        'Jacksonville',
+        'San Francisco',
+        'Seattle',
+        'Denver',
+        'Washington',
+        'Boston',
+        'Detroit',
+        'Miami',
+        'Atlanta',
+        'Orlando',
+        'Minneapolis',
+        'Las Vegas',
+      ];
+      return usCities.map((c) => City(c)).toList();
+    }
+
+    // 9. Azerbaycan Şehirleri
+    if (lower.contains('azer') || lower == 'az') {
+      const azerbaijanCities = [
+        'Baku (Bakü)',
+        'Ganja (Gence)',
+        'Sumqayit (Sumgayıt)',
+        'Mingachevir (Mingeçevir)',
+        'Shirvan (Şirvan)',
+        'Nakhchivan (Nahçıvan)',
+        'Sheki (Şeki)',
+        'Lankaran (Lenkeran)',
+        'Yevlakh (Yevlah)',
+        'Guba (Kuba)',
+        'Shusha (Şuşa)',
+        'Khankendi (Hankendi)',
+      ];
+      return azerbaijanCities.map((c) => City(c)).toList();
+    }
+
+    // 10. Suudi Arabistan Şehirleri
+    if (lower.contains('suud') || lower.contains('saudi') || lower == 'sa') {
+      const saudiCities = [
+        'Makkah (Mekke)',
+        'Madinah (Medine)',
+        'Riyadh (Riyad)',
+        'Jeddah (Cidde)',
+        'Dammam',
+        'Taif',
+        'Tabuk (Tebük)',
+        'Buraidah',
+        'Al Khobar',
+        'Abha',
+        'Yanbu',
+      ];
+      return saudiCities.map((c) => City(c)).toList();
+    }
+
+    // 11. Bosna-Hersek Şehirleri
+    if (lower.contains('bosna') || lower.contains('bosnia') || lower == 'ba') {
+      const bosniaCities = [
+        'Sarajevo (Saraybosna)',
+        'Mostar',
+        'Banja Luka',
+        'Tuzla',
+        'Zenica',
+        'Bihac',
+        'Travnik',
+      ];
+      return bosniaCities.map((c) => City(c)).toList();
+    }
+
+    // 12. Kuzey Kıbrıs Şehirleri
+    if (lower.contains('kıbrıs') || lower.contains('kibris') || lower.contains('cyprus') || lower == 'cy') {
+      const cyprusCities = [
+        'Lefkosa (Nicosia)',
+        'Gazimagusa (Famagusta)',
+        'Girne (Kyrenia)',
+        'Guzelyurt',
+        'Iskele',
+      ];
+      return cyprusCities.map((c) => City(c)).toList();
+    }
+
+    // 13. İsveç Şehirleri
+    if (lower.contains('isveç') || lower.contains('isvec') || lower.contains('sweden') || lower == 'se') {
+      const swedenCities = [
+        'Stockholm',
+        'Göteborg',
+        'Malmö',
+        'Uppsala',
+        'Västerås',
+        'Örebro',
+        'Linköping',
+        'Helsingborg',
+      ];
+      return swedenCities.map((c) => City(c)).toList();
+    }
+
+    // 14. Norveç Şehirleri
+    if (lower.contains('norveç') || lower.contains('norvec') || lower.contains('norway') || lower == 'no') {
+      const norwayCities = [
+        'Oslo',
+        'Bergen',
+        'Trondheim',
+        'Stavanger',
+        'Drammen',
+        'Kristiansand',
+        'Tromsø',
+      ];
+      return norwayCities.map((c) => City(c)).toList();
+    }
+
+    // 15. Danimarka Şehirleri
+    if (lower.contains('danimark') || lower.contains('denmark') || lower == 'dk') {
+      const denmarkCities = [
+        'København (Kopenhag)',
+        'Aarhus',
+        'Odense',
+        'Aalborg',
+        'Esbjerg',
+        'Randers',
+      ];
+      return denmarkCities.map((c) => City(c)).toList();
+    }
+
+    // 16. İtalya Şehirleri
+    if (lower.contains('ital') || lower == 'it') {
+      const italyCities = [
+        'Roma (Rome)',
+        'Milano (Milan)',
+        'Napoli',
+        'Torino',
+        'Palermo',
+        'Bologna',
+        'Firenze (Florence)',
+        'Venezia (Venice)',
+      ];
+      return italyCities.map((c) => City(c)).toList();
+    }
+
+    // 17. İspanya Şehirleri
+    if (lower.contains('ispan') || lower.contains('spain') || lower == 'es') {
+      const spainCities = [
+        'Madrid',
+        'Barcelona',
+        'Valencia',
+        'Sevilla',
+        'Zaragoza',
+        'Malaga',
+        'Granada',
+        'Cordoba',
+      ];
+      return spainCities.map((c) => City(c)).toList();
+    }
+
+    // 18. Rusya Şehirleri
+    if (lower.contains('rus') || lower == 'ru') {
+      const russiaCities = [
+        'Moscow (Moskova)',
+        'Saint Petersburg',
+        'Kazan',
+        'Ufa',
+        'Novosibirsk',
+        'Yekaterinburg',
+        'Grozny',
+        'Makhachkala',
+      ];
+      return russiaCities.map((c) => City(c)).toList();
+    }
+
+    // 19. Kanada Şehirleri
+    if (lower.contains('kanada') || lower.contains('canada') || lower == 'ca') {
+      const canadaCities = [
+        'Toronto',
+        'Montreal',
+        'Vancouver',
+        'Calgary',
+        'Edmonton',
+        'Ottawa',
+        'Winnipeg',
+      ];
+      return canadaCities.map((c) => City(c)).toList();
+    }
+
+    // 20. Avustralya Şehirleri
+    if (lower.contains('avustral') || lower.contains('australia') || lower == 'au') {
+      const australiaCities = [
+        'Sydney',
+        'Melbourne',
+        'Brisbane',
+        'Perth',
+        'Adelaide',
+        'Canberra',
+      ];
+      return australiaCities.map((c) => City(c)).toList();
+    }
+
+    // 21. Özbekistan Şehirleri
+    if (lower.contains('özbek') || lower.contains('uzbek') || lower == 'uz') {
+      const uzbekistanCities = [
+        'Tashkent (Taşkent)',
+        'Samarkand (Semerkant)',
+        'Bukhara (Buhara)',
+        'Namangan',
+        'Andijan',
+        'Fergana',
+        'Khiva',
+      ];
+      return uzbekistanCities.map((c) => City(c)).toList();
+    }
+
+    // 22. Kazakistan Şehirleri
+    if (lower.contains('kazak') || lower == 'kz') {
+      const kazakhstanCities = [
+        'Almaty',
+        'Astana (Nur-Sultan)',
+        'Shymkent',
+        'Karaganda',
+        'Aktobe',
+        'Taraz',
+        'Turkistan',
+      ];
+      return kazakhstanCities.map((c) => City(c)).toList();
+    }
+
+    // Varsayılan: Türkiye'nin 81 İli
+    const turkeyCities = [
+      'Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Aksaray', 'Amasya', 'Ankara', 'Antalya',
+      'Ardahan', 'Artvin', 'Aydın', 'Balıkesir', 'Bartın', 'Batman', 'Bayburt', 'Bilecik',
+      'Bingöl', 'Bitlis', 'Bolu', 'Burdur', 'Bursa', 'Çanakkale', 'Çankırı', 'Çorum',
+      'Denizli', 'Diyarbakır', 'Düzce', 'Edirne', 'Elazığ', 'Erzincan', 'Erzurum', 'Eskişehir',
+      'Gaziantep', 'Giresun', 'Gümüşhane', 'Hakkari', 'Hatay', 'Iğdır', 'Isparta', 'İstanbul',
+      'İzmir', 'Kahramanmaraş', 'Karabük', 'Karaman', 'Kars', 'Kastamonu', 'Kayseri', 'Kilis',
+      'Kırıkkale', 'Kırklareli', 'Kırşehir', 'Kocaeli', 'Konya', 'Kütahya', 'Malatya', 'Manisa',
+      'Mardin', 'Mersin', 'Muğla', 'Muş', 'Nevşehir', 'Niğde', 'Ordu', 'Osmaniye',
+      'Rize', 'Sakarya', 'Samsun', 'Şanlıurfa', 'Siirt', 'Sinop', 'Sivas', 'Şırnak',
+      'Tekirdağ', 'Tokat', 'Trabzon', 'Tunceli', 'Uşak', 'Van', 'Yalova', 'Yozgat', 'Zonguldak'
     ];
+    return turkeyCities.map((c) => City(c)).toList();
   }
 
   String _normalizeTurkishCharacters(String input) {
@@ -84,13 +548,43 @@ class HttpController {
 
   String _normalizeCityName(String city) {
     if (city.isEmpty) return 'Istanbul';
-    String norm = _normalizeTurkishCharacters(city);
+    // Parantez içindeki açıklamayı ayır (örn: "Köln (Cologne)" -> "Köln")
+    String cleaned = city.contains('(') ? city.split('(')[0].trim() : city;
+    String norm = _normalizeTurkishCharacters(cleaned);
     return norm.isEmpty ? 'Istanbul' : norm;
   }
 
   String _normalizeCountryName(String country) {
     if (country.isEmpty) return 'Turkey';
-    String norm = _normalizeTurkishCharacters(country);
+    final lower = country.toLowerCase().trim();
+
+    // Aladhan API için standart ülke adı eşleştirmeleri
+    if (lower.contains('alman') || lower.contains('german') || lower == 'de') return 'Germany';
+    if (lower.contains('türk') || lower.contains('turk') || lower == 'tr') return 'Turkey';
+    if (lower.contains('fran') || lower == 'fr') return 'France';
+    if (lower.contains('holland') || lower.contains('netherland') || lower == 'nl') return 'Netherlands';
+    if (lower.contains('avustur') || lower.contains('austria') || lower == 'at') return 'Austria';
+    if (lower.contains('belç') || lower.contains('belg') || lower == 'be') return 'Belgium';
+    if (lower.contains('isviç') || lower.contains('switz') || lower == 'ch') return 'Switzerland';
+    if (lower.contains('ingil') || lower.contains('united kingdom') || lower == 'gb' || lower == 'uk') return 'United Kingdom';
+    if (lower.contains('amerik') || lower.contains('united states') || lower == 'us' || lower == 'usa') return 'United States';
+    if (lower.contains('azer') || lower == 'az') return 'Azerbaijan';
+    if (lower.contains('suud') || lower.contains('saudi') || lower == 'sa') return 'Saudi Arabia';
+    if (lower.contains('bosna') || lower.contains('bosnia') || lower == 'ba') return 'Bosnia and Herzegovina';
+    if (lower.contains('kıbrıs') || lower.contains('kibris') || lower.contains('cyprus') || lower == 'cy') return 'Cyprus';
+    if (lower.contains('isveç') || lower.contains('isvec') || lower.contains('sweden') || lower == 'se') return 'Sweden';
+    if (lower.contains('norveç') || lower.contains('norvec') || lower.contains('norway') || lower == 'no') return 'Norway';
+    if (lower.contains('danimark') || lower.contains('denmark') || lower == 'dk') return 'Denmark';
+    if (lower.contains('ital') || lower == 'it') return 'Italy';
+    if (lower.contains('ispan') || lower.contains('spain') || lower == 'es') return 'Spain';
+    if (lower.contains('rus') || lower == 'ru') return 'Russia';
+    if (lower.contains('kanada') || lower.contains('canada') || lower == 'ca') return 'Canada';
+    if (lower.contains('avustral') || lower.contains('australia') || lower == 'au') return 'Australia';
+    if (lower.contains('özbek') || lower.contains('uzbek') || lower == 'uz') return 'Uzbekistan';
+    if (lower.contains('kazak') || lower == 'kz') return 'Kazakhstan';
+
+    String cleaned = country.contains('(') ? country.split('(')[0].trim() : country;
+    String norm = _normalizeTurkishCharacters(cleaned);
     return norm.isEmpty ? 'Turkey' : norm;
   }
 
