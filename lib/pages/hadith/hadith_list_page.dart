@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:kuranvenamaz/core/hadith_data.dart';
 import 'package:kuranvenamaz/core/httpcontroller.dart';
 import 'package:kuranvenamaz/entity/hadith_model.dart';
 import 'package:kuranvenamaz/theme/app_theme.dart';
@@ -260,8 +259,8 @@ class _HadithListPageState extends State<HadithListPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: const [
+              const Row(
+                children: [
                   Icon(Icons.auto_stories_rounded, color: AppTheme.goldAccent),
                   SizedBox(width: 10),
                   Text(

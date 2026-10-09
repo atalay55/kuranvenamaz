@@ -13,7 +13,7 @@ class QiblahCompass extends StatefulWidget {
   const QiblahCompass({Key? key}) : super(key: key);
 
   @override
-  _QiblahCompassState createState() => _QiblahCompassState();
+  State<QiblahCompass> createState() => _QiblahCompassState();
 }
 
 class _QiblahCompassState extends State<QiblahCompass> {
@@ -131,7 +131,7 @@ class _PureQiblaFinderViewState extends State<PureQiblaFinderView> {
   Future<void> _initPosition() async {
     try {
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
 
       double lat = position.latitude;

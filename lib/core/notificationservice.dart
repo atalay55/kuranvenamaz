@@ -84,18 +84,18 @@ class NotificationService {
         }
 
         // 1. Ezan Kanali (v3)
-        final AndroidNotificationChannel ezanChannel = AndroidNotificationChannel(
+        const AndroidNotificationChannel ezanChannel = AndroidNotificationChannel(
           'namaz_vakitleri_ezan_v3',
           'Ezan Vakti Bildirimleri',
           description: 'Namaz vakitlerinde ezan sesi ile hatırlatma.',
           importance: Importance.max,
           playSound: true,
-          sound: const RawResourceAndroidNotificationSound('ezan'),
+          sound: RawResourceAndroidNotificationSound('ezan'),
           enableVibration: true,
         );
 
         // 2. Vakit Öncesi Hatırlatma Kanali
-        final AndroidNotificationChannel hatirlatmaChannel = AndroidNotificationChannel(
+        const AndroidNotificationChannel hatirlatmaChannel = AndroidNotificationChannel(
           'namaz_vakitleri_hatirlatma',
           'Vakit Öncesi Hatırlatma Bildirimleri',
           description: 'Namaz vaktinden önce gelen hatırlatma bildirimleri.',
@@ -105,7 +105,7 @@ class NotificationService {
         );
 
         // 3. Standart Bildirim Kanali
-        final AndroidNotificationChannel standartChannel = AndroidNotificationChannel(
+        const AndroidNotificationChannel standartChannel = AndroidNotificationChannel(
           'namaz_vakitleri_standart',
           'Standart Namaz Bildirimleri',
           description: 'Namaz vakitlerinde standart bildirim sesi.',

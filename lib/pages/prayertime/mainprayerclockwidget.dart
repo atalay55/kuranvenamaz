@@ -143,7 +143,7 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
                   decoration: BoxDecoration(
                     color: Colors.white10,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppTheme.goldAccent.withOpacity(0.3)),
+                    border: Border.all(color: AppTheme.goldAccent.withValues(alpha: 0.3)),
                   ),
                   child: const Row(
                     children: [
@@ -212,7 +212,7 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
                           Expanded(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                              child: NamazVakitleriKucuk(
+                              child: namazVakitleriKucuk(
                                 namazVakitleriList[index],
                                 isNextVakit: namazVakitleriList[index].vakitIsmi == sonrakiVakitIsmi,
                               ),
@@ -278,7 +278,7 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
           decoration: BoxDecoration(
             color: Colors.black38,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppTheme.goldAccent.withOpacity(0.3)),
+            border: Border.all(color: AppTheme.goldAccent.withValues(alpha: 0.3)),
           ),
           child: Text(
             value,

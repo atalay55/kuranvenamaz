@@ -316,9 +316,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     ? "Açılan ekranda 'Kuran ve Namaz' uygulamasını bulup yanındaki düğmeyi açın (yeşile çevirin), sonra geri tuşuna basın."
                     : "Açılan ekranda 'Kuran ve Namaz' uygulamasını bulup izin verin, sonra geri tuşuna basın.",
                 buttonLabel: "Listeyi Aç →",
-                onTap: () async {
-                  await DeviceSettingsService.openAutostartSettings();
-                },
+                onTap: () => _showAutostartPreGuideAndOpen(context, isXiaomi),
               ),
             ],
           ),

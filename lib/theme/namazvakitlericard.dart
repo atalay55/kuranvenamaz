@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:kuranvenamaz/entity/namazvakitleri.dart';
 import 'package:kuranvenamaz/theme/app_theme.dart';
 
-Widget NamazVakitleriKucuk(NamazVakitleri namazVakit, {bool isNextVakit = false}) {
+Widget namazVakitleriKucuk(NamazVakitleri namazVakit, {bool isNextVakit = false}) {
   return Container(
     padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
     decoration: BoxDecoration(
-      color: isNextVakit ? AppTheme.goldAccent.withOpacity(0.2) : AppTheme.surfaceDark,
+      color: isNextVakit ? AppTheme.goldAccent.withValues(alpha: 0.2) : AppTheme.surfaceDark,
       border: Border.all(
-        color: isNextVakit ? AppTheme.goldAccent : AppTheme.goldAccent.withOpacity(0.2),
+        color: isNextVakit ? AppTheme.goldAccent : AppTheme.goldAccent.withValues(alpha: 0.2),
         width: isNextVakit ? 1.5 : 1,
       ),
       borderRadius: BorderRadius.circular(12),
       boxShadow: isNextVakit
           ? [
               BoxShadow(
-                color: AppTheme.goldAccent.withOpacity(0.3),
+                color: AppTheme.goldAccent.withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),

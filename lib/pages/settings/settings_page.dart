@@ -86,45 +86,6 @@ class _SettingsPageState extends State<SettingsPage>
     }
   }
 
-  Widget _buildGuideStep({required String number, required String text}) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 26,
-          height: 26,
-          decoration: const BoxDecoration(
-            color: AppTheme.primaryEmerald,
-            shape: BoxShape.circle,
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            number,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 3),
-            child: Text(
-              text,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   // ─── İZİN DURUM KARTI ───────────────────────────────────────────────────
 
   Widget _buildPermissionCard() {
@@ -745,8 +706,9 @@ class _SettingsPageState extends State<SettingsPage>
                                   color: AppTheme.textSecondaryDark,
                                   fontSize: 12)),
                           onChanged: (val) {
-                            if (val != null)
+                            if (val != null) {
                               setState(() => _notificationTiming = val);
+                            }
                           },
                         ),
                       ],

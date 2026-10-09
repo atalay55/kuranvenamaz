@@ -35,7 +35,7 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  MyApp(this.isFirstRun);
+  const MyApp(this.isFirstRun, {super.key});
   final bool isFirstRun;
 
   @override

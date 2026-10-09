@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:kuranvenamaz/entity/location.dart';
@@ -356,7 +355,7 @@ class HttpController {
 
   Future<List<Map<String, dynamic>>> fetchHadithCategories() async {
     try {
-      final url = 'https://hadeethenc.com/api/v1/categories/list/?language=tr';
+      const url = 'https://hadeethenc.com/api/v1/categories/list/?language=tr';
       debugPrint("🚀 [HADITH CATEGORIES API] Request: $url");
       final response = await http.get(Uri.parse(url), headers: _apiHeaders).timeout(const Duration(seconds: 6));
       if (response.statusCode == 200) {
@@ -496,7 +495,7 @@ class HttpController {
 
     // 2. Türkiye Operatörlerinde %100 Engelsiz Çalışan Canlı Buhârî Hadis API'si (jsDelivr CDN API)
     try {
-      final url = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/tur-bukhari.json';
+      const url = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/tur-bukhari.json';
       debugPrint("🚀 [ENGELSİZ CANLI HADİS API] İstek atılıyor (Sayfa $page): $url");
       final response = await http.get(Uri.parse(url), headers: _apiHeaders).timeout(const Duration(seconds: 6));
       if (response.statusCode == 200) {
@@ -537,20 +536,6 @@ class HttpController {
     } catch (_) {}
 
     return [];
-  }
-
-  void _refreshPopularHadithsBackground(List<String> sampleIds) async {
-    try {
-      final results = await Future.wait(
-        sampleIds.map((id) => fetchHadithDetail(id).catchError((_) => null)),
-      ).timeout(const Duration(seconds: 8));
-
-      final list = results.whereType<Map<String, dynamic>>().toList();
-      if (list.isNotEmpty) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('cached_popular_hadiths', jsonEncode(list));
-      }
-    } catch (_) {}
   }
 
   // Canlı Hadis Çekme (Günün Hadisi için API entegrasyonu)
