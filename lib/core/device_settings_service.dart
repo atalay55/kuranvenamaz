@@ -185,4 +185,18 @@ class DeviceSettingsService {
       return false;
     }
   }
+
+  /// Cihazın bildirim kanalı ayarlarını açar (Kullanıcı telefondaki zil seslerinden seçim yapabilir)
+  static Future<bool> openChannelNotificationSettings(String channelId) async {
+    try {
+      final bool result = await _channel.invokeMethod(
+        'openChannelNotificationSettings',
+        {'channelId': channelId},
+      );
+      return result;
+    } catch (e) {
+      debugPrint("openChannelNotificationSettings error: $e");
+      return await openNotificationSettings();
+    }
+  }
 }

@@ -48,9 +48,11 @@ class PrayerUtilities {
       }
 
       if (_fetchedTimes != null) {
-        NotificationService().reschedulePrayerNotifications(_fetchedTimes!).catchError((err) {
+        try {
+          await NotificationService().reschedulePrayerNotifications(_fetchedTimes!);
+        } catch (err) {
           debugPrint("Notification reschedule hatasi: $err");
-        });
+        }
       }
     } catch (e) {
       debugPrint("initializeData hatası: $e");

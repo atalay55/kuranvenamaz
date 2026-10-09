@@ -127,6 +127,26 @@ class MainActivity: FlutterActivity() {
                     }
                 }
 
+                "openChannelNotificationSettings" -> {
+                    try {
+                        val channelId = call.argument<String>("channelId") ?: "namaz_vakitleri_standart_v2"
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
+                                putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                                putExtra(Settings.EXTRA_CHANNEL_ID, channelId)
+                            }
+                            startActivity(intent)
+                            result.success(true)
+                        } else {
+                            openAppDetailsSettings()
+                            result.success(false)
+                        }
+                    } catch (e: Exception) {
+                        openAppDetailsSettings()
+                        result.success(false)
+                    }
+                }
+
                 else -> result.notImplemented()
             }
         }
