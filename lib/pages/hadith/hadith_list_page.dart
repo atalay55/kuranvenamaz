@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kuranvenamaz/core/app_translations.dart';
 import 'package:kuranvenamaz/core/httpcontroller.dart';
 import 'package:kuranvenamaz/entity/hadith_model.dart';
 import 'package:kuranvenamaz/theme/app_theme.dart';
@@ -110,8 +111,11 @@ class _HadithListPageState extends State<HadithListPage> {
 
     List<HadithItem> loadedList = [];
 
+    final String defaultCatId = _apiCategories.isNotEmpty
+        ? _apiCategories.first['id'].toString()
+        : ((AppTranslations.hadithLanguageCode == 'tr') ? '646' : '1');
     final String targetCatId =
-        (categoryId != null && categoryId != 'all') ? categoryId : '646';
+        (categoryId != null && categoryId != 'all') ? categoryId : defaultCatId;
     final apiHadithList = await _httpController
         .fetchHadithsByCategory(targetCatId, perPage: 20, page: 1);
 
@@ -170,10 +174,13 @@ class _HadithListPageState extends State<HadithListPage> {
     });
 
     _currentPage++;
+    final String defaultCatId = _apiCategories.isNotEmpty
+        ? _apiCategories.first['id'].toString()
+        : ((AppTranslations.hadithLanguageCode == 'tr') ? '646' : '1');
     final String targetCatId =
         (_selectedCategoryId != null && _selectedCategoryId != 'all')
             ? _selectedCategoryId!
-            : '646';
+            : defaultCatId;
     final moreApiHadiths = await _httpController
         .fetchHadithsByCategory(targetCatId, perPage: 20, page: _currentPage);
 
@@ -303,8 +310,8 @@ class _HadithListPageState extends State<HadithListPage> {
   @override
   Widget build(BuildContext context) {
     List<Map<String, String>> categoryList = [
-      {'id': 'all', 'title': 'Tümü'},
-      {'id': 'fav', 'title': 'Favorilerim'},
+      {'id': 'all', 'title': AppTranslations.translate('all', fallback: 'Tümü')},
+      {'id': 'fav', 'title': AppTranslations.translate('favorites', fallback: 'Favorilerim')},
     ];
 
     if (_apiCategories.isNotEmpty) {

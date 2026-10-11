@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:kuranvenamaz/core/app_translations.dart';
 import 'package:kuranvenamaz/entity/location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -598,6 +599,13 @@ class HttpController {
     final encodedCity = Uri.encodeComponent(cleanCity);
     final encodedCountry = Uri.encodeComponent(cleanCountry);
 
+    // 0. Öncelik: Yerel önbellekte bugünün vakitleri varsa ANINDA (0 ms) dön, alarm kurulumunu ve açılışı geciktirme!
+    final cachedFast = await _loadTimesFromCache(cacheKey);
+    if (cachedFast != null && cachedFast.isNotEmpty && cachedFast.containsKey(todayStr)) {
+      debugPrint("⚡ $cleanCity için bugünün namaz vakitleri anında yerel önbellekten okundu.");
+      return Times(timesByDate: cachedFast);
+    }
+
     // 1. Öncelik: Tüm ayın takvim verisini çekme
     try {
       final url = 'https://api.aladhan.com/v1/calendarByCity?city=$encodedCity&country=$encodedCountry&method=13&month=${now.month}&year=${now.year}';
@@ -813,44 +821,56 @@ class HttpController {
     'Accept': 'application/json',
   };
 
-  // Diyanet Meal Resmi Ayet API (Al-Quran Cloud Diyanet Meali)
+  // Kur'an Meali Resmi Ayet API (Al-Quran Cloud: tr.diyanet / en.sahih / de.bubenheim)
   Future<Map<String, String>?> fetchDiyanetAyet([int? ayahNumber]) async {
     try {
       final now = DateTime.now();
       final dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays;
       final targetAyah = ayahNumber ?? ((dayOfYear * 17) % 6236 + 1);
 
-      final url = 'https://api.alquran.cloud/v1/ayah/$targetAyah/editions/quran-uthmani,tr.diyanet';
-      final response = await http.get(Uri.parse(url), headers: _apiHeaders).timeout(const Duration(seconds: 5));
+      // Tek seferde Arapça ve TR, EN, DE meallerini birlikte çekiyoruz
+      final url = 'https://api.alquran.cloud/v1/ayah/$targetAyah/editions/quran-uthmani,tr.diyanet,en.sahih,de.bubenheim';
+      final response = await http.get(Uri.parse(url), headers: _apiHeaders).timeout(const Duration(seconds: 6));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
-        if (jsonData['data'] != null && jsonData['data'] is List && (jsonData['data'] as List).length >= 2) {
+        if (jsonData['data'] != null && jsonData['data'] is List && (jsonData['data'] as List).length >= 4) {
           final arabicData = jsonData['data'][0];
-          final diyanetData = jsonData['data'][1];
+          final trData = jsonData['data'][1];
+          final enData = jsonData['data'][2];
+          final deData = jsonData['data'][3];
 
           final String arabicText = arabicData['text'] ?? '';
-          final String diyanetText = diyanetData['text'] ?? '';
-          final String surahName = diyanetData['surah']?['englishName'] ?? 'Sûre';
-          final int numberInSurah = diyanetData['numberInSurah'] ?? 1;
+          final String trText = trData['text'] ?? '';
+          final String enText = enData['text'] ?? '';
+          final String deText = deData['text'] ?? '';
+
+          final String surahName = trData['surah']?['englishName'] ?? 'Sûre';
+          final int numberInSurah = trData['numberInSurah'] ?? 1;
 
           return {
             'arabic': arabicText,
-            'turkish': diyanetText,
-            'source': "$surahName Sûresi, $numberInSurah. Âyet (Diyanet Meali)",
+            'turkish': trText,
+            'english': enText,
+            'german': deText,
+            'sourceTr': "$surahName Sûresi, $numberInSurah. Âyet (Diyanet Meali)",
+            'sourceEn': "Surah $surahName, Ayah $numberInSurah (Saheeh International)",
+            'sourceDe': "Sure $surahName, Vers $numberInSurah (Bubenheim & Elyas)",
           };
         }
       }
     } catch (e) {
-      debugPrint("Diyanet Ayet API hatası: $e");
+      debugPrint("Ayet API hatası: $e");
     }
     return null;
   }
 
-  Future<List<Map<String, dynamic>>> fetchHadithCategories() async {
+  Future<List<Map<String, dynamic>>> fetchHadithCategories([String? lang]) async {
+    final language = lang ?? AppTranslations.hadithLanguageCode;
+    final cacheKey = 'cached_hadith_categories_$language';
     try {
-      const url = 'https://hadeethenc.com/api/v1/categories/list/?language=tr';
-      debugPrint("🚀 [HADITH CATEGORIES API] Request: $url");
+      final url = 'https://hadeethenc.com/api/v1/categories/list/?language=$language';
+      debugPrint("🚀 [HADITH CATEGORIES API] Request ($language): $url");
       final response = await http.get(Uri.parse(url), headers: _apiHeaders).timeout(const Duration(seconds: 6));
       if (response.statusCode == 200) {
         final List<dynamic> list = json.decode(response.body);
@@ -861,20 +881,20 @@ class HttpController {
           'parent_id': item['parent_id']?.toString(),
         }).toList();
 
-        debugPrint("✅ [HADITH CATEGORIES API] Fetched ${result.length} categories!");
+        debugPrint("✅ [HADITH CATEGORIES API] Fetched ${result.length} categories ($language)!");
         if (result.isNotEmpty) {
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('cached_hadith_categories', jsonEncode(result));
+          await prefs.setString(cacheKey, jsonEncode(result));
           return result;
         }
       }
     } catch (e) {
-      debugPrint("❌ [HADITH CATEGORIES API Error]: $e");
+      debugPrint("❌ [HADITH CATEGORIES API Error ($language)]: $e");
     }
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final String? cached = prefs.getString('cached_hadith_categories');
+      final String? cached = prefs.getString(cacheKey);
       if (cached != null && cached.isNotEmpty) {
         final List<dynamic> decoded = jsonDecode(cached);
         if (decoded.isNotEmpty) {
@@ -886,11 +906,12 @@ class HttpController {
     return [];
   }
 
-  Future<List<Map<String, dynamic>>> fetchHadithsByCategory(String categoryId, {int perPage = 20, int page = 1}) async {
-    final cacheKey = 'cached_hadiths_cat_${categoryId}_p$page';
+  Future<List<Map<String, dynamic>>> fetchHadithsByCategory(String categoryId, {int perPage = 20, int page = 1, String? lang}) async {
+    final language = lang ?? AppTranslations.hadithLanguageCode;
+    final cacheKey = 'cached_hadiths_cat_${categoryId}_${language}_p$page';
     try {
-      final url = 'https://hadeethenc.com/api/v1/hadeeths/list/?language=tr&category_id=$categoryId&per_page=$perPage&page=$page';
-      debugPrint("🚀 [HADITH LIST API] Requesting HadeethEnc Page $page: $url");
+      final url = 'https://hadeethenc.com/api/v1/hadeeths/list/?language=$language&category_id=$categoryId&per_page=$perPage&page=$page';
+      debugPrint("🚀 [HADITH LIST API] Requesting HadeethEnc ($language) Page $page: $url");
       final response = await http.get(Uri.parse(url), headers: _apiHeaders).timeout(const Duration(seconds: 4));
       debugPrint("📥 [HADITH LIST API] Response Code: ${response.statusCode}");
       if (response.statusCode == 200) {
@@ -902,7 +923,7 @@ class HttpController {
             'title': item['title'].toString(),
           }).toList();
 
-          debugPrint("✅ [HADITH LIST API] Fetched ${result.length} hadiths (Page $page)!");
+          debugPrint("✅ [HADITH LIST API] Fetched ${result.length} hadiths ($language - Page $page)!");
           if (result.isNotEmpty) {
             final prefs = await SharedPreferences.getInstance();
             await prefs.setString(cacheKey, jsonEncode(result));
@@ -911,20 +932,21 @@ class HttpController {
         }
       }
     } catch (e) {
-      debugPrint("⚠️ [HADITH LIST API] HadeethEnc DNS engeline takıldı: $e. Engelsiz Canlı Hadis API'sine geçiliyor...");
+      debugPrint("⚠️ [HADITH LIST API] HadeethEnc ($language) hatası: $e");
     }
 
-    return await fetchPopularOrAllHadiths(page: page);
+    return await fetchPopularOrAllHadiths(page: page, lang: language);
   }
 
-  Future<Map<String, dynamic>?> fetchHadithDetail(String hadithId) async {
-    final cacheKey = 'cached_hadith_detail_$hadithId';
+  Future<Map<String, dynamic>?> fetchHadithDetail(String hadithId, [String? lang]) async {
+    final language = lang ?? AppTranslations.hadithLanguageCode;
+    final cacheKey = 'cached_hadith_detail_${hadithId}_$language';
     try {
-      final url = 'https://hadeethenc.com/api/v1/hadeeths/one/?language=tr&id=$hadithId';
+      final url = 'https://hadeethenc.com/api/v1/hadeeths/one/?language=$language&id=$hadithId';
       final response = await http.get(Uri.parse(url), headers: _apiHeaders).timeout(const Duration(seconds: 4));
       if (response.statusCode == 200) {
         final Map<String, dynamic> item = json.decode(response.body);
-        final turkishText = (item['hadeeth'] != null && item['hadeeth'].toString().isNotEmpty)
+        final translatedText = (item['hadeeth'] != null && item['hadeeth'].toString().isNotEmpty)
             ? item['hadeeth'].toString()
             : (item['title'] ?? '');
         final arabicText = (item['hadeeth_ar'] != null && item['hadeeth_ar'].toString().isNotEmpty)
@@ -933,7 +955,7 @@ class HttpController {
 
         final result = {
           'id': item['id'].toString(),
-          'turkish': turkishText,
+          'turkish': translatedText,
           'arabic': arabicText,
           'source': item['attribution'] ?? 'Hadis-i Şerif [HadeethEnc API]',
           'explanation': item['explanation'] ?? '',
@@ -945,7 +967,7 @@ class HttpController {
         return result;
       }
     } catch (e) {
-      debugPrint("Hadis detay çekme hatası ($hadithId): $e");
+      debugPrint("Hadis detay çekme hatası ($hadithId - $language): $e");
     }
 
     try {
@@ -959,10 +981,12 @@ class HttpController {
     return null;
   }
 
-  Future<List<Map<String, dynamic>>> fetchPopularOrAllHadiths({int page = 1}) async {
+  Future<List<Map<String, dynamic>>> fetchPopularOrAllHadiths({int page = 1, String? lang}) async {
+    final language = lang ?? AppTranslations.hadithLanguageCode;
     // 1. Önce HadeethEnc API'yi dene
     try {
-      final url = 'https://hadeethenc.com/api/v1/hadeeths/list/?language=tr&category_id=646&per_page=20&page=$page';
+      final catId = (language == 'tr') ? '646' : '1';
+      final url = 'https://hadeethenc.com/api/v1/hadeeths/list/?language=$language&category_id=$catId&per_page=20&page=$page';
       final response = await http.get(Uri.parse(url), headers: _apiHeaders).timeout(const Duration(seconds: 4));
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonMap = json.decode(response.body);
@@ -978,19 +1002,20 @@ class HttpController {
 
           if (result.isNotEmpty) {
             final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('cached_popular_hadiths_p$page', jsonEncode(result));
+            await prefs.setString('cached_popular_hadiths_${language}_p$page', jsonEncode(result));
             return result;
           }
         }
       }
     } catch (e) {
-      debugPrint("⚠️ HadeethEnc DNS engeli: $e. Türkiye Engelsiz Canlı Hadis API'sine geçiliyor...");
+      debugPrint("⚠️ HadeethEnc ($language) hatası: $e. Alternatif API'ye geçiliyor...");
     }
 
-    // 2. Türkiye Operatörlerinde %100 Engelsiz Çalışan Canlı Buhârî Hadis API'si (jsDelivr CDN API)
+    // 2. Canlı Buhârî Hadis API'si (jsDelivr CDN API)
     try {
-      const url = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/tur-bukhari.json';
-      debugPrint("🚀 [ENGELSİZ CANLI HADİS API] İstek atılıyor (Sayfa $page): $url");
+      final editionName = (language == 'en') ? 'eng-bukhari.json' : 'tur-bukhari.json';
+      final url = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$editionName';
+      debugPrint("🚀 [ENGELSİZ CANLI HADİS API] İstek atılıyor (Sayfa $page, $editionName): $url");
       final response = await http.get(Uri.parse(url), headers: _apiHeaders).timeout(const Duration(seconds: 6));
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonMap = json.decode(response.body);
@@ -1002,14 +1027,14 @@ class HttpController {
             'id': item['hadithnumber'].toString(),
             'turkish': item['text'].toString(),
             'arabic': '',
-            'source': "Sahîh-i Buhârî, Hadis No: ${item['hadithnumber']} [Engelsiz Canlı API]",
+            'source': "Sahîh-i Buhârî, No: ${item['hadithnumber']}",
             'explanation': '',
           }).toList();
 
           debugPrint("✅ [ENGELSİZ CANLI HADİS API] ${result.length} adet CANLI HADİS çekildi (Sayfa $page)!");
           if (result.isNotEmpty) {
             final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('cached_popular_hadiths_p$page', jsonEncode(result));
+            await prefs.setString('cached_popular_hadiths_${language}_p$page', jsonEncode(result));
             return result;
           }
         }
@@ -1020,7 +1045,7 @@ class HttpController {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final String? cached = prefs.getString('cached_popular_hadiths_p$page');
+      final String? cached = prefs.getString('cached_popular_hadiths_${language}_p$page');
       if (cached != null && cached.isNotEmpty) {
         final List<dynamic> decoded = jsonDecode(cached);
         if (decoded.isNotEmpty) {
@@ -1032,22 +1057,40 @@ class HttpController {
     return [];
   }
 
-  // Canlı Hadis Çekme (Günün Hadisi için API entegrasyonu)
+  // Canlı Hadis Çekme (Günün Hadisi için API entegrasyonu - TR, EN, DE)
   Future<Map<String, String>?> fetchLiveHadis() async {
     try {
       final now = DateTime.now();
       final dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays;
-      // Popüler ve bilinen Türkçe hadis ID'leri
+      // Popüler ve bilinen hadis ID'leri (HadeethEnc'te tüm dillerde mevcut)
       final sampleIds = ["5913", "5907", "6208", "6274", "6275", "8402", "3410", "6258", "15"];
       final targetId = sampleIds[dayOfYear % sampleIds.length];
 
-      final detail = await fetchHadithDetail(targetId);
-      if (detail != null && detail['turkish']!.toString().isNotEmpty) {
+      final results = await Future.wait([
+        fetchHadithDetail(targetId, 'tr'),
+        fetchHadithDetail(targetId, 'en'),
+        fetchHadithDetail(targetId, 'de'),
+      ]);
+
+      final tr = results[0];
+      final en = results[1];
+      final de = results[2];
+
+      final arabic = tr?['arabic']?.toString() ?? en?['arabic']?.toString() ?? de?['arabic']?.toString() ?? '';
+      final turkish = tr?['turkish']?.toString() ?? '';
+      final english = en?['turkish']?.toString() ?? '';
+      final german = de?['turkish']?.toString() ?? '';
+
+      if (turkish.isNotEmpty || english.isNotEmpty || german.isNotEmpty) {
         return {
           'title': "Günün Hadisi",
-          'arabic': detail['arabic'].toString(),
-          'turkish': detail['turkish'].toString(),
-          'source': "${detail['source']} (${detail['grade']})",
+          'arabic': arabic,
+          'turkish': turkish,
+          'english': english,
+          'german': german,
+          'sourceTr': "${tr?['source'] ?? ''} (${tr?['grade'] ?? ''})",
+          'sourceEn': "${en?['source'] ?? ''} (${en?['grade'] ?? ''})",
+          'sourceDe': "${de?['source'] ?? ''} (${de?['grade'] ?? ''})",
         };
       }
     } catch (e) {

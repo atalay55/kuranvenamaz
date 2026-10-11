@@ -61,13 +61,13 @@ class AyetDuaHadisTheme extends StatelessWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.copy_rounded, color: AppTheme.textSecondaryDark, size: 18),
-                tooltip: 'Kopyala',
+                tooltip: 'copy'.tr,
                 onPressed: () {
-                  final textToCopy = "$title\n\n${arabicText != null ? "$arabicText\n\n" : ""}$description\n\nKaynak: ${kaynakca ?? ''}";
+                  final textToCopy = "$title\n\n${arabicText != null ? "$arabicText\n\n" : ""}$description\n\n${'source'.tr}: ${kaynakca ?? ''}";
                   Clipboard.setData(ClipboardData(text: textToCopy));
                   Get.snackbar(
-                    'Kopyalandı',
-                    '$title panoya kopyalandı.',
+                    'copied'.tr,
+                    'copied_desc'.trParams({'title': title}),
                     snackPosition: SnackPosition.BOTTOM,
                     backgroundColor: AppTheme.primaryEmerald,
                     colorText: Colors.white,

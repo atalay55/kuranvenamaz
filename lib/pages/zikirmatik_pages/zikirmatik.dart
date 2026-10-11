@@ -1,19 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kuranvenamaz/core/app_translations.dart';
 import 'package:kuranvenamaz/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vibration/vibration.dart';
 
 class ZikirItem {
-  final String title;
+  final String titleTr;
+  final String titleEn;
+  final String titleDe;
+  final String titleAr;
   final String arabic;
-  final String meaning;
+  final String meaningTr;
+  final String meaningEn;
+  final String meaningDe;
+  final String meaningAr;
 
   const ZikirItem({
-    required this.title,
+    required this.titleTr,
+    required this.titleEn,
+    required this.titleDe,
+    required this.titleAr,
     required this.arabic,
-    required this.meaning,
+    required this.meaningTr,
+    required this.meaningEn,
+    required this.meaningDe,
+    required this.meaningAr,
   });
+
+  String getTitle(String lang) {
+    switch (lang) {
+      case 'de':
+        return titleDe;
+      case 'en':
+        return titleEn;
+      case 'ar':
+        return titleAr;
+      default:
+        return titleTr;
+    }
+  }
+
+  String getMeaning(String lang) {
+    switch (lang) {
+      case 'de':
+        return meaningDe;
+      case 'en':
+        return meaningEn;
+      case 'ar':
+        return meaningAr;
+      default:
+        return meaningTr;
+    }
+  }
 }
 
 class Zikirmatik extends StatefulWidget {
@@ -31,29 +70,81 @@ class _ZikirmatikState extends State<Zikirmatik> {
 
   final List<ZikirItem> zikirList = const [
     ZikirItem(
-      title: "Sübhânallah",
+      titleTr: "Sübhânallah",
+      titleEn: "SubhanAllah",
+      titleDe: "SubhanAllah",
+      titleAr: "سُبْحَانَ اللَّهِ",
       arabic: "سُبْحَانَ اللَّهِ",
-      meaning: "Allah noksan sıfatlardan münezzehtir.",
+      meaningTr: "Allah noksan sıfatlardan münezzehtir.",
+      meaningEn: "Glory be to Allah.",
+      meaningDe: "Gepriesen sei Allah (erhaben über alle Mängel).",
+      meaningAr: "تنزيه الله تعالى عن كل نقص وعيب.",
     ),
     ZikirItem(
-      title: "Elhamdülillâh",
+      titleTr: "Elhamdülillâh",
+      titleEn: "Alhamdulillah",
+      titleDe: "Alhamdulillah",
+      titleAr: "الْحَمْدُ لِلَّهِ",
       arabic: "الْحَمْدُ لِلَّهِ",
-      meaning: "Hamd Allah'a mahsustur.",
+      meaningTr: "Hamd Allah'a mahsustur.",
+      meaningEn: "All praise is due to Allah.",
+      meaningDe: "Alles Lob und aller Dank gebührt Allah.",
+      meaningAr: "الثناء والشكر كله لله عز وجل.",
     ),
     ZikirItem(
-      title: "Allâhu Ekber",
+      titleTr: "Allâhu Ekber",
+      titleEn: "Allahu Akbar",
+      titleDe: "Allahu Akbar",
+      titleAr: "اللَّهُ أَكْبَرُ",
       arabic: "اللَّهُ أَكْبَرُ",
-      meaning: "Allah en büyüktür.",
+      meaningTr: "Allah en büyüktür.",
+      meaningEn: "Allah is the Greatest.",
+      meaningDe: "Allah ist der Größte.",
+      meaningAr: "الله أعظم وأجل من كل شيء.",
     ),
     ZikirItem(
-      title: "Lâ ilâhe illallâh",
+      titleTr: "Lâ ilâhe illallâh",
+      titleEn: "La ilaha illallah",
+      titleDe: "La ilaha illallah",
+      titleAr: "لَا إِلٰهَ إِلَّا اللَّهُ",
       arabic: "لَا إِلٰهَ إِلَّا اللَّهُ",
-      meaning: "Allah'tan başka ilah yoktur.",
+      meaningTr: "Allah'tan başka ilah yoktur.",
+      meaningEn: "There is no deity worthy of worship except Allah.",
+      meaningDe: "Es gibt keinen anbetungswürdigen Gott außer Allah.",
+      meaningAr: "لا معبود بحق إلا الله وحده لا شريك له.",
     ),
     ZikirItem(
-      title: "Estağfirullâh",
+      titleTr: "Estağfirullâh",
+      titleEn: "Astaghfirullah",
+      titleDe: "Astaghfirullah",
+      titleAr: "أَسْتَغْفِرُ اللَّهَ",
       arabic: "أَسْتَغْفِرُ اللَّهَ",
-      meaning: "Allah'tan bağışlanma dilerim.",
+      meaningTr: "Allah'tan bağışlanma dilerim.",
+      meaningEn: "I seek forgiveness from Allah.",
+      meaningDe: "Ich bitte Allah um Vergebung.",
+      meaningAr: "أطلب المغفرة والستر من الله تعالى.",
+    ),
+    ZikirItem(
+      titleTr: "Lâ Havle",
+      titleEn: "La Hawla",
+      titleDe: "La Hawla",
+      titleAr: "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
+      arabic: "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
+      meaningTr: "Güç ve kuvvet ancak Allah'a aittir.",
+      meaningEn: "There is no power nor strength except with Allah.",
+      meaningDe: "Es gibt keine Macht noch Kraft außer durch Allah.",
+      meaningAr: "لا حول ولا قوة إلا بالله العلي العظيم.",
+    ),
+    ZikirItem(
+      titleTr: "Salavât-ı Şerîfe",
+      titleEn: "Salawat",
+      titleDe: "Salawat",
+      titleAr: "الصلاة على النبي",
+      arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ",
+      meaningTr: "Allah'ım! Efendimiz Muhammed'e salât ve selâm eyle.",
+      meaningEn: "O Allah, send blessings upon our Master Muhammad.",
+      meaningDe: "O Allah, segne unseren Meister Muhammad.",
+      meaningAr: "اللهم صل وسلم وبارك على سيدنا محمد.",
     ),
   ];
 
@@ -62,7 +153,18 @@ class _ZikirmatikState extends State<Zikirmatik> {
   @override
   void initState() {
     super.initState();
+    AppTranslations.currentLocaleNotifier.addListener(_onLocaleChanged);
     _loadCounterData();
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    AppTranslations.currentLocaleNotifier.removeListener(_onLocaleChanged);
+    super.dispose();
   }
 
   Future<void> _loadCounterData() async {
@@ -113,15 +215,32 @@ class _ZikirmatikState extends State<Zikirmatik> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.surfaceDark,
-        title: const Text("Zikri Sıfırla", style: TextStyle(color: AppTheme.goldAccent)),
-        content: const Text("Zikir sayacını sıfırlamak istediğinize emin misiniz?", style: TextStyle(color: Colors.white70)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: AppTheme.goldAccent, width: 1.5),
+        ),
+        title: Text(
+          AppTranslations.translate('reset_dhikr_title', fallback: "Zikri Sıfırla"),
+          style: const TextStyle(color: Color(0xFF1B1B1B), fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          AppTranslations.translate('reset_dhikr_desc', fallback: "Zikir sayacını sıfırlamak istediğinize emin misiniz?"),
+          style: const TextStyle(color: Color(0xFF2C2C2C)),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("İptal", style: TextStyle(color: Colors.white38)),
+            child: Text(
+              AppTranslations.translate('cancel', fallback: "İptal"),
+              style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.w600),
+            ),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent.shade700,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
             onPressed: () {
               setState(() {
                 count.value = 0;
@@ -130,7 +249,7 @@ class _ZikirmatikState extends State<Zikirmatik> {
               _saveCounterData();
               Navigator.pop(context);
             },
-            child: const Text("Sıfırla"),
+            child: Text(AppTranslations.translate('reset', fallback: "Sıfırla")),
           ),
         ],
       ),
@@ -139,16 +258,18 @@ class _ZikirmatikState extends State<Zikirmatik> {
 
   @override
   Widget build(BuildContext context) {
+    final langCode = AppTranslations.currentLanguageCode;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Zikirmatik"),
+        title: Text(AppTranslations.translate('dhikr', fallback: "Zikirmatik")),
         actions: [
           IconButton(
             icon: Icon(
               isVibrationEnabled ? Icons.vibration_rounded : Icons.phone_android_rounded,
               color: isVibrationEnabled ? AppTheme.goldAccent : Colors.white38,
             ),
-            tooltip: 'Titreşim',
+            tooltip: AppTranslations.translate('vibration', fallback: 'Titreşim'),
             onPressed: () {
               setState(() {
                 isVibrationEnabled = !isVibrationEnabled;
@@ -158,7 +279,7 @@ class _ZikirmatikState extends State<Zikirmatik> {
           ),
           IconButton(
             icon: const Icon(Icons.restart_alt_rounded, color: AppTheme.goldAccent),
-            tooltip: 'Sıfırla',
+            tooltip: AppTranslations.translate('reset', fallback: 'Sıfırla'),
             onPressed: _resetCounter,
           ),
         ],
@@ -169,19 +290,19 @@ class _ZikirmatikState extends State<Zikirmatik> {
           child: Column(
             children: [
               // Zikir Selector Dropdown Card
-              _buildZikirSelectorCard(),
+              _buildZikirSelectorCard(langCode),
               const SizedBox(height: 20),
 
-              // Target Limit Selector (33 / 99 / Sınırsız)
-              _buildTargetSelectorRow(),
+              // Target Limit Selector (33 / 99 / 100 / Sınırsız)
+              _buildTargetSelectorRow(langCode),
               const SizedBox(height: 20),
 
               // Tour & Total Stats Card
-              _buildStatsDisplay(),
+              _buildStatsDisplay(langCode),
               const Spacer(),
 
               // Interactive Tasbeeh Counter Button
-              _buildMainCounterButton(),
+              _buildMainCounterButton(langCode),
               const Spacer(),
             ],
           ),
@@ -190,7 +311,7 @@ class _ZikirmatikState extends State<Zikirmatik> {
     );
   }
 
-  Widget _buildZikirSelectorCard() {
+  Widget _buildZikirSelectorCard(String langCode) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -207,7 +328,7 @@ class _ZikirmatikState extends State<Zikirmatik> {
                 return DropdownMenuItem<ZikirItem>(
                   value: item,
                   child: Text(
-                    item.title,
+                    item.getTitle(langCode),
                     style: const TextStyle(
                       color: AppTheme.primaryEmerald,
                       fontSize: 18,
@@ -236,7 +357,7 @@ class _ZikirmatikState extends State<Zikirmatik> {
           ),
           const SizedBox(height: 4),
           Text(
-            selectedZikir.meaning,
+            selectedZikir.getMeaning(langCode),
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: AppTheme.textSecondaryDark,
@@ -248,12 +369,14 @@ class _ZikirmatikState extends State<Zikirmatik> {
     );
   }
 
-  Widget _buildTargetSelectorRow() {
+  Widget _buildTargetSelectorRow(String langCode) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [33, 99, 100, 0].map((limit) {
         final isSelected = targetLimit == limit;
-        final label = limit == 0 ? "Sınırsız" : "$limit";
+        final label = limit == 0
+            ? AppTranslations.translate('unlimited', fallback: "Sınırsız")
+            : "$limit";
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4.0),
           child: ChoiceChip(
@@ -278,7 +401,18 @@ class _ZikirmatikState extends State<Zikirmatik> {
     );
   }
 
-  Widget _buildStatsDisplay() {
+  Widget _buildStatsDisplay(String langCode) {
+    String tourLabel;
+    if (langCode == 'de') {
+      tourLabel = targetLimit > 0 ? "Runde (${targetLimit}er)" : "Runde";
+    } else if (langCode == 'en') {
+      tourLabel = targetLimit > 0 ? "Round ($targetLimit)" : "Round";
+    } else if (langCode == 'ar') {
+      tourLabel = targetLimit > 0 ? "جولة ($targetLimit)" : "جولة";
+    } else {
+      tourLabel = targetLimit > 0 ? "Tur ($targetLimit'lük)" : "Tur";
+    }
+
     return Row(
       children: [
         Expanded(
@@ -287,7 +421,7 @@ class _ZikirmatikState extends State<Zikirmatik> {
             decoration: AppTheme.cardDecoration(color: AppTheme.surfaceDark),
             child: Column(
               children: [
-                const Text("Tur (33'lük)", style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12)),
+                Text(tourLabel, style: const TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12)),
                 const SizedBox(height: 4),
                 Obx(() => Text(
                       "${tourCount.value}",
@@ -304,7 +438,10 @@ class _ZikirmatikState extends State<Zikirmatik> {
             decoration: AppTheme.cardDecoration(color: AppTheme.surfaceDark),
             child: Column(
               children: [
-                const Text("Toplam Zikir", style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12)),
+                Text(
+                  AppTranslations.translate('total_dhikr', fallback: "Toplam Zikir"),
+                  style: const TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12),
+                ),
                 const SizedBox(height: 4),
                 Obx(() => Text(
                       "${count.value}",
@@ -318,7 +455,7 @@ class _ZikirmatikState extends State<Zikirmatik> {
     );
   }
 
-  Widget _buildMainCounterButton() {
+  Widget _buildMainCounterButton(String langCode) {
     return GestureDetector(
       onTap: _incrementCounter,
       child: Container(
@@ -334,7 +471,7 @@ class _ZikirmatikState extends State<Zikirmatik> {
           border: Border.all(color: AppTheme.goldAccent, width: 4),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primaryEmerald.withOpacity(0.5),
+              color: AppTheme.primaryEmerald.withValues(alpha: 0.5),
               blurRadius: 20,
               spreadRadius: 4,
             ),
@@ -360,9 +497,9 @@ class _ZikirmatikState extends State<Zikirmatik> {
                   color: AppTheme.goldAccent,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
-                  "DOKUN",
-                  style: TextStyle(
+                child: Text(
+                  AppTranslations.translate('tap', fallback: "DOKUN"),
+                  style: const TextStyle(
                     color: Colors.black,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,

@@ -18,8 +18,39 @@ class MainActivity: FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
+        // Arka plan alarmlarının kesilmemesi ve Xiaomi'nin uygulamayı uyutmaması için Foreground Service başlat
+        PrayerForegroundService.startService(this)
+
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
+                "updateForegroundNotification" -> {
+                    val city = call.argument<String>("city") ?: ""
+                    val nextPrayer = call.argument<String>("nextPrayer") ?: ""
+                    val nextPrayerTime = call.argument<String>("nextPrayerTime") ?: ""
+                    val remaining = call.argument<String>("remaining") ?: ""
+                    val imsak = call.argument<String>("imsak") ?: ""
+                    val gunes = call.argument<String>("gunes") ?: ""
+                    val ogle = call.argument<String>("ogle") ?: ""
+                    val ikindi = call.argument<String>("ikindi") ?: ""
+                    val aksam = call.argument<String>("aksam") ?: ""
+                    val yatsi = call.argument<String>("yatsi") ?: ""
+
+                    PrayerForegroundService.updateWithPrayerTimes(
+                        context = this,
+                        city = city,
+                        nextPrayer = nextPrayer,
+                        nextPrayerTime = nextPrayerTime,
+                        remaining = remaining,
+                        imsak = imsak,
+                        gunes = gunes,
+                        ogle = ogle,
+                        ikindi = ikindi,
+                        aksam = aksam,
+                        yatsi = yatsi
+                    )
+                    result.success(true)
+                }
+
                 "getDeviceManufacturer" -> {
                     result.success(Build.MANUFACTURER)
                 }

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
 import '../entity/namazvakitleri.dart';
 
@@ -49,6 +50,32 @@ class WidgetService {
         androidName: androidWidgetProvider,
         iOSName: iosWidgetName,
       );
+
+      // Üst bildirim çekmecesindeki kalıcı bildirimi namaz vakitleriyle güncelle
+      try {
+        const platform = MethodChannel('com.fatihatalay.kuranvenamaz/device_settings');
+        final timesMap = <String, String>{};
+        for (final v in vakitler) {
+          timesMap[v.vakitIsmi.toLowerCase()] = v.namazSaati;
+        }
+
+        final hours = kalanSure.inHours.toString().padLeft(2, '0');
+        final minutes = (kalanSure.inMinutes % 60).toString().padLeft(2, '0');
+        final countdownFormatted = "$hours:$minutes";
+
+        await platform.invokeMethod('updateForegroundNotification', {
+          'city': cityName,
+          'nextPrayer': sonrakiVakitIsmi,
+          'nextPrayerTime': nextPrayerTime,
+          'remaining': countdownFormatted,
+          'imsak': timesMap['imsak'] ?? '',
+          'gunes': timesMap['güneş'] ?? timesMap['gunes'] ?? '',
+          'ogle': timesMap['öğle'] ?? timesMap['ogle'] ?? '',
+          'ikindi': timesMap['ikindi'] ?? '',
+          'aksam': timesMap['akşam'] ?? timesMap['aksam'] ?? '',
+          'yatsi': timesMap['yatsı'] ?? timesMap['yatsi'] ?? '',
+        });
+      } catch (_) {}
     } catch (e) {
       debugPrint("WidgetService updateWidgetData hatası: $e");
     }

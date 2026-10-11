@@ -33,9 +33,9 @@ class SettingsService {
   bool _askedPrompt = false;
   bool _oemBannerDismissed = false;
 
-  // 2. Alarm (Yedek / Erteleme / Uyanma Güvencesi)
+  // 2. Alarm (Hatırlatma / Öncesi veya Vakti)
   bool _secondAlarmEnabled = true;
-  int _secondAlarmMinutes = 15; // Genel / Varsayılan: Vakitten 15 dakika sonra çalar
+  int _secondAlarmMinutes = -15; // Genel / Varsayılan: Vakitten 15 dakika önce çalar
   String _secondAlarmSoundType = 'alarm'; // 'alarm' (sesli zil) veya 'ezan'
   Map<int, int> _prayerSecondAlarmMinutes = {}; // Vakit bazlı özel dakikalar (0: İmsak, ...)
 
@@ -73,23 +73,25 @@ class SettingsService {
   Map<int, Set<int>> get dayPrayers => Map.unmodifiable(_dayPrayers);
 
   int getFirstAlarmMinutes({int? prayerIndex}) {
+    int val = _firstAlarmMinutes;
     if (prayerIndex != null && _prayerFirstAlarmMinutes.containsKey(prayerIndex)) {
-      return _prayerFirstAlarmMinutes[prayerIndex]!;
+      val = _prayerFirstAlarmMinutes[prayerIndex]!;
     }
-    return _firstAlarmMinutes;
+    return val > 0 ? -val : val;
   }
 
   bool get secondAlarmEnabled => _secondAlarmEnabled;
-  int get secondAlarmMinutes => _secondAlarmMinutes;
+  int get secondAlarmMinutes => _secondAlarmMinutes > 0 ? -_secondAlarmMinutes : _secondAlarmMinutes;
   String get secondAlarmSoundType => _secondAlarmSoundType;
   Map<int, Set<int>> get daySecondPrayers => Map.unmodifiable(_daySecondPrayers);
   Map<int, int> get prayerSecondAlarmMinutes => Map.unmodifiable(_prayerSecondAlarmMinutes);
 
   int getSecondAlarmMinutes({int? prayerIndex}) {
+    int val = _secondAlarmMinutes;
     if (prayerIndex != null && _prayerSecondAlarmMinutes.containsKey(prayerIndex)) {
-      return _prayerSecondAlarmMinutes[prayerIndex]!;
+      val = _prayerSecondAlarmMinutes[prayerIndex]!;
     }
-    return _secondAlarmMinutes;
+    return val > 0 ? -val : val;
   }
 
   Set<int> getPrayersForDay(int weekday) {
@@ -137,7 +139,12 @@ class SettingsService {
     }
 
     _secondAlarmEnabled = prefs.getBool(keySecondAlarmEnabled) ?? true;
-    _secondAlarmMinutes = prefs.getInt(keySecondAlarmMinutes) ?? 15;
+    int rawSecondMinutes = prefs.getInt(keySecondAlarmMinutes) ?? -15;
+    if (rawSecondMinutes > 0) {
+      rawSecondMinutes = -rawSecondMinutes;
+      await prefs.setInt(keySecondAlarmMinutes, rawSecondMinutes);
+    }
+    _secondAlarmMinutes = rawSecondMinutes;
     _secondAlarmSoundType = prefs.getString(keySecondAlarmSoundType) ?? 'alarm';
 
     final daySecondPrayersJson = prefs.getString(keyDaySecondPrayers);
@@ -165,8 +172,11 @@ class SettingsService {
         _prayerSecondAlarmMinutes = {};
         decoded.forEach((k, v) {
           final pIdx = int.tryParse(k);
-          final m = (v as num).toInt();
-          if (pIdx != null && m > 0) {
+          int m = (v as num).toInt();
+          if (m > 0) {
+            m = -m;
+          }
+          if (pIdx != null) {
             _prayerSecondAlarmMinutes[pIdx] = m;
           }
         });
@@ -175,7 +185,12 @@ class SettingsService {
       }
     }
 
-    _firstAlarmMinutes = prefs.getInt(keyFirstAlarmMinutes) ?? 0;
+    int rawFirstMinutes = prefs.getInt(keyFirstAlarmMinutes) ?? 0;
+    if (rawFirstMinutes > 0) {
+      rawFirstMinutes = -rawFirstMinutes;
+      await prefs.setInt(keyFirstAlarmMinutes, rawFirstMinutes);
+    }
+    _firstAlarmMinutes = rawFirstMinutes;
     final prayerFirstMinutesJson = prefs.getString(keyPrayerFirstAlarmMinutes);
     if (prayerFirstMinutesJson != null) {
       try {
@@ -183,7 +198,10 @@ class SettingsService {
         _prayerFirstAlarmMinutes = {};
         decoded.forEach((k, v) {
           final pIdx = int.tryParse(k);
-          final m = (v as num).toInt();
+          int m = (v as num).toInt();
+          if (m > 0) {
+            m = -m;
+          }
           if (pIdx != null) {
             _prayerFirstAlarmMinutes[pIdx] = m;
           }
@@ -193,7 +211,7 @@ class SettingsService {
       }
     }
 
-    debugPrint("Settings initialized: enabled=$_notificationsEnabled, ezan=$_ezanEnabled (firstAlarm=$_firstAlarmMinutes dk, perPrayer=$_prayerFirstAlarmMinutes), preNotif=$_preNotificationEnabled, secondAlarm=$_secondAlarmEnabled (default +$_secondAlarmMinutes dk, perPrayer=$_prayerSecondAlarmMinutes), dayPrayers=$_dayPrayers, daySecondPrayers=$_daySecondPrayers");
+    debugPrint("Settings initialized: enabled=$_notificationsEnabled, ezan=$_ezanEnabled (firstAlarm=$_firstAlarmMinutes dk, perPrayer=$_prayerFirstAlarmMinutes), preNotif=$_preNotificationEnabled, secondAlarm=$_secondAlarmEnabled (default $_secondAlarmMinutes dk, perPrayer=$_prayerSecondAlarmMinutes), dayPrayers=$_dayPrayers, daySecondPrayers=$_daySecondPrayers");
   }
 
   Future<void> setNotificationsEnabled(bool enabled) async {
@@ -221,13 +239,15 @@ class SettingsService {
   }
 
   Future<void> setFirstAlarmMinutes(int minutes) async {
-    _firstAlarmMinutes = minutes;
+    final normalized = minutes > 0 ? -minutes : minutes;
+    _firstAlarmMinutes = normalized;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(keyFirstAlarmMinutes, minutes);
+    await prefs.setInt(keyFirstAlarmMinutes, normalized);
   }
 
   Future<void> setPrayerFirstAlarmMinutes(int prayerIndex, int minutes) async {
-    _prayerFirstAlarmMinutes[prayerIndex] = minutes;
+    final normalized = minutes > 0 ? -minutes : minutes;
+    _prayerFirstAlarmMinutes[prayerIndex] = normalized;
     final prefs = await SharedPreferences.getInstance();
     final Map<String, int> mapToSave = {};
     _prayerFirstAlarmMinutes.forEach((k, v) => mapToSave[k.toString()] = v);
@@ -235,10 +255,11 @@ class SettingsService {
   }
 
   Future<void> setAllPrayersFirstAlarmMinutes(int minutes) async {
-    _firstAlarmMinutes = minutes;
+    final normalized = minutes > 0 ? -minutes : minutes;
+    _firstAlarmMinutes = normalized;
     _prayerFirstAlarmMinutes.clear();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(keyFirstAlarmMinutes, minutes);
+    await prefs.setInt(keyFirstAlarmMinutes, normalized);
     await prefs.remove(keyPrayerFirstAlarmMinutes);
   }
 
@@ -255,13 +276,15 @@ class SettingsService {
   }
 
   Future<void> setSecondAlarmMinutes(int minutes) async {
-    _secondAlarmMinutes = minutes;
+    final normalized = minutes > 0 ? -minutes : minutes;
+    _secondAlarmMinutes = normalized;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(keySecondAlarmMinutes, minutes);
+    await prefs.setInt(keySecondAlarmMinutes, normalized);
   }
 
   Future<void> setPrayerSecondAlarmMinutes(int prayerIndex, int minutes) async {
-    _prayerSecondAlarmMinutes[prayerIndex] = minutes;
+    final normalized = minutes > 0 ? -minutes : minutes;
+    _prayerSecondAlarmMinutes[prayerIndex] = normalized;
     final prefs = await SharedPreferences.getInstance();
     final Map<String, int> mapToSave = {};
     _prayerSecondAlarmMinutes.forEach((k, v) => mapToSave[k.toString()] = v);
@@ -269,10 +292,11 @@ class SettingsService {
   }
 
   Future<void> setAllPrayersSecondAlarmMinutes(int minutes) async {
-    _secondAlarmMinutes = minutes;
+    final normalized = minutes > 0 ? -minutes : minutes;
+    _secondAlarmMinutes = normalized;
     _prayerSecondAlarmMinutes.clear();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(keySecondAlarmMinutes, minutes);
+    await prefs.setInt(keySecondAlarmMinutes, normalized);
     await prefs.remove(keyPrayerSecondAlarmMinutes);
   }
 

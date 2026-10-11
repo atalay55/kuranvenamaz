@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:kuranvenamaz/core/app_translations.dart';
 import 'package:kuranvenamaz/core/quran_service.dart';
 import 'package:kuranvenamaz/entity/quran_model.dart';
 import 'package:kuranvenamaz/theme/app_theme.dart';
@@ -690,9 +691,16 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildModeChip("Arapça+Meal", QuranViewMode.combined),
-              _buildModeChip("Arapça", QuranViewMode.arabicOnly),
-              _buildModeChip("Meal", QuranViewMode.turkishOnly),
+              _buildModeChip(
+                  AppTranslations.translate("arabic_and_translation",
+                      fallback: "Arapça+Meal"),
+                  QuranViewMode.combined),
+              _buildModeChip(
+                  AppTranslations.translate("arabic", fallback: "Arapça"),
+                  QuranViewMode.arabicOnly),
+              _buildModeChip(
+                  AppTranslations.translate("translation", fallback: "Meal"),
+                  QuranViewMode.turkishOnly),
             ],
           ),
           const SizedBox(height: 6),
@@ -709,9 +717,12 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                     size: 18,
                   ),
                   const SizedBox(width: 6),
-                  Text("Metin Boyutu",
-                      style:
-                          TextStyle(color: secondaryTextColor, fontSize: 12)),
+                  Text(
+                    AppTranslations.translate("text_size",
+                        fallback: "Metin Boyutu"),
+                    style:
+                        TextStyle(color: secondaryTextColor, fontSize: 12),
+                  ),
                 ],
               ),
               Row(

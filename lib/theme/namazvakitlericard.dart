@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kuranvenamaz/core/app_translations.dart';
 import 'package:kuranvenamaz/entity/namazvakitleri.dart';
 import 'package:kuranvenamaz/theme/app_theme.dart';
 
@@ -32,12 +33,14 @@ Widget namazVakitleriKucuk(NamazVakitleri namazVakit, {bool isNextVakit = false}
         ),
         const SizedBox(height: 4),
         Text(
-          namazVakit.vakitIsmi,
+          AppTranslations.getLocalizedPrayerName(namazVakit.vakitIsmi),
           style: TextStyle(
             fontSize: 11,
             fontWeight: isNextVakit ? FontWeight.bold : FontWeight.normal,
             color: isNextVakit ? AppTheme.goldAccent : AppTheme.textSecondaryDark,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 2),
         Text(

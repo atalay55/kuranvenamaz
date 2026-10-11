@@ -3,6 +3,7 @@ import 'dart:math' show pi, sin, cos, tan, atan2;
 import 'package:flutter/material.dart';
 import 'package:flutter_qiblah/flutter_qiblah.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:kuranvenamaz/core/app_translations.dart';
 import 'package:kuranvenamaz/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vibration/vibration.dart';
@@ -50,7 +51,7 @@ class _QiblahCompassState extends State<QiblahCompass> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Kıble Bulucu"),
+        title: Text(AppTranslations.translate('qibla', fallback: "Kıble Pusulası")),
         centerTitle: true,
       ),
       body: Container(
@@ -319,8 +320,8 @@ class _PureQiblaFinderViewState extends State<PureQiblaFinderView> {
               const SizedBox(width: 10),
               Text(
                 isAligned
-                    ? "KIBLE YÖNÜNDESİNİZ ✓"
-                    : "KÂBE AÇISI: ${targetQibla.toStringAsFixed(0)}°",
+                    ? AppTranslations.translate('facing_qibla', fallback: "KIBLE YÖNÜNDESİNİZ ✓")
+                    : "${AppTranslations.translate('qibla_angle', fallback: 'KÂBE AÇISI').toUpperCase()}: ${targetQibla.toStringAsFixed(0)}°",
                 style: TextStyle(
                   color: isAligned ? Colors.white : AppTheme.goldAccent,
                   fontSize: 18,
@@ -339,7 +340,7 @@ class _PureQiblaFinderViewState extends State<PureQiblaFinderView> {
                     color: AppTheme.goldLight, size: 14),
                 const SizedBox(width: 4),
                 Text(
-                  "Kâbe'ye Uzaklık: ${distanceKm!.toStringAsFixed(0)} km",
+                  "${AppTranslations.translate('distance_to_kaaba', fallback: "Kâbe'ye Uzaklık")}: ${distanceKm!.toStringAsFixed(0)} km",
                   style: const TextStyle(
                     color: AppTheme.goldAccent,
                     fontSize: 13,
@@ -422,12 +423,16 @@ class _PureQiblaFinderViewState extends State<PureQiblaFinderView> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem("Kıble Açısı", "${targetQibla.toStringAsFixed(0)}°"),
-          Container(width: 1, height: 30, color: Colors.white12),
-          _buildStatItem("Cihaz Yönü", "${phoneHeading.toStringAsFixed(0)}°"),
+          _buildStatItem(
+              AppTranslations.translate('qibla_angle', fallback: "Kıble Açısı"),
+              "${targetQibla.toStringAsFixed(0)}°"),
           Container(width: 1, height: 30, color: Colors.white12),
           _buildStatItem(
-              "Mesafe",
+              AppTranslations.translate('device_heading', fallback: "Cihaz Yönü"),
+              "${phoneHeading.toStringAsFixed(0)}°"),
+          Container(width: 1, height: 30, color: Colors.white12),
+          _buildStatItem(
+              AppTranslations.translate('distance', fallback: "Mesafe"),
               distanceKm != null
                   ? "${distanceKm!.toStringAsFixed(0)} km"
                   : "-"),

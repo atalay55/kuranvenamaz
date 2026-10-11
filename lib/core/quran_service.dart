@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:kuranvenamaz/core/app_translations.dart';
 import 'package:kuranvenamaz/entity/quran_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -122,28 +123,29 @@ class QuranService {
     Surah(number: 114, name: "الناس", turkishName: "Nâs", englishNameTranslation: "İnsanlar", numberOfAyahs: 6, revelationType: "Mekke"),
   ];
 
-  // Fetch Surah Ayahs from Al-Quran Cloud (Arabic Uthmani + Diyanet Meal)
-  Future<List<AyahDetail>> fetchSurahAyahs(int surahNumber) async {
+  // Fetch Surah Ayahs from Al-Quran Cloud (Arabic Uthmani + Active Language Meal)
+  Future<List<AyahDetail>> fetchSurahAyahs(int surahNumber, {String? edition}) async {
     try {
-      final url = 'https://api.alquran.cloud/v1/surah/$surahNumber/editions/quran-uthmani,tr.diyanet';
+      final editionId = edition ?? AppTranslations.quranEditionIdentifier;
+      final url = 'https://api.alquran.cloud/v1/surah/$surahNumber/editions/quran-uthmani,$editionId';
       final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
         if (jsonData['data'] != null && jsonData['data'] is List && (jsonData['data'] as List).length >= 2) {
           final arabicList = jsonData['data'][0]['ayahs'] as List;
-          final diyanetList = jsonData['data'][1]['ayahs'] as List;
+          final mealList = jsonData['data'][1]['ayahs'] as List;
 
           List<AyahDetail> result = [];
-          for (int i = 0; i < arabicList.length && i < diyanetList.length; i++) {
+          for (int i = 0; i < arabicList.length && i < mealList.length; i++) {
             final arabicItem = arabicList[i];
-            final diyanetItem = diyanetList[i];
+            final mealItem = mealList[i];
 
             result.add(
               AyahDetail(
                 numberInSurah: arabicItem['numberInSurah'] ?? (i + 1),
                 arabicText: arabicItem['text'] ?? '',
-                turkishTranslation: diyanetItem['text'] ?? '',
+                turkishTranslation: mealItem['text'] ?? '',
               ),
             );
           }

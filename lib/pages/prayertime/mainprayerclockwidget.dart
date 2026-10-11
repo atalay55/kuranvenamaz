@@ -7,6 +7,7 @@ import '../../core/utilities.dart';
 import '../../core/widget_service.dart';
 import '../../entity/namazvakitleri.dart';
 import '../../theme/namazvakitlericard.dart';
+import '../../core/app_translations.dart';
 
 class MainPrayerClockWidget extends StatefulWidget {
   const MainPrayerClockWidget({Key? key}) : super(key: key);
@@ -117,22 +118,61 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
       child: Column(
         children: <Widget>[
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.location_on_rounded, color: AppTheme.goldAccent, size: 20),
-                  const SizedBox(width: 6),
-                  Text(
-                    "$cityName, $countryName",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+              // 1. Sol: Konum Bilgisi (Asla taşmaz, çift Expanded + ellipsis korumalı)
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(Icons.location_on_rounded, color: AppTheme.goldAccent, size: 20),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        "$cityName, ${AppTranslations.getLocalizedCountryName(countryName)}",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 6),
+
+              // 2. Dil Seçici Butonu (🌐 TR / EN / DE / AR)
+              InkWell(
+                onTap: () => _showLanguageBottomSheet(context),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white10,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppTheme.goldAccent.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.language_rounded, color: AppTheme.goldAccent, size: 14),
+                      const SizedBox(width: 4),
+                      Text(
+                        (Get.locale?.languageCode ?? 'tr').toUpperCase(),
+                        style: const TextStyle(
+                          color: AppTheme.goldAccent,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+
+              // 3. Konum Değiştir Butonu
               InkWell(
                 onTap: () {
                   Get.to(const CountrySelectPage())?.then((_) => _loadData());
@@ -145,13 +185,14 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: AppTheme.goldAccent.withValues(alpha: 0.3)),
                   ),
-                  child: const Row(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.edit_location_alt_rounded, color: AppTheme.goldAccent, size: 14),
-                      SizedBox(width: 4),
+                      const Icon(Icons.edit_location_alt_rounded, color: AppTheme.goldAccent, size: 14),
+                      const SizedBox(width: 4),
                       Text(
-                        "Değiştir",
-                        style: TextStyle(color: AppTheme.goldAccent, fontSize: 12),
+                        'change'.tr,
+                        style: const TextStyle(color: AppTheme.goldAccent, fontSize: 12),
                       ),
                     ],
                   ),
@@ -163,7 +204,9 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
 
           // Countdown Display Banner
           Text(
-            "$sonrakiVakitIsmi Vaktine Kalan Süre",
+            'remaining_to'.trParams({
+              'vakit': AppTranslations.getLocalizedPrayerName(sonrakiVakitIsmi),
+            }),
             style: const TextStyle(
               color: AppTheme.goldLight,
               fontSize: 13,
@@ -175,11 +218,11 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildTimeUnit(displaySaat, "Saat"),
+              _buildTimeUnit(displaySaat, 'hours'.tr),
               const Text(" : ", style: TextStyle(color: AppTheme.goldAccent, fontSize: 26, fontWeight: FontWeight.bold)),
-              _buildTimeUnit(displayDakika, "Dakika"),
+              _buildTimeUnit(displayDakika, 'minutes'.tr),
               const Text(" : ", style: TextStyle(color: AppTheme.goldAccent, fontSize: 26, fontWeight: FontWeight.bold)),
-              _buildTimeUnit(displaySaniye, "Saniye"),
+              _buildTimeUnit(displaySaniye, 'seconds'.tr),
             ],
           ),
           const SizedBox(height: 18),
@@ -234,7 +277,7 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
                         });
                       },
                       icon: const Icon(Icons.refresh, size: 16),
-                      label: const Text("Yeniden Dene"),
+                      label: Text('retry'.tr),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryEmerald,
                         foregroundColor: Colors.white,
@@ -245,7 +288,7 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
               } else {
                 return Column(
                   children: [
-                    const Text('Namaz vakitleri alınamadı.', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                    Text('failed_prayer_times'.tr, style: const TextStyle(color: Colors.white70, fontSize: 12)),
                     const SizedBox(height: 8),
                     ElevatedButton.icon(
                       onPressed: () {
@@ -254,7 +297,7 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
                         });
                       },
                       icon: const Icon(Icons.refresh, size: 16),
-                      label: const Text("Yeniden Dene"),
+                      label: Text('retry'.tr),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryEmerald,
                         foregroundColor: Colors.white,
@@ -296,6 +339,93 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
           style: const TextStyle(fontSize: 10, color: AppTheme.textSecondaryDark),
         ),
       ],
+    );
+  }
+
+  void _showLanguageBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surfaceDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        final currentCode = Get.locale?.languageCode ?? 'tr';
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.textSecondaryDark.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    const Icon(Icons.language_rounded, color: AppTheme.primaryEmerald, size: 24),
+                    const SizedBox(width: 10),
+                    Text(
+                      'select_language'.tr,
+                      style: const TextStyle(
+                        color: AppTheme.primaryEmerald,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                ...AppTranslations.supportedLanguages.map((lang) {
+                  final isSelected = lang['code'] == currentCode;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: ListTile(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: BorderSide(
+                          color: isSelected
+                              ? AppTheme.goldAccent
+                              : AppTheme.goldAccent.withValues(alpha: 0.2),
+                          width: isSelected ? 1.5 : 1,
+                        ),
+                      ),
+                      tileColor: isSelected
+                          ? AppTheme.goldAccent.withValues(alpha: 0.2)
+                          : Colors.black.withValues(alpha: 0.03),
+                      leading: Text(lang['flag']!, style: const TextStyle(fontSize: 26)),
+                      title: Text(
+                        lang['name']!,
+                        style: TextStyle(
+                          color: isSelected ? AppTheme.primaryEmerald : AppTheme.textPrimaryDark,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                      ),
+                      trailing: isSelected
+                          ? const Icon(Icons.check_circle_rounded, color: AppTheme.primaryEmerald)
+                          : null,
+                      onTap: () async {
+                        Navigator.pop(ctx);
+                        await AppTranslations.changeLocale(lang['code']!);
+                        if (mounted) setState(() {});
+                      },
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

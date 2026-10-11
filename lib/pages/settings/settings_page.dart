@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kuranvenamaz/core/app_translations.dart';
 import 'package:kuranvenamaz/core/device_settings_service.dart';
 import 'package:kuranvenamaz/core/notificationservice.dart';
 import 'package:kuranvenamaz/core/settings_service.dart';
@@ -48,13 +49,19 @@ class _SettingsPageState extends State<SettingsPage>
   @override
   void initState() {
     super.initState();
+    AppTranslations.currentLocaleNotifier.addListener(_onLocaleChanged);
     WidgetsBinding.instance.addObserver(this);
     _loadSettings();
     _checkPermissions();
   }
 
+  void _onLocaleChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    AppTranslations.currentLocaleNotifier.removeListener(_onLocaleChanged);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -118,6 +125,143 @@ class _SettingsPageState extends State<SettingsPage>
     }
   }
 
+  // ─── DİL SEÇİMİ KARTI ───────────────────────────────────────────────────
+
+  Widget _buildLanguageCard() {
+    final currentCode = AppTranslations.currentLanguageCode;
+    final currentLang = AppTranslations.supportedLanguages.firstWhere(
+      (l) => l['code'] == currentCode,
+      orElse: () => {'code': 'tr', 'name': 'Türkçe', 'flag': '🇹🇷'},
+    );
+
+    return Container(
+      decoration: AppTheme.cardDecoration(color: AppTheme.surfaceDark),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: AppTheme.goldAccent.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppTheme.goldAccent.withValues(alpha: 0.3)),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            currentLang['flag'] ?? '🌐',
+            style: const TextStyle(fontSize: 22),
+          ),
+        ),
+        title: Text(
+          AppTranslations.translate('app_language', fallback: 'Uygulama Dili'),
+          style: const TextStyle(
+            color: AppTheme.textPrimaryDark,
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+          ),
+        ),
+        subtitle: Text(
+          currentLang['name'] ?? 'Türkçe',
+          style: const TextStyle(
+            color: AppTheme.primaryEmerald,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        trailing: const Icon(
+          Icons.arrow_forward_ios_rounded,
+          color: AppTheme.goldAccent,
+          size: 16,
+        ),
+        onTap: () => _showLanguageSelectionSheet(),
+      ),
+    );
+  }
+
+  void _showLanguageSelectionSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final currentCode = AppTranslations.currentLanguageCode;
+        return Container(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          decoration: const BoxDecoration(
+            color: AppTheme.surfaceDark,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade400,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    AppTranslations.translate('select_language', fallback: 'Uygulama Dilini Seçin'),
+                    style: const TextStyle(
+                      color: AppTheme.textPrimaryDark,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 17,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 20),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ...AppTranslations.supportedLanguages.map((lang) {
+                final isSelected = lang['code'] == currentCode;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: BorderSide(
+                        color: isSelected ? AppTheme.goldAccent : AppTheme.goldAccent.withValues(alpha: 0.2),
+                        width: isSelected ? 1.5 : 1,
+                      ),
+                    ),
+                    tileColor: isSelected
+                        ? AppTheme.goldAccent.withValues(alpha: 0.12)
+                        : Colors.black.withValues(alpha: 0.03),
+                    leading: Text(lang['flag']!, style: const TextStyle(fontSize: 24)),
+                    title: Text(
+                      lang['name']!,
+                      style: TextStyle(
+                        color: isSelected ? AppTheme.primaryEmerald : AppTheme.textPrimaryDark,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                    ),
+                    trailing: isSelected
+                        ? const Icon(Icons.check_circle_rounded, color: AppTheme.primaryEmerald)
+                        : null,
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      await AppTranslations.changeLocale(lang['code']!);
+                      if (mounted) setState(() {});
+                    },
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // ─── İZİN DURUM KARTI ───────────────────────────────────────────────────
 
   Widget _buildPermissionCard() {
@@ -128,9 +272,9 @@ class _SettingsPageState extends State<SettingsPage>
           color: Colors.white10,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Row(
+        child: Row(
           children: [
-            SizedBox(
+            const SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
@@ -138,10 +282,10 @@ class _SettingsPageState extends State<SettingsPage>
                 color: AppTheme.goldAccent,
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Text(
-              "Bildirim ayarları kontrol ediliyor...",
-              style: TextStyle(color: Colors.white70, fontSize: 13),
+              AppTranslations.translate('notifications_checking', fallback: "Bildirim ayarları kontrol ediliyor..."),
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
           ],
         ),
@@ -164,27 +308,27 @@ class _SettingsPageState extends State<SettingsPage>
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppTheme.primaryEmerald, width: 1.5),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.check_circle_rounded,
+          const Icon(Icons.check_circle_rounded,
               color: AppTheme.primaryEmerald, size: 26),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Bildirimler Aktif ✓",
-                  style: TextStyle(
+                  AppTranslations.translate('notifications_active_ok', fallback: "Bildirimler Aktif ✓"),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
-                  "Ezan ve namaz vakti bildirimleri sorunsuz çalışacak.",
-                  style: TextStyle(color: Colors.white60, fontSize: 12),
+                  AppTranslations.translate('notifications_active_ok_desc', fallback: "Ezan ve namaz vakti bildirimleri sorunsuz çalışacak."),
+                  style: const TextStyle(color: Colors.white60, fontSize: 12),
                 ),
               ],
             ),
@@ -611,22 +755,22 @@ class _SettingsPageState extends State<SettingsPage>
             ),
           ),
           const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Telefondaki Kendi Alarm Sesleri",
-                  style: TextStyle(
+                  AppTranslations.translate('device_custom_sounds_title', fallback: "Telefondaki Kendi Alarm Sesleri"),
+                  style: const TextStyle(
                     color: AppTheme.textPrimaryDark,
                     fontWeight: FontWeight.bold,
                     fontSize: 12.5,
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
-                  "Telefonunuzdaki hazır alarm ve zil seslerinden seçmek için dokunun.",
-                  style: TextStyle(
+                  AppTranslations.translate('device_custom_sounds_desc', fallback: "Telefonunuzdaki hazır alarm ve zil seslerinden seçmek için dokunun."),
+                  style: const TextStyle(
                     color: AppTheme.textSecondaryDark,
                     fontSize: 10.5,
                   ),
@@ -646,9 +790,9 @@ class _SettingsPageState extends State<SettingsPage>
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text(
-              "Sesi Seç",
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+            child: Text(
+              AppTranslations.translate('change', fallback: "Seç"),
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
             ),
             onPressed: () async {
               await DeviceSettingsService.openChannelNotificationSettings(
@@ -660,521 +804,20 @@ class _SettingsPageState extends State<SettingsPage>
     );
   }
 
-  Future<void> _showMinutePickerDialog({
-    required String title,
-    required int initialMinutes,
-    int? prayerIndex,
-    required bool isSecondAlarm,
-  }) async {
-    int selectedMinutes = initialMinutes;
-    String selectedSoundType = _secondAlarmSoundType;
-    bool applyToAll = prayerIndex == null;
-    final TextEditingController textController =
-        TextEditingController(text: initialMinutes.toString());
-    String? playingSoundType;
-
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Container(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-              ),
-              decoration: BoxDecoration(
-                color: AppTheme.bgDark,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
-                border: Border(
-                  top: BorderSide(
-                    color: AppTheme.goldAccent.withValues(alpha: 0.5),
-                    width: 1.5,
-                  ),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 15,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 42,
-                        height: 4.5,
-                        decoration: BoxDecoration(
-                          color:
-                              AppTheme.textSecondaryDark.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(7),
-                          decoration: BoxDecoration(
-                            color: AppTheme.goldAccent.withValues(alpha: 0.18),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            isSecondAlarm
-                                ? Icons.alarm_add_rounded
-                                : Icons.timer_rounded,
-                            color: AppTheme.primaryEmerald,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            title,
-                            style: const TextStyle(
-                              color: AppTheme.textPrimaryDark,
-                              fontSize: 16.5,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      isSecondAlarm
-                          ? "Vakit girdikten sonra 2. alarmın kaç dakika sonra çalacağını ve zil sesini belirleyin."
-                          : "Vakit girmeden önce hatırlatmanın kaç dakika önce yapılacağını belirleyin.",
-                      style: const TextStyle(
-                          color: AppTheme.textSecondaryDark, fontSize: 12.5),
-                    ),
-                    const SizedBox(height: 18),
-
-                    // Gösterge Kartı
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 16, horizontal: 20),
-                      decoration: BoxDecoration(
-                        color: AppTheme.cardDark,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppTheme.goldAccent.withValues(alpha: 0.4),
-                          width: 1.2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.goldAccent.withValues(alpha: 0.08),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.remove_circle_outline,
-                                color: AppTheme.primaryEmerald, size: 30),
-                            onPressed: () {
-                              if (selectedMinutes > 1) {
-                                setModalState(() {
-                                  selectedMinutes--;
-                                  textController.text =
-                                      selectedMinutes.toString();
-                                });
-                              }
-                            },
-                          ),
-                          Column(
-                            children: [
-                              Text(
-                                "$selectedMinutes",
-                                style: const TextStyle(
-                                  color: AppTheme.primaryEmerald,
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                isSecondAlarm ? "Dakika Sonra" : "Dakika Önce",
-                                style: const TextStyle(
-                                  color: AppTheme.textSecondaryDark,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.add_circle_outline,
-                                color: AppTheme.primaryEmerald, size: 30),
-                            onPressed: () {
-                              if (selectedMinutes < 120) {
-                                setModalState(() {
-                                  selectedMinutes++;
-                                  textController.text =
-                                      selectedMinutes.toString();
-                                });
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Slider
-                    Slider(
-                      value: selectedMinutes.clamp(1, 60).toDouble(),
-                      min: 1,
-                      max: 60,
-                      divisions: 59,
-                      activeColor: AppTheme.primaryEmerald,
-                      inactiveColor:
-                          AppTheme.goldAccent.withValues(alpha: 0.25),
-                      label: "$selectedMinutes dk",
-                      onChanged: (val) {
-                        setModalState(() {
-                          selectedMinutes = val.round();
-                          textController.text = selectedMinutes.toString();
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Hızlı Seçim Butonları
-                    const Text(
-                      "Hızlı Seçenekler:",
-                      style: TextStyle(
-                        color: AppTheme.textPrimaryDark,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [5, 10, 15, 20, 25, 30, 45, 60].map((m) {
-                        final isSelected = selectedMinutes == m;
-                        return ChoiceChip(
-                          label: Text("$m dk"),
-                          selected: isSelected,
-                          selectedColor: AppTheme.primaryEmerald,
-                          backgroundColor: AppTheme.cardDark,
-                          side: BorderSide(
-                            color: isSelected
-                                ? AppTheme.primaryEmerald
-                                : AppTheme.goldAccent.withValues(alpha: 0.35),
-                            width: 1,
-                          ),
-                          labelStyle: TextStyle(
-                            color: isSelected
-                                ? Colors.white
-                                : AppTheme.textPrimaryDark,
-                            fontWeight:
-                                isSelected ? FontWeight.bold : FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                          onSelected: (_) {
-                            setModalState(() {
-                              selectedMinutes = m;
-                              textController.text = m.toString();
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Elle Dakika Girişi
-                    Row(
-                      children: [
-                        const Text(
-                          "Özel Dakika:",
-                          style: TextStyle(
-                            color: AppTheme.textPrimaryDark,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        SizedBox(
-                          width: 80,
-                          child: TextField(
-                            controller: textController,
-                            keyboardType: TextInputType.number,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: AppTheme.textPrimaryDark,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                            decoration: InputDecoration(
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 8),
-                              filled: true,
-                              fillColor: AppTheme.cardDark,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                  color: AppTheme.goldAccent
-                                      .withValues(alpha: 0.4),
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                  color: AppTheme.goldAccent
-                                      .withValues(alpha: 0.4),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: const BorderSide(
-                                  color: AppTheme.primaryEmerald,
-                                  width: 1.5,
-                                ),
-                              ),
-                              hintText: "Dk",
-                              hintStyle: TextStyle(
-                                  color: AppTheme.textSecondaryDark
-                                      .withValues(alpha: 0.5)),
-                            ),
-                            onChanged: (val) {
-                              final numVal = int.tryParse(val);
-                              if (numVal != null &&
-                                  numVal >= 1 &&
-                                  numVal <= 180) {
-                                setModalState(() {
-                                  selectedMinutes = numVal;
-                                });
-                              }
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          "dakika",
-                          style: TextStyle(
-                              color: AppTheme.textSecondaryDark, fontSize: 12),
-                        ),
-                      ],
-                    ),
-
-                    // 2. Alarm Ses Seçimi (Sadece 2. alarm için)
-                    if (isSecondAlarm) ...[
-                      const SizedBox(height: 18),
-                      const Text(
-                        "2. Alarm Ses Türü:",
-                        style: TextStyle(
-                          color: AppTheme.textPrimaryDark,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppTheme.cardDark,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppTheme.goldAccent.withValues(alpha: 0.35),
-                            width: 1,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            _buildSoundChoiceTile(
-                              type: 'alarm',
-                              title: "⏰ Yüksek Sesli Çalar Saat (Önerilen)",
-                              subtitle:
-                                  "Uykudan uyandırmak için kesintisiz çalar saat tonu.",
-                              groupValue: selectedSoundType,
-                              playingSoundType: playingSoundType,
-                              onSelect: (v) =>
-                                  setModalState(() => selectedSoundType = v),
-                              onTogglePlay: (type) async {
-                                if (playingSoundType == type) {
-                                  await NotificationService()
-                                      .stopPreviewSound();
-                                  setModalState(() => playingSoundType = null);
-                                } else {
-                                  setModalState(() => playingSoundType = type);
-                                  await NotificationService()
-                                      .playPreviewSound(type);
-                                }
-                              },
-                            ),
-                            Divider(
-                              color: AppTheme.goldAccent.withValues(alpha: 0.2),
-                              height: 1,
-                            ),
-                            _buildSoundChoiceTile(
-                              type: 'ezan',
-                              title: "🕌 Ezan Sesi İle Okunsun",
-                              subtitle: "İkinci alarmda da ezan sesi çalar.",
-                              groupValue: selectedSoundType,
-                              playingSoundType: playingSoundType,
-                              onSelect: (v) =>
-                                  setModalState(() => selectedSoundType = v),
-                              onTogglePlay: (type) async {
-                                if (playingSoundType == type) {
-                                  await NotificationService()
-                                      .stopPreviewSound();
-                                  setModalState(() => playingSoundType = null);
-                                } else {
-                                  setModalState(() => playingSoundType = type);
-                                  await NotificationService()
-                                      .playPreviewSound(type);
-                                }
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      _buildDeviceCustomSoundBanner(
-                        channelId: 'namaz_vakitleri_ezan_v4',
-                      ),
-                    ],
-
-                    if (prayerIndex != null) ...[
-                      const SizedBox(height: 16),
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        value: applyToAll,
-                        activeColor: AppTheme.primaryEmerald,
-                        checkColor: Colors.white,
-                        title: const Text(
-                          "Tüm namaz vakitlerine uygula",
-                          style: TextStyle(
-                            color: AppTheme.textPrimaryDark,
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        subtitle: const Text(
-                          "İşaretlenirse bu dakika ve ses ayarı tüm vakitlerin 2. alarmına uygulanır.",
-                          style: TextStyle(
-                              color: AppTheme.textSecondaryDark,
-                              fontSize: 11.5),
-                        ),
-                        onChanged: (val) {
-                          setModalState(() {
-                            applyToAll = val ?? false;
-                          });
-                        },
-                      ),
-                    ],
-
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppTheme.textSecondaryDark,
-                              side: BorderSide(
-                                  color: AppTheme.textSecondaryDark
-                                      .withValues(alpha: 0.35)),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: const Text("Vazgeç"),
-                            onPressed: () async {
-                              await NotificationService().stopPreviewSound();
-                              Navigator.pop(ctx);
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryEmerald,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: const Text(
-                              "Kaydet",
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            onPressed: () async {
-                              final messenger = ScaffoldMessenger.of(context);
-                              await NotificationService().stopPreviewSound();
-                              Navigator.pop(ctx);
-                              if (isSecondAlarm) {
-                                if (prayerIndex != null && !applyToAll) {
-                                  await _settings.setPrayerSecondAlarmMinutes(
-                                      prayerIndex, selectedMinutes);
-                                } else {
-                                  await _settings
-                                      .setAllPrayersSecondAlarmMinutes(
-                                          selectedMinutes);
-                                }
-                                await _settings
-                                    .setSecondAlarmSoundType(selectedSoundType);
-                                setState(() {
-                                  _secondAlarmSoundType = selectedSoundType;
-                                });
-                              } else {
-                                await _settings
-                                    .setNotificationTiming(selectedMinutes);
-                                setState(() {
-                                  _notificationTiming = selectedMinutes;
-                                });
-                              }
-                              await PrayerUtilities().getNamazVakitleri();
-                              messenger.showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    isSecondAlarm
-                                        ? "✅ 2. Alarm: +$selectedMinutes dk sonra (${selectedSoundType == 'alarm' ? 'Çalar Saat' : 'Ezan'}) kaydedildi!"
-                                        : "✅ Hatırlatma süresi $selectedMinutes dk önce olarak güncellendi!",
-                                  ),
-                                  backgroundColor: AppTheme.primaryEmerald,
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    ).whenComplete(() => NotificationService().stopPreviewSound());
-  }
-
-  Future<void> _showFirstAlarmDialog({
+  Future<void> _showAlarmDialog({
+    required int alarmNumber,
     int? prayerIndex,
     String? prayerName,
   }) async {
-    final currentMinutes =
-        _settings.getFirstAlarmMinutes(prayerIndex: prayerIndex);
-    // 0: Tam Vakit, -1: Vakitten Önce, 1: Vakitten Sonra
-    int timingMode = currentMinutes == 0 ? 0 : (currentMinutes < 0 ? -1 : 1);
-    int offsetMinutes = currentMinutes.abs() == 0 ? 15 : currentMinutes.abs();
-    String selectedSoundType = _soundType;
+    final bool isFirst = alarmNumber == 1;
+    final int currentMinutes = isFirst
+        ? _settings.getFirstAlarmMinutes(prayerIndex: prayerIndex)
+        : _settings.getSecondAlarmMinutes(prayerIndex: prayerIndex);
+
+    // 0: Tam Vakit, -1: Vakitten Önce
+    int timingMode = currentMinutes == 0 ? 0 : -1;
+    int offsetMinutes = currentMinutes == 0 ? 15 : currentMinutes.abs();
+    String selectedSoundType = isFirst ? _soundType : _secondAlarmSoundType;
     bool applyToAll = prayerIndex == null;
     final TextEditingController textController =
         TextEditingController(text: offsetMinutes.toString());
@@ -1184,92 +827,156 @@ class _SettingsPageState extends State<SettingsPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      enableDrag: true,
       builder: (ctx) {
+        bool isClosed = false;
+        void safePop() {
+          if (!isClosed && Navigator.of(ctx).canPop()) {
+            isClosed = true;
+            Navigator.of(ctx).pop();
+          }
+        }
+
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return Container(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 16,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            return ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.9,
               ),
-              decoration: BoxDecoration(
-                color: AppTheme.bgDark,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
-                border: Border(
-                  top: BorderSide(
-                    color: AppTheme.goldAccent.withValues(alpha: 0.5),
-                    width: 1.5,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppTheme.bgDark,
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(24)),
+                  border: Border(
+                    top: BorderSide(
+                      color: AppTheme.goldAccent.withValues(alpha: 0.5),
+                      width: 1.5,
+                    ),
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 15,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 15,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
-              ),
-              child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(
-                      child: Container(
-                        width: 42,
-                        height: 4.5,
-                        decoration: BoxDecoration(
-                          color:
-                              AppTheme.textSecondaryDark.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(3),
+                    // ÜST PANEL (Flutter BottomSheet sürükleme hareketini doğrudan yönetir)
+                    Container(
+                      padding: const EdgeInsets.only(
+                        left: 20,
+                        right: 12,
+                        top: 12,
+                        bottom: 10,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Center(
+                              child: Container(
+                                width: 44,
+                                height: 5,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.textSecondaryDark
+                                      .withValues(alpha: 0.35),
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(7),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.goldAccent
+                                        .withValues(alpha: 0.18),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.alarm_rounded,
+                                    color: AppTheme.primaryEmerald,
+                                    size: 22,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    isFirst
+                                        ? (prayerIndex != null
+                                            ? AppTranslations.translate('first_alarm_dialog_title', fallback: "@name İçin 1. Alarm Ayarları").replaceAll('@name', prayerName ?? '')
+                                            : AppTranslations.translate('first_alarm_dialog_title_general', fallback: "1. Alarm (Ana Alarm) Ayarları"))
+                                        : (prayerIndex != null
+                                            ? AppTranslations.translate('second_alarm_dialog_title', fallback: "@name İçin 2. Alarm Ayarları").replaceAll('@name', prayerName ?? '')
+                                            : AppTranslations.translate('second_alarm_dialog_title_general', fallback: "2. Alarm Ayarları")),
+                                    style: const TextStyle(
+                                      color: AppTheme.textPrimaryDark,
+                                      fontSize: 16.5,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.close_rounded,
+                                    color: AppTheme.textSecondaryDark,
+                                    size: 24,
+                                  ),
+                                  onPressed: safePop,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 32),
+                              child: Text(
+                                isFirst
+                                    ? AppTranslations.translate('first_alarm_dialog_desc', fallback: "Alarm saatini (tam vakit veya önce) ve ses tercihinizi belirleyin.")
+                                    : AppTranslations.translate('second_alarm_dialog_desc', fallback: "Alarm saatini (tam vakit veya önce) ve ses tercihinizi belirleyin."),
+                                style: const TextStyle(
+                                    color: AppTheme.textSecondaryDark, fontSize: 12.5),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                    Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      color: AppTheme.textSecondaryDark.withValues(alpha: 0.15),
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(7),
-                          decoration: BoxDecoration(
-                            color: AppTheme.goldAccent.withValues(alpha: 0.18),
-                            borderRadius: BorderRadius.circular(10),
+                    Flexible(
+                      child: NotificationListener<ScrollEndNotification>(
+                        onNotification: (notification) {
+                          if (notification.metrics.pixels < -35) {
+                            safePop();
+                            return true;
+                          }
+                          return false;
+                        },
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(
+                            parent: AlwaysScrollableScrollPhysics(),
                           ),
-                          child: const Icon(
-                            Icons.alarm_rounded,
-                            color: AppTheme.primaryEmerald,
-                            size: 22,
+                          padding: EdgeInsets.only(
+                            left: 20,
+                            right: 20,
+                            top: 14,
+                            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            prayerIndex != null
-                                ? "$prayerName İçin 1. Alarm Ayarları"
-                                : "1. Alarm (Ana Alarm) Ayarları",
-                            style: const TextStyle(
-                              color: AppTheme.textPrimaryDark,
-                              fontSize: 16.5,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      "Alarm saatini (tam vakit, önce veya sonra) ve ses tercihinizi belirleyin.",
-                      style: TextStyle(
-                          color: AppTheme.textSecondaryDark, fontSize: 12.5),
-                    ),
-                    const SizedBox(height: 16),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
 
                     // Zamanlama Modu
-                    const Text(
-                      "Alarm Zamanı:",
-                      style: TextStyle(
+                    Text(
+                      AppTranslations.translate('alarm_timing_label', fallback: "Alarm Zamanı:"),
+                      style: const TextStyle(
                         color: AppTheme.textPrimaryDark,
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
@@ -1312,7 +1019,7 @@ class _SettingsPageState extends State<SettingsPage>
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    "Tam Vakit",
+                                    AppTranslations.translate('exact_time', fallback: "Tam Vakit"),
                                     style: TextStyle(
                                       color: timingMode == 0
                                           ? Colors.white
@@ -1322,7 +1029,7 @@ class _SettingsPageState extends State<SettingsPage>
                                     ),
                                   ),
                                   Text(
-                                    "(0 dk)",
+                                    "(0 ${AppTranslations.translate('minutes_unit', fallback: 'dk')})",
                                     style: TextStyle(
                                       color: timingMode == 0
                                           ? Colors.white70
@@ -1370,7 +1077,7 @@ class _SettingsPageState extends State<SettingsPage>
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    "Vakitten Önce",
+                                    AppTranslations.translate('before_prayer_label', fallback: "Vakitten Önce"),
                                     style: TextStyle(
                                       color: timingMode == -1
                                           ? Colors.white
@@ -1380,67 +1087,9 @@ class _SettingsPageState extends State<SettingsPage>
                                     ),
                                   ),
                                   Text(
-                                    "(-$offsetMinutes dk)",
+                                    "(-$offsetMinutes ${AppTranslations.translate('minutes_unit', fallback: 'dk')})",
                                     style: TextStyle(
                                       color: timingMode == -1
-                                          ? Colors.white70
-                                          : AppTheme.textSecondaryDark,
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              setModalState(() {
-                                timingMode = 1;
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(10),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              decoration: BoxDecoration(
-                                color: timingMode == 1
-                                    ? AppTheme.primaryEmerald
-                                    : AppTheme.cardDark,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: timingMode == 1
-                                      ? AppTheme.goldAccent
-                                      : AppTheme.goldAccent
-                                          .withValues(alpha: 0.25),
-                                  width: timingMode == 1 ? 1.5 : 1,
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    Icons.alarm_on_rounded,
-                                    size: 18,
-                                    color: timingMode == 1
-                                        ? Colors.white
-                                        : AppTheme.goldAccent,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    "Vakitten Sonra",
-                                    style: TextStyle(
-                                      color: timingMode == 1
-                                          ? Colors.white
-                                          : AppTheme.textPrimaryDark,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 11.5,
-                                    ),
-                                  ),
-                                  Text(
-                                    "(+$offsetMinutes dk)",
-                                    style: TextStyle(
-                                      color: timingMode == 1
                                           ? Colors.white70
                                           : AppTheme.textSecondaryDark,
                                       fontSize: 10,
@@ -1466,15 +1115,15 @@ class _SettingsPageState extends State<SettingsPage>
                             width: 1,
                           ),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(Icons.check_circle_outline_rounded,
+                            const Icon(Icons.check_circle_outline_rounded,
                                 color: AppTheme.primaryEmerald, size: 24),
-                            SizedBox(width: 12),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                "Namaz vakti tam girdiğinde alarm veya ezan çalar (0 dakika).",
-                                style: TextStyle(
+                                AppTranslations.translate('exact_time_info', fallback: "Namaz vakti tam girdiğinde alarm veya ezan çalar (0 dakika)."),
+                                style: const TextStyle(
                                   color: AppTheme.textPrimaryDark,
                                   fontSize: 12.5,
                                 ),
@@ -1523,9 +1172,7 @@ class _SettingsPageState extends State<SettingsPage>
                                   ),
                                 ),
                                 Text(
-                                  timingMode == -1
-                                      ? "Dakika Önce"
-                                      : "Dakika Sonra",
+                                  AppTranslations.translate('minutes_before_label', fallback: "Dakika Önce"),
                                   style: const TextStyle(
                                     color: AppTheme.textSecondaryDark,
                                     fontSize: 12,
@@ -1572,9 +1219,9 @@ class _SettingsPageState extends State<SettingsPage>
                       const SizedBox(height: 6),
 
                       // Hızlı Seçim Butonları
-                      const Text(
-                        "Hızlı Seçenekler:",
-                        style: TextStyle(
+                      Text(
+                        AppTranslations.translate('quick_options', fallback: "Hızlı Seçenekler:"),
+                        style: const TextStyle(
                           color: AppTheme.textPrimaryDark,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -1587,7 +1234,7 @@ class _SettingsPageState extends State<SettingsPage>
                         children: [5, 10, 15, 20, 25, 30, 45, 60].map((m) {
                           final isSelected = offsetMinutes == m;
                           return ChoiceChip(
-                            label: Text("$m dk"),
+                            label: Text("$m ${AppTranslations.translate('minutes_unit', fallback: 'dk')}"),
                             selected: isSelected,
                             selectedColor: AppTheme.primaryEmerald,
                             backgroundColor: AppTheme.cardDark,
@@ -1620,9 +1267,9 @@ class _SettingsPageState extends State<SettingsPage>
                       // Elle Dakika Girişi
                       Row(
                         children: [
-                          const Text(
-                            "Özel Dakika:",
-                            style: TextStyle(
+                          Text(
+                            AppTranslations.translate('custom_minute', fallback: "Özel Dakika:"),
+                            style: const TextStyle(
                               color: AppTheme.textPrimaryDark,
                               fontSize: 12.5,
                               fontWeight: FontWeight.w600,
@@ -1642,7 +1289,7 @@ class _SettingsPageState extends State<SettingsPage>
                               ),
                               decoration: InputDecoration(
                                 contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 6),
+                                    horizontal: 6, vertical: 6),
                                 filled: true,
                                 fillColor: AppTheme.cardDark,
                                 border: OutlineInputBorder(
@@ -1666,7 +1313,7 @@ class _SettingsPageState extends State<SettingsPage>
                                     width: 1.5,
                                   ),
                                 ),
-                                hintText: "Dk",
+                                hintText: AppTranslations.translate('minutes_unit', fallback: "Dk"),
                                 hintStyle: TextStyle(
                                     color: AppTheme.textSecondaryDark
                                         .withValues(alpha: 0.5)),
@@ -1684,11 +1331,10 @@ class _SettingsPageState extends State<SettingsPage>
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const Text(
-                            "dakika",
-                            style: TextStyle(
-                                color: AppTheme.textSecondaryDark,
-                                fontSize: 12),
+                          Text(
+                            AppTranslations.translate('minutes_unit', fallback: "dakika"),
+                            style: const TextStyle(
+                                color: AppTheme.textSecondaryDark, fontSize: 11.5),
                           ),
                         ],
                       ),
@@ -1697,9 +1343,9 @@ class _SettingsPageState extends State<SettingsPage>
                     const SizedBox(height: 18),
 
                     // Ses Seçimi
-                    const Text(
-                      "Alarm Zil Sesi:",
-                      style: TextStyle(
+                    Text(
+                      AppTranslations.translate('alarm_ringtone_label', fallback: "Alarm Zil Sesi:"),
+                      style: const TextStyle(
                         color: AppTheme.textPrimaryDark,
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
@@ -1719,8 +1365,8 @@ class _SettingsPageState extends State<SettingsPage>
                         children: [
                           _buildSoundChoiceTile(
                             type: 'ezan',
-                            title: "🕌 Ezan Sesi İle Okunsun",
-                            subtitle: "Namaz vaktinde sesli ezan okunur.",
+                            title: AppTranslations.translate('sound_adhan_title', fallback: "🕌 Ezan Sesi İle Okunsun"),
+                            subtitle: AppTranslations.translate('sound_adhan_desc', fallback: "Namaz vaktinde sesli ezan okunur."),
                             groupValue: selectedSoundType,
                             playingSoundType: playingSoundType,
                             onSelect: (v) =>
@@ -1737,14 +1383,14 @@ class _SettingsPageState extends State<SettingsPage>
                             },
                           ),
                           Divider(
-                            color: AppTheme.goldAccent.withValues(alpha: 0.2),
                             height: 1,
+                            color: AppTheme.goldAccent.withValues(alpha: 0.2),
                           ),
                           _buildSoundChoiceTile(
-                            type: 'notification',
-                            title: "🔔 Standart Bildirim Tonu",
+                            type: 'standart',
+                            title: AppTranslations.translate('sound_notification_title', fallback: "🔔 Standart Bildirim Tonu"),
                             subtitle:
-                                "Cihazınızın standart bildirim sesi verilir.",
+                                AppTranslations.translate('sound_notification_desc', fallback: "Cihazınızın standart bildirim sesi verilir."),
                             groupValue: selectedSoundType,
                             playingSoundType: playingSoundType,
                             onSelect: (v) =>
@@ -1761,14 +1407,14 @@ class _SettingsPageState extends State<SettingsPage>
                             },
                           ),
                           Divider(
-                            color: AppTheme.goldAccent.withValues(alpha: 0.2),
                             height: 1,
+                            color: AppTheme.goldAccent.withValues(alpha: 0.2),
                           ),
                           _buildSoundChoiceTile(
                             type: 'alarm',
-                            title: "⏰ Yüksek Sesli Çalar Saat",
+                            title: AppTranslations.translate('sound_alarm_title', fallback: "⏰ Yüksek Sesli Çalar Saat"),
                             subtitle:
-                                "Uyanmak için kesintisiz çalar saat tonu.",
+                                AppTranslations.translate('sound_alarm_desc', fallback: "Uyanmak için kesintisiz çalar saat tonu."),
                             groupValue: selectedSoundType,
                             playingSoundType: playingSoundType,
                             onSelect: (v) =>
@@ -1800,17 +1446,19 @@ class _SettingsPageState extends State<SettingsPage>
                         value: applyToAll,
                         activeColor: AppTheme.primaryEmerald,
                         checkColor: Colors.white,
-                        title: const Text(
-                          "Tüm namaz vakitlerine uygula",
-                          style: TextStyle(
+                        title: Text(
+                          AppTranslations.translate('apply_to_all_prayers', fallback: "Tüm namaz vakitlerine uygula"),
+                          style: const TextStyle(
                             color: AppTheme.textPrimaryDark,
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        subtitle: const Text(
-                          "İşaretlenirse bu dakika ve ses ayarı tüm vakitlerin 1. alarmına uygulanır.",
-                          style: TextStyle(
+                        subtitle: Text(
+                          isFirst
+                              ? AppTranslations.translate('apply_to_all_first_desc', fallback: "İşaretlenirse bu dakika ve ses ayarı tüm vakitlerin 1. alarmına uygulanır.")
+                              : AppTranslations.translate('apply_to_all_second_desc', fallback: "İşaretlenirse bu dakika ve ses ayarı tüm vakitlerin 2. alarmına uygulanır."),
+                          style: const TextStyle(
                               color: AppTheme.textSecondaryDark, fontSize: 11),
                         ),
                         onChanged: (val) {
@@ -1835,10 +1483,10 @@ class _SettingsPageState extends State<SettingsPage>
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12)),
                             ),
-                            child: const Text("Vazgeç"),
+                            child: Text(AppTranslations.translate('discard', fallback: "Vazgeç")),
                             onPressed: () async {
                               await NotificationService().stopPreviewSound();
-                              Navigator.pop(ctx);
+                              safePop();
                             },
                           ),
                         ),
@@ -1852,51 +1500,62 @@ class _SettingsPageState extends State<SettingsPage>
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12)),
                             ),
-                            child: const Text(
-                              "Kaydet",
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                            child: Text(
+                              AppTranslations.translate('save', fallback: "Kaydet"),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             onPressed: () async {
                               final messenger = ScaffoldMessenger.of(context);
                               await NotificationService().stopPreviewSound();
-                              Navigator.pop(ctx);
+                              safePop();
 
                               final finalMinutes = timingMode == 0
                                   ? 0
-                                  : (timingMode == -1
-                                      ? -offsetMinutes
-                                      : offsetMinutes);
+                                  : -offsetMinutes;
 
-                              if (prayerIndex != null && !applyToAll) {
-                                await _settings.setPrayerFirstAlarmMinutes(
-                                    prayerIndex, finalMinutes);
+                              if (isFirst) {
+                                if (prayerIndex != null && !applyToAll) {
+                                  await _settings.setPrayerFirstAlarmMinutes(
+                                      prayerIndex, finalMinutes);
+                                } else {
+                                  await _settings.setAllPrayersFirstAlarmMinutes(
+                                      finalMinutes);
+                                }
+
+                                await _settings.setSoundType(selectedSoundType);
+                                setState(() {
+                                  _soundType = selectedSoundType;
+                                });
                               } else {
-                                await _settings.setAllPrayersFirstAlarmMinutes(
-                                    finalMinutes);
-                              }
+                                if (prayerIndex != null && !applyToAll) {
+                                  await _settings.setPrayerSecondAlarmMinutes(
+                                      prayerIndex, finalMinutes);
+                                } else {
+                                  await _settings.setAllPrayersSecondAlarmMinutes(
+                                      finalMinutes);
+                                }
 
-                              await _settings.setSoundType(selectedSoundType);
-                              setState(() {
-                                _soundType = selectedSoundType;
-                              });
+                                await _settings.setSecondAlarmSoundType(selectedSoundType);
+                                setState(() {
+                                  _secondAlarmSoundType = selectedSoundType;
+                                });
+                              }
 
                               await PrayerUtilities().getNamazVakitleri();
 
-                              String timeInfo = finalMinutes == 0
-                                  ? "Tam Vakit"
-                                  : (finalMinutes < 0
-                                      ? "${-finalMinutes} dk önce"
-                                      : "+$finalMinutes dk sonra");
-                              String soundInfo = selectedSoundType == 'ezan'
-                                  ? 'Ezan'
-                                  : (selectedSoundType == 'alarm'
-                                      ? 'Çalar Saat'
-                                      : 'Bildirim');
+                              String timeInfo = AppTranslations.getTimingLabel(finalMinutes);
+                              String soundInfo = AppTranslations.getSoundTypeLabel(selectedSoundType);
 
                               messenger.showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    "✅ 1. Alarm: $timeInfo ($soundInfo) kaydedildi!",
+                                    isFirst
+                                        ? AppTranslations.translate('first_alarm_saved_msg', fallback: "✅ 1. Alarm: @time (@sound) kaydedildi!")
+                                            .replaceAll('@time', timeInfo)
+                                            .replaceAll('@sound', soundInfo)
+                                        : AppTranslations.translate('second_alarm_saved_msg', fallback: "✅ 2. Alarm: @time (@sound) kaydedildi!")
+                                            .replaceAll('@time', timeInfo)
+                                            .replaceAll('@sound', soundInfo),
                                   ),
                                   backgroundColor: AppTheme.primaryEmerald,
                                   duration: const Duration(seconds: 2),
@@ -1910,12 +1569,23 @@ class _SettingsPageState extends State<SettingsPage>
                   ],
                 ),
               ),
-            );
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
           },
         );
       },
     ).whenComplete(() => NotificationService().stopPreviewSound());
   }
+
+  Future<void> _showFirstAlarmDialog({int? prayerIndex, String? prayerName}) =>
+      _showAlarmDialog(alarmNumber: 1, prayerIndex: prayerIndex, prayerName: prayerName);
+
+  Future<void> _showSecondAlarmDialog({int? prayerIndex, String? prayerName}) =>
+      _showAlarmDialog(alarmNumber: 2, prayerIndex: prayerIndex, prayerName: prayerName);
 
   static const List<Map<String, dynamic>> _prayersData = [
     {
@@ -1956,20 +1626,11 @@ class _SettingsPageState extends State<SettingsPage>
     },
   ];
 
-  static const List<Map<String, dynamic>> _daysData = [
-    {'id': 1, 'short': 'Pzt', 'full': 'Pazartesi'},
-    {'id': 2, 'short': 'Sal', 'full': 'Salı'},
-    {'id': 3, 'short': 'Çar', 'full': 'Çarşamba'},
-    {'id': 4, 'short': 'Per', 'full': 'Perşembe'},
-    {'id': 5, 'short': 'Cum', 'full': 'Cuma'},
-    {'id': 6, 'short': 'Cmt', 'full': 'Cumartesi'},
-    {'id': 7, 'short': 'Paz', 'full': 'Pazar'},
-  ];
-
   Widget _buildWeeklyPrayerScheduleSection() {
-    final activeDayData = _daysData.firstWhere(
+    final daysData = AppTranslations.getWeekDays();
+    final activeDayData = daysData.firstWhere(
       (d) => d['id'] == _selectedWeekday,
-      orElse: () => _daysData.first,
+      orElse: () => daysData.first,
     );
     final activeDayName = activeDayData['full'] as String;
     final activePrayers = _dayPrayers[_selectedWeekday] ?? <int>{};
@@ -1986,10 +1647,10 @@ class _SettingsPageState extends State<SettingsPage>
               const Icon(Icons.calendar_month_rounded,
                   color: AppTheme.goldAccent, size: 22),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  "Günlük Alarm ve Ezan Planı",
-                  style: TextStyle(
+                  AppTranslations.translate('alarm_schedule_title', fallback: "Günlük Alarm ve Ezan Planı"),
+                  style: const TextStyle(
                     color: AppTheme.textPrimaryDark,
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
@@ -2012,8 +1673,9 @@ class _SettingsPageState extends State<SettingsPage>
                 ),
                 child: Text(
                   activePrayers.isNotEmpty
-                      ? "${activePrayers.length} Vakit"
-                      : "Alarmlar Kapalı",
+                      ? AppTranslations.translate('prayer_count_badge', fallback: "@count Vakit")
+                          .replaceAll('@count', "${activePrayers.length}")
+                      : AppTranslations.translate('alarms_off', fallback: "Alarmlar Kapalı"),
                   style: TextStyle(
                     color: activePrayers.isNotEmpty
                         ? AppTheme.primaryEmerald
@@ -2026,16 +1688,19 @@ class _SettingsPageState extends State<SettingsPage>
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
-            "Günü seçin; aşağıdaki 1. Ana Alarm (Vakit Girişi) ve 2. Yedek Alarm (+15 dk uyanma güvencesi) ayarlarını dilediğiniz gibi özelleştirin:",
-            style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12),
+          Text(
+            AppTranslations.translate(
+              'alarm_schedule_desc',
+              fallback: "Günü seçin; aşağıdaki 1. Ana Alarm (Vakit Girişi) ve 2. Yedek Alarm (+15 dk uyanma güvencesi) ayarlarını dilediğiniz gibi özelleştirin:",
+            ),
+            style: const TextStyle(color: AppTheme.textSecondaryDark, fontSize: 12),
           ),
           const SizedBox(height: 14),
 
           // ─── 7 GÜN SEÇİCİ TABLAR ───
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: _daysData.map((day) {
+            children: daysData.map((day) {
               final id = day['id'] as int;
               final short = day['short'] as String;
               final isCurrentTab = id == _selectedWeekday;
@@ -2133,7 +1798,8 @@ class _SettingsPageState extends State<SettingsPage>
                         color: AppTheme.primaryEmerald, size: 18),
                     const SizedBox(width: 8),
                     Text(
-                      "Düzenlenen Gün: $activeDayName",
+                      AppTranslations.translate('editing_day', fallback: "Düzenlenen Gün: @day")
+                          .replaceAll('@day', activeDayName),
                       style: const TextStyle(
                         color: AppTheme.textPrimaryDark,
                         fontWeight: FontWeight.bold,
@@ -2150,7 +1816,7 @@ class _SettingsPageState extends State<SettingsPage>
                     ActionChip(
                       avatar: const Icon(Icons.copy_rounded,
                           size: 14, color: AppTheme.textPrimaryDark),
-                      label: const Text("Tüm Günlere Uygula"),
+                      label: Text(AppTranslations.translate('apply_all_days', fallback: "Tüm Günlere Uygula")),
                       backgroundColor: Colors.white,
                       side: BorderSide(
                           color:
@@ -2179,7 +1845,9 @@ class _SettingsPageState extends State<SettingsPage>
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                  "$activeDayName alarmları (1. ve 2. Alarmlar) tüm 7 güne uygulandı!"),
+                                AppTranslations.translate('applied_all_days_msg', fallback: "@day alarmları (1. ve 2. Alarmlar) tüm 7 güne uygulandı!")
+                                    .replaceAll('@day', activeDayName),
+                              ),
                               backgroundColor: AppTheme.primaryEmerald,
                               duration: const Duration(seconds: 2),
                             ),
@@ -2190,7 +1858,7 @@ class _SettingsPageState extends State<SettingsPage>
                     ActionChip(
                       avatar: const Icon(Icons.date_range_rounded,
                           size: 14, color: AppTheme.textPrimaryDark),
-                      label: const Text("Hafta İçi Uygula"),
+                      label: Text(AppTranslations.translate('apply_weekdays', fallback: "Hafta İçi Uygula")),
                       backgroundColor: Colors.white,
                       side: BorderSide(
                           color:
@@ -2219,7 +1887,9 @@ class _SettingsPageState extends State<SettingsPage>
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                  "$activeDayName alarmları Hafta İçi (Pzt-Cum) günlerine uygulandı!"),
+                                AppTranslations.translate('applied_weekdays_msg', fallback: "@day alarmları Hafta İçi günlerine uygulandı!")
+                                    .replaceAll('@day', activeDayName),
+                              ),
                               backgroundColor: AppTheme.primaryEmerald,
                               duration: const Duration(seconds: 2),
                             ),
@@ -2230,7 +1900,7 @@ class _SettingsPageState extends State<SettingsPage>
                     ActionChip(
                       avatar: const Icon(Icons.weekend_rounded,
                           size: 14, color: AppTheme.textPrimaryDark),
-                      label: const Text("Hafta Sonu Uygula"),
+                      label: Text(AppTranslations.translate('apply_weekends', fallback: "Hafta Sonu Uygula")),
                       backgroundColor: Colors.white,
                       side: BorderSide(
                           color:
@@ -2259,7 +1929,9 @@ class _SettingsPageState extends State<SettingsPage>
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                  "$activeDayName alarmları Hafta Sonu (Cmt-Paz) günlerine uygulandı!"),
+                                AppTranslations.translate('applied_weekends_msg', fallback: "@day alarmları Hafta Sonu günlerine uygulandı!")
+                                    .replaceAll('@day', activeDayName),
+                              ),
                               backgroundColor: AppTheme.primaryEmerald,
                               duration: const Duration(seconds: 2),
                             ),
@@ -2268,7 +1940,7 @@ class _SettingsPageState extends State<SettingsPage>
                       },
                     ),
                     ActionChip(
-                      label: const Text("Tüm 1. Vakitleri Aç"),
+                      label: Text(AppTranslations.translate('turn_on_all_first', fallback: "Tüm 1. Vakitleri Aç")),
                       backgroundColor: Colors.white,
                       side: BorderSide(
                           color:
@@ -2290,7 +1962,7 @@ class _SettingsPageState extends State<SettingsPage>
                     ActionChip(
                       avatar: const Icon(Icons.alarm_on_rounded,
                           size: 14, color: AppTheme.goldAccent),
-                      label: const Text("Tüm 2. Alarmları Aç"),
+                      label: Text(AppTranslations.translate('turn_on_all_second', fallback: "Tüm 2. Alarmları Aç")),
                       backgroundColor: Colors.white,
                       side: BorderSide(
                           color: AppTheme.goldAccent.withValues(alpha: 0.5)),
@@ -2310,7 +1982,7 @@ class _SettingsPageState extends State<SettingsPage>
                       },
                     ),
                     ActionChip(
-                      label: const Text("Tümünü Kapat"),
+                      label: Text(AppTranslations.translate('turn_off_all', fallback: "Tümünü Kapat")),
                       backgroundColor: Colors.white,
                       side:
                           BorderSide(color: Colors.red.withValues(alpha: 0.3)),
@@ -2342,7 +2014,8 @@ class _SettingsPageState extends State<SettingsPage>
           // ─── 6 VAKİT LİSTESİ (ÇİFT ALARM KARTLARI) ───
           ..._prayersData.map((prayer) {
             final index = prayer['index'] as int;
-            final name = prayer['name'] as String;
+            final name = AppTranslations.getPrayerScheduleName(index,
+                defaultName: prayer['name'] as String);
             final icon = prayer['icon'] as IconData;
             final isFirstSelected = activePrayers.contains(index);
             final isSecondSelected = activeSecondPrayers.contains(index);
@@ -2374,7 +2047,6 @@ class _SettingsPageState extends State<SettingsPage>
                           color: isFirstSelected
                               ? AppTheme.primaryEmerald.withValues(alpha: 0.15)
                               : Colors.black.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
                           icon,
@@ -2409,7 +2081,7 @@ class _SettingsPageState extends State<SettingsPage>
                             runSpacing: 2,
                             children: [
                               Text(
-                                "1. Alarm",
+                                AppTranslations.translate('first_alarm', fallback: "1. Alarm"),
                                 style: TextStyle(
                                   color: isFirstSelected
                                       ? AppTheme.textSecondaryDark
@@ -2422,19 +2094,10 @@ class _SettingsPageState extends State<SettingsPage>
                                 builder: (_) {
                                   final firstMin = _settings
                                       .getFirstAlarmMinutes(prayerIndex: index);
-                                  String firstTimingText;
-                                  if (firstMin == 0) {
-                                    firstTimingText = "Tam Vakit";
-                                  } else if (firstMin < 0) {
-                                    firstTimingText = "${-firstMin} dk önce";
-                                  } else {
-                                    firstTimingText = "+$firstMin dk sonra";
-                                  }
-                                  String firstSoundText = _soundType == 'ezan'
-                                      ? "🕌 Ezan"
-                                      : (_soundType == 'alarm'
-                                          ? "⏰ Alarm"
-                                          : "🔔 Bildirim");
+                                  final firstTimingText =
+                                      AppTranslations.getTimingLabel(firstMin);
+                                  final firstSoundText =
+                                      AppTranslations.getSoundTypeLabel(_soundType);
 
                                   return Container(
                                     padding: const EdgeInsets.symmetric(
@@ -2527,12 +2190,9 @@ class _SettingsPageState extends State<SettingsPage>
                           const SizedBox(width: 8),
                           Expanded(
                             child: InkWell(
-                              onTap: () => _showMinutePickerDialog(
-                                title: "$name İçin 2. Alarm Ayarları",
-                                initialMinutes: _settings.getSecondAlarmMinutes(
-                                    prayerIndex: index),
+                              onTap: () => _showSecondAlarmDialog(
                                 prayerIndex: index,
-                                isSecondAlarm: true,
+                                prayerName: name,
                               ),
                               borderRadius: BorderRadius.circular(8),
                               child: Column(
@@ -2542,7 +2202,7 @@ class _SettingsPageState extends State<SettingsPage>
                                   Row(
                                     children: [
                                       Text(
-                                        "2. Alarm (Yedek)",
+                                        AppTranslations.translate('second_alarm_backup', fallback: "2. Alarm (Yedek)"),
                                         style: TextStyle(
                                           color: AppTheme.textPrimaryDark,
                                           fontWeight: isSecondSelected
@@ -2578,7 +2238,7 @@ class _SettingsPageState extends State<SettingsPage>
                                             color: AppTheme.goldAccent),
                                         const SizedBox(width: 3),
                                         Text(
-                                          "+${_settings.getSecondAlarmMinutes(prayerIndex: index)} dk sonra • ${_secondAlarmSoundType == 'ezan' ? '🕌 Ezan' : '⏰ Alarm'}",
+                                          "${AppTranslations.getTimingLabel(_settings.getSecondAlarmMinutes(prayerIndex: index))} • ${AppTranslations.getSoundTypeLabel(_secondAlarmSoundType)}",
                                           style: const TextStyle(
                                             color: AppTheme.goldAccent,
                                             fontSize: 9.5,
@@ -2631,7 +2291,7 @@ class _SettingsPageState extends State<SettingsPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Uygulama Ayarları"),
+        title: Text(AppTranslations.translate('app_settings', fallback: "Uygulama Ayarları")),
         centerTitle: true,
       ),
       body: RefreshIndicator(
@@ -2647,33 +2307,37 @@ class _SettingsPageState extends State<SettingsPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Dil Seçimi Kartı
+              _buildLanguageCard(),
+              const SizedBox(height: 16),
+
               // Header Card
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: AppTheme.headerGradientDecoration(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.notifications_active_rounded,
+                    const Icon(Icons.notifications_active_rounded,
                         color: AppTheme.goldAccent, size: 36),
-                    SizedBox(width: 14),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Namaz Vakti Bildirimleri",
-                            style: TextStyle(
+                            AppTranslations.translate('prayer_notifications_title', fallback: "Namaz Vakti Bildirimleri"),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
-                            "Namaz vakitlerinde ezan okunması ve vakit öncesi hatırlatmalar.",
-                            style: TextStyle(
+                            AppTranslations.translate('prayer_notifications_desc', fallback: "Namaz vakitlerinde ezan okunması ve vakit öncesi hatırlatmalar."),
+                            style: const TextStyle(
                               color: AppTheme.goldLight,
                               fontSize: 12,
                             ),
@@ -2701,16 +2365,16 @@ class _SettingsPageState extends State<SettingsPage>
                         : Icons.notifications_off_rounded,
                     color: AppTheme.goldAccent,
                   ),
-                  title: const Text(
-                    "Namaz Bildirimlerini Aç",
-                    style: TextStyle(
+                  title: Text(
+                    AppTranslations.translate('enable_prayer_notifications', fallback: "Namaz Bildirimlerini Aç"),
+                    style: const TextStyle(
                       color: AppTheme.textPrimaryDark,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  subtitle: const Text(
-                    "Tüm ezan ve hatırlatma bildirimlerini aktif/pasif yapın.",
-                    style: TextStyle(
+                  subtitle: Text(
+                    AppTranslations.translate('enable_prayer_notifications_desc', fallback: "Tüm ezan ve hatırlatma bildirimlerini aktif/pasif yapın."),
+                    style: const TextStyle(
                         color: AppTheme.textSecondaryDark, fontSize: 12),
                   ),
                   value: _notificationsEnabled,
@@ -2728,11 +2392,14 @@ class _SettingsPageState extends State<SettingsPage>
               const SizedBox(height: 20),
 
               if (_notificationsEnabled) ...[
-                const Padding(
-                  padding: EdgeInsets.only(left: 4, bottom: 8),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 8),
                   child: Text(
-                    "GÜNLÜK VE HAFTALIK VAKİT ALARMLARI",
-                    style: TextStyle(
+                    AppTranslations.translate(
+                      'daily_weekly_alarms_title',
+                      fallback: "GÜNLÜK VE HAFTALIK VAKİT ALARMLARI",
+                    ),
+                    style: const TextStyle(
                       color: AppTheme.goldAccent,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,

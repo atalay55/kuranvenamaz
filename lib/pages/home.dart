@@ -13,6 +13,7 @@ import 'package:kuranvenamaz/pages/settings/settings_page.dart';
 import 'package:kuranvenamaz/pages/zikirmatik_pages/zikirmatik.dart';
 import 'package:kuranvenamaz/theme/app_theme.dart';
 import 'package:kuranvenamaz/theme/ayetduahadistheme.dart';
+import 'package:kuranvenamaz/core/app_translations.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -30,6 +31,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    AppTranslations.init();
+    AppTranslations.currentLocaleNotifier.addListener(_onLocaleChanged);
     WidgetsBinding.instance.addObserver(this);
     _refreshContent();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -38,10 +41,27 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
   }
 
+  void _onLocaleChanged() {
+    if (mounted) {
+      setState(() {});
+      _refreshContent();
+    }
+  }
+
   @override
   void dispose() {
+    AppTranslations.currentLocaleNotifier.removeListener(_onLocaleChanged);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeLocales(List<Locale>? locales) {
+    super.didChangeLocales(locales);
+    if (mounted) {
+      _refreshContent();
+      setState(() {});
+    }
   }
 
   @override
@@ -110,11 +130,16 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
-  void _showNotificationOnboardingDialog(BuildContext context) {
+  void _showNotificationOnboardingDialog([BuildContext? contextParam]) {
+    final targetContext = (contextParam != null && contextParam.mounted)
+        ? contextParam
+        : (Get.context ?? context);
+    if (!targetContext.mounted) return;
+
     showDialog(
-      context: context,
+      context: targetContext,
       barrierDismissible: false,
-      builder: (context) {
+      builder: (dialogCtx) {
         return AlertDialog(
           backgroundColor: AppTheme.surfaceDark,
           shape: RoundedRectangleBorder(
@@ -123,13 +148,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           ),
           title: const Row(
             children: [
-              Icon(Icons.mosque_rounded, color: AppTheme.goldAccent, size: 28),
+              Icon(Icons.mosque_rounded, color: AppTheme.primaryEmerald, size: 28),
               SizedBox(width: 10),
               Expanded(
                 child: Text(
                   "Namaz Bildirimleri",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Color(0xFF1B1B1B), // Siyah yapıldı
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
@@ -137,20 +162,32 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
             ],
           ),
-          content: const Column(
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 "Namaz vakitlerinde ezan okunmasını veya 1 dakika öncesinde hatırlatma bildirimi almayı ister misiniz?",
                 style: TextStyle(
-                    color: AppTheme.textPrimaryDark, fontSize: 14, height: 1.4),
+                    color: Color(0xFF2A2A2A), fontSize: 14, height: 1.4, fontWeight: FontWeight.w500),
               ),
-              SizedBox(height: 12),
-              Text(
-                "• Vaktinden 1 dakika önce uyarı verilebilir.\n• Dilediğiniz zaman Ayarlar sayfasından değiştirebilirsiniz.",
-                style: TextStyle(
-                    color: AppTheme.goldLight, fontSize: 12, height: 1.3),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B4D3E).withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.25)),
+                ),
+                child: const Text(
+                  "• Vaktinden 1 dakika önce uyarı verilebilir.\n• Dilediğiniz zaman Ayarlar sayfasından değiştirebilirsiniz.",
+                  style: TextStyle(
+                      color: Color(0xFF1B4D3E), // Sarı yerine okunaklı koyu zümrüt tonu
+                      fontSize: 12,
+                      height: 1.35,
+                      fontWeight: FontWeight.w600),
+                ),
               ),
             ],
           ),
@@ -167,7 +204,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
-                      side: const BorderSide(color: AppTheme.goldAccent),
                     ),
                   ),
                   icon: const Text("🕌 ", style: TextStyle(fontSize: 16)),
@@ -181,19 +217,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     await s.setSoundType('ezan');
                     await s.setNotificationTiming(15);
                     await s.setAskedPrompt(true);
-                    if (!context.mounted) return;
-                    Navigator.pop(context);
+                    if (dialogCtx.mounted) {
+                      Navigator.of(dialogCtx).pop();
+                    }
                     await DeviceSettingsService
                         .openBatteryOptimizationSettings();
-                    if (!context.mounted) return;
-                    _showOEMPermissionDialog(context);
+                    if (!mounted) return;
+                    _showOEMPermissionDialog();
                   },
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.goldAccent,
-                    side: const BorderSide(color: AppTheme.goldAccent),
+                    foregroundColor: const Color(0xFF1B4D3E),
+                    side: const BorderSide(color: Color(0xFF1B4D3E), width: 1.2),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -202,7 +239,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   icon: const Text("🔔 ", style: TextStyle(fontSize: 16)),
                   label: const Text(
                     "Evet, Standart Bildirim Ver (15 Dk Önce)",
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1B4D3E)),
                   ),
                   onPressed: () async {
                     final s = SettingsService();
@@ -210,9 +250,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     await s.setSoundType('notification');
                     await s.setNotificationTiming(15);
                     await s.setAskedPrompt(true);
-                    if (!context.mounted) return;
-                    Navigator.pop(context);
-                    _showOEMPermissionDialog(context);
+                    if (dialogCtx.mounted) {
+                      Navigator.of(dialogCtx).pop();
+                    }
+                    if (!mounted) return;
+                    _showOEMPermissionDialog();
                   },
                 ),
                 const SizedBox(height: 6),
@@ -221,13 +263,16 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     final s = SettingsService();
                     await s.setNotificationsEnabled(false);
                     await s.setAskedPrompt(true);
-                    if (!context.mounted) return;
-                    Navigator.pop(context);
+                    if (dialogCtx.mounted) {
+                      Navigator.of(dialogCtx).pop();
+                    }
                   },
                   child: const Text(
                     "Şimdilik İstemiyorum",
                     style: TextStyle(
-                        color: AppTheme.textSecondaryDark, fontSize: 12),
+                        color: Color(0xFF555555),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
@@ -238,15 +283,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     );
   }
 
-  void _showOEMPermissionDialog(BuildContext context) async {
+  void _showOEMPermissionDialog([BuildContext? contextParam]) async {
     final permStatus = await DeviceSettingsService.checkNotificationPermissions();
-    if (!context.mounted) return;
+    if (!mounted) return;
+
+    final targetContext = (contextParam != null && contextParam.mounted)
+        ? contextParam
+        : (Get.context ?? context);
+    if (!targetContext.mounted) return;
 
     final manufacturer = permStatus?.manufacturer ?? 'Bilinmiyor';
     final isXiaomi = permStatus?.isXiaomi ?? false;
 
     showDialog(
-      context: context,
+      context: targetContext,
       barrierDismissible: true,
       builder: (ctx) {
         return AlertDialog(
@@ -263,7 +313,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 child: Text(
                   "Ezan İzinleri",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Color(0xFF1B1B1B), // Siyah
                     fontWeight: FontWeight.bold,
                     fontSize: 17,
                   ),
@@ -279,15 +329,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white10,
+                  color: const Color(0xFF1B4D3E).withOpacity(0.08),
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.2)),
                 ),
                 child: Text(
                   "$manufacturer telefonunuzda ezan tam vaktinde çalabilmesi için 2 kolay ayar yapmanız gerekiyor. Her butona sırayla basın:",
                   style: const TextStyle(
-                    color: Colors.white70,
+                    color: Color(0xFF2C2C2C),
                     fontSize: 13,
                     height: 1.4,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
@@ -316,7 +368,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     ? "Açılan ekranda 'Kuran ve Namaz' uygulamasını bulup yanındaki düğmeyi açın (yeşile çevirin), sonra geri tuşuna basın."
                     : "Açılan ekranda 'Kuran ve Namaz' uygulamasını bulup izin verin, sonra geri tuşuna basın.",
                 buttonLabel: "Listeyi Aç →",
-                onTap: () => _showAutostartPreGuideAndOpen(context, isXiaomi),
+                onTap: () => _showAutostartPreGuideAndOpen(ctx, isXiaomi),
               ),
             ],
           ),
@@ -331,7 +383,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               child: const Text(
                 "Tamamlandı",
                 style: TextStyle(
-                    color: AppTheme.goldAccent, fontWeight: FontWeight.bold),
+                    color: Color(0xFF1B4D3E),
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -342,35 +396,34 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   /// Autostart açmadan önce çok net bir "şimdi ne yapacaksın" dialogu
   Future<void> _showAutostartPreGuideAndOpen(
-      BuildContext context, bool isXiaomi) async {
+      BuildContext targetContext, bool isXiaomi) async {
+    if (!mounted) return;
+    final validContext = targetContext.mounted
+        ? targetContext
+        : (Get.context ?? context);
+    if (!validContext.mounted) return;
+
     await showDialog(
-      context: context,
+      context: validContext,
       barrierDismissible: false,
-      builder: (ctx) {
+      builder: (guideCtx) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1A2332),
+          backgroundColor: AppTheme.surfaceDark,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: Colors.orange.shade700, width: 1.5),
+            side: const BorderSide(color: AppTheme.goldAccent, width: 1.5),
           ),
-          title: Row(
+          title: const Row(
             children: [
-              Text("👆",
-                  style: TextStyle(
-                      fontSize: 24,
-                      shadows: [
-                        Shadow(
-                            color: Colors.orange.withOpacity(0.5),
-                            blurRadius: 8)
-                      ])),
-              const SizedBox(width: 10),
-              const Expanded(
+              Text("👆", style: TextStyle(fontSize: 24)),
+              SizedBox(width: 10),
+              Expanded(
                 child: Text(
                   "Şimdi ne yapacaksınız?",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Color(0xFF1B1B1B),
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 17,
                   ),
                 ),
               ),
@@ -404,10 +457,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.15),
+                  color: const Color(0xFF1B4D3E).withOpacity(0.08),
                   borderRadius: BorderRadius.circular(8),
-                  border:
-                      Border.all(color: Colors.orange.shade700, width: 1),
+                  border: Border.all(
+                      color: const Color(0xFF1B4D3E).withOpacity(0.25),
+                      width: 1),
                 ),
                 child: Row(
                   children: [
@@ -418,9 +472,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         isXiaomi
                             ? "İpucu: Liste alfabetik değil, uygulama adına göre sıralı. 'K' harfine bakın."
                             : "İpucu: Listede 'Kuran ve Namaz' yazan satırı arayın.",
-                        style: TextStyle(
-                            color: Colors.orange.shade200,
-                            fontSize: 11,
+                        style: const TextStyle(
+                            color: Color(0xFF1B4D3E),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
                             height: 1.3),
                       ),
                     ),
@@ -446,7 +501,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   ),
                 ),
                 onPressed: () async {
-                  Navigator.pop(ctx);
+                  Navigator.pop(guideCtx);
                   // Artık açıyoruz
                   await DeviceSettingsService.openAutostartSettings();
                 },
@@ -491,7 +546,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             child: Text(
               text,
               style: const TextStyle(
-                color: Colors.white,
+                color: Color(0xFF2C2C2C),
                 fontSize: 13,
                 height: 1.4,
               ),
@@ -513,9 +568,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
+        color: Colors.black.withOpacity(0.04),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white24, width: 1),
+        border: Border.all(color: Colors.black12, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -543,7 +598,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 child: Text(
                   title,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: Color(0xFF1B1B1B), // Siyah
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),
@@ -555,7 +610,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           Text(
             description,
             style: const TextStyle(
-                color: Colors.white60, fontSize: 11.5, height: 1.4),
+                color: Color(0xFF2C2C2C), fontSize: 12, height: 1.4),
           ),
           const SizedBox(height: 8),
           SizedBox(
@@ -585,18 +640,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Namaz ve Kur'an"),
+        title: Text(AppTranslations.translate("app_title", fallback: "Namaz ve Kur'an")),
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded, color: AppTheme.goldAccent),
-            tooltip: 'İçerik Yenile',
+            tooltip: AppTranslations.translate('refresh', fallback: 'Yenile'),
             onPressed: _refreshContent,
           ),
           IconButton(
             icon:
                 const Icon(Icons.settings_rounded, color: AppTheme.goldAccent),
-            tooltip: 'Ayarlar',
+            tooltip: AppTranslations.translate('settings', fallback: 'Ayarlar'),
             onPressed: () => Get.to(() => const SettingsPage()),
           ),
         ],
@@ -622,10 +677,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     Icon(Icons.warning_amber_rounded,
                         color: Colors.amber.shade400, size: 20),
                     const SizedBox(width: 6),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        "Ezan bildirimlerinin aksamaması için izin verin.",
-                        style: TextStyle(
+                        "oem_banner_text".tr,
+                        style: const TextStyle(
                             color: Colors.white,
                             fontSize: 11,
                             fontWeight: FontWeight.w500),
@@ -639,8 +694,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       onPressed: () => _showOEMPermissionDialog(context),
-                      child: const Text("İzin Ver",
-                          style: TextStyle(
+                      child: Text("allow".tr,
+                          style: const TextStyle(
                               color: AppTheme.goldAccent,
                               fontSize: 12,
                               fontWeight: FontWeight.bold)),
@@ -650,7 +705,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                           color: Colors.white60, size: 18),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
-                      tooltip: 'Kapat',
+                      tooltip: 'close'.tr,
                       onPressed: () async {
                         final s = SettingsService();
                         await s.setOemBannerDismissed(true);
@@ -677,22 +732,22 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
             // Daily Content Cards
             AyetDuaHadisTheme(
-              title: currentAyet.title,
+              title: AppTranslations.getLocalizedCardTitle(currentAyet.title),
               arabicText: currentAyet.arabic,
-              description: currentAyet.turkish,
-              kaynakca: currentAyet.source,
+              description: currentAyet.getText(),
+              kaynakca: currentAyet.getSource(),
             ),
             AyetDuaHadisTheme(
-              title: currentHadis.title,
+              title: AppTranslations.getLocalizedCardTitle(currentHadis.title),
               arabicText: currentHadis.arabic,
-              description: currentHadis.turkish,
-              kaynakca: currentHadis.source,
+              description: currentHadis.getText(),
+              kaynakca: currentHadis.getSource(),
             ),
             AyetDuaHadisTheme(
-              title: currentDua.title,
+              title: AppTranslations.getLocalizedCardTitle(currentDua.title),
               arabicText: currentDua.arabic,
-              description: currentDua.turkish,
-              kaynakca: currentDua.source,
+              description: currentDua.getText(),
+              kaynakca: currentDua.getSource(),
             ),
             const SizedBox(height: 20),
           ],
@@ -708,13 +763,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           children: [
             _buildQuickTile(
               icon: Icons.menu_book_rounded,
-              label: "Kur'an-ı Kerim",
+              label: AppTranslations.translate("quran", fallback: "Kur'an-ı Kerim"),
               onTap: () => Get.to(() => const SurahListPage()),
             ),
             const SizedBox(width: 8),
             _buildQuickTile(
               icon: Icons.auto_stories_rounded,
-              label: "Hadis-i Şerifler",
+              label: AppTranslations.translate("hadiths", fallback: "Hadis-i Şerifler"),
               onTap: () => Get.to(() => const HadithListPage()),
             ),
           ],
@@ -724,13 +779,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           children: [
             _buildQuickTile(
               icon: Icons.fingerprint_rounded,
-              label: "Zikirmatik",
+              label: AppTranslations.translate("dhikr", fallback: "Zikirmatik"),
               onTap: () => Get.to(() => const Zikirmatik()),
             ),
             const SizedBox(width: 8),
             _buildQuickTile(
               icon: Icons.explore_rounded,
-              label: "Kıble Pusulası",
+              label: AppTranslations.translate("qibla", fallback: "Kıble Pusulası"),
               onTap: () => Get.to(() => const QiblahCompass()),
             ),
           ],
@@ -740,13 +795,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           children: [
             _buildQuickTile(
               icon: Icons.calendar_month_rounded,
-              label: "Hicri Takvim",
+              label: AppTranslations.translate("hijri_calendar", fallback: "Hicri Takvim"),
               onTap: () => Get.to(() => const HijriCalendarWidget()),
             ),
             const SizedBox(width: 8),
             _buildQuickTile(
               icon: Icons.settings_rounded,
-              label: "Ayarlar & Ezan",
+              label: AppTranslations.translate("settings_adhan", fallback: "Ayarlar & Ezan"),
               onTap: () => Get.to(() => const SettingsPage()),
             ),
           ],
@@ -800,101 +855,86 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             decoration: AppTheme.headerGradientDecoration(
               borderRadius: BorderRadius.zero,
             ),
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.mosque_rounded,
+                const Icon(Icons.mosque_rounded,
                     color: AppTheme.goldAccent, size: 42),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 Text(
-                  "Namaz ve Kur'an",
-                  style: TextStyle(
+                  AppTranslations.translate("app_title", fallback: "Namaz ve Kur'an"),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  "Huzur rehberiniz",
-                  style: TextStyle(color: AppTheme.goldLight, fontSize: 13),
+                  AppTranslations.translate("peace_guide", fallback: "Huzur rehberiniz"),
+                  style: const TextStyle(color: AppTheme.goldLight, fontSize: 13),
                 ),
               ],
             ),
           ),
           ListTile(
             leading: const Icon(Icons.home_rounded, color: AppTheme.goldAccent),
-            title:
-                const Text("Ana Sayfa", style: TextStyle(color: Colors.black)),
+            title: Text(AppTranslations.translate("home", fallback: "Ana Sayfa"), style: const TextStyle(color: AppTheme.textPrimaryDark, fontWeight: FontWeight.w500)),
             onTap: () => Navigator.pop(context),
           ),
           ListTile(
-            leading: const Icon(Icons.menu_book_rounded,
-                color: Color.fromRGBO(197, 160, 89, 1)),
-            title: const Text("Kur'an-ı Kerim",
-                style: TextStyle(color: Colors.black)),
+            leading: const Icon(Icons.menu_book_rounded, color: AppTheme.goldAccent),
+            title: Text(AppTranslations.translate("quran", fallback: "Kur'an-ı Kerim"), style: const TextStyle(color: AppTheme.textPrimaryDark, fontWeight: FontWeight.w500)),
             onTap: () {
               Navigator.pop(context);
               Get.to(() => const SurahListPage());
             },
           ),
           ListTile(
-            leading: const Icon(Icons.auto_stories_rounded,
-                color: AppTheme.goldAccent),
-            title: const Text("Hadis-i Şerifler",
-                style: TextStyle(color: Colors.black)),
+            leading: const Icon(Icons.auto_stories_rounded, color: AppTheme.goldAccent),
+            title: Text(AppTranslations.translate("hadiths", fallback: "Hadis-i Şerifler"), style: const TextStyle(color: AppTheme.textPrimaryDark, fontWeight: FontWeight.w500)),
             onTap: () {
               Navigator.pop(context);
               Get.to(() => const HadithListPage());
             },
           ),
           ListTile(
-            leading: const Icon(Icons.fingerprint_rounded,
-                color: AppTheme.goldAccent),
-            title:
-                const Text("Zikirmatik", style: TextStyle(color: Colors.black)),
+            leading: const Icon(Icons.fingerprint_rounded, color: AppTheme.goldAccent),
+            title: Text(AppTranslations.translate("dhikr", fallback: "Zikirmatik"), style: const TextStyle(color: AppTheme.textPrimaryDark, fontWeight: FontWeight.w500)),
             onTap: () {
               Navigator.pop(context);
               Get.to(() => const Zikirmatik());
             },
           ),
           ListTile(
-            leading:
-                const Icon(Icons.explore_rounded, color: AppTheme.goldAccent),
-            title: const Text("Kıble Pusulası",
-                style: TextStyle(color: Colors.black)),
+            leading: const Icon(Icons.explore_rounded, color: AppTheme.goldAccent),
+            title: Text(AppTranslations.translate("qibla", fallback: "Kıble Pusulası"), style: const TextStyle(color: AppTheme.textPrimaryDark, fontWeight: FontWeight.w500)),
             onTap: () {
               Navigator.pop(context);
               Get.to(() => const QiblahCompass());
             },
           ),
           ListTile(
-            leading: const Icon(Icons.calendar_month_rounded,
-                color: AppTheme.goldAccent),
-            title: const Text("Hicri Takvim",
-                style: TextStyle(color: Colors.black)),
+            leading: const Icon(Icons.calendar_month_rounded, color: AppTheme.goldAccent),
+            title: Text(AppTranslations.translate("hijri_calendar", fallback: "Hicri Takvim"), style: const TextStyle(color: AppTheme.textPrimaryDark, fontWeight: FontWeight.w500)),
             onTap: () {
               Navigator.pop(context);
               Get.to(() => const HijriCalendarWidget());
             },
           ),
-          const Divider(color: Colors.white24),
+          const Divider(color: Colors.black12),
           ListTile(
-            leading:
-                const Icon(Icons.settings_rounded, color: AppTheme.goldAccent),
-            title: const Text("Ayarlar & Ezan",
-                style: TextStyle(color: Colors.black)),
+            leading: const Icon(Icons.settings_rounded, color: AppTheme.goldAccent),
+            title: Text(AppTranslations.translate("settings_adhan", fallback: "Ayarlar & Ezan"), style: const TextStyle(color: AppTheme.textPrimaryDark, fontWeight: FontWeight.w500)),
             onTap: () {
               Navigator.pop(context);
               Get.to(() => const SettingsPage());
             },
           ),
           ListTile(
-            leading: const Icon(Icons.location_city_rounded,
-                color: AppTheme.goldAccent),
-            title: const Text("Şehir / Ülke Değiştir",
-                style: TextStyle(color: Colors.black)),
+            leading: const Icon(Icons.location_city_rounded, color: AppTheme.goldAccent),
+            title: Text(AppTranslations.translate("change_location", fallback: "Şehir / Ülke Değiştir"), style: const TextStyle(color: AppTheme.textPrimaryDark, fontWeight: FontWeight.w500)),
             onTap: () {
               Navigator.pop(context);
               Get.to(() => const CountrySelectPage());

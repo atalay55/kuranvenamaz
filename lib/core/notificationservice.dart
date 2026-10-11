@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
@@ -10,6 +11,9 @@ import 'package:kuranvenamaz/entity/location.dart';
 @pragma('vm:entry-point')
 void notificationTapBackground(NotificationResponse notificationResponse) {
   debugPrint("Background notification tapped: ${notificationResponse.id}");
+  if (notificationResponse.id != null) {
+    FlutterLocalNotificationsPlugin().cancel(notificationResponse.id!);
+  }
 }
 
 class NotificationService {
@@ -61,6 +65,9 @@ class NotificationService {
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) async {
         debugPrint("Notification clicked: ${response.id}");
+        if (response.id != null) {
+          await notificationsPlugin.cancel(response.id!);
+        }
       },
       onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
     );
@@ -126,7 +133,7 @@ class NotificationService {
 
   NotificationDetails _getNotificationDetails(String channelType) {
     if (channelType == 'ezan') {
-      return const NotificationDetails(
+      return NotificationDetails(
         android: AndroidNotificationDetails(
           'namaz_vakitleri_ezan_v4',
           'Ezan Vakti Bildirimleri',
@@ -134,15 +141,26 @@ class NotificationService {
           importance: Importance.max,
           priority: Priority.max,
           playSound: true,
-          sound: RawResourceAndroidNotificationSound('ezan'),
+          sound: const RawResourceAndroidNotificationSound('ezan'),
           audioAttributesUsage: AudioAttributesUsage.alarm,
           fullScreenIntent: true,
           category: AndroidNotificationCategory.alarm,
           visibility: NotificationVisibility.public,
           enableVibration: true,
           showWhen: true,
+          autoCancel: false,
+          ongoing: true,
+          additionalFlags: Int32List.fromList([4]),
+          actions: const <AndroidNotificationAction>[
+            AndroidNotificationAction(
+              'stop_alarm_action',
+              'Durdur',
+              cancelNotification: true,
+              showsUserInterface: false,
+            ),
+          ],
         ),
-        iOS: DarwinNotificationDetails(
+        iOS: const DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
@@ -413,7 +431,7 @@ class NotificationService {
 
           // 1. Ana Namaz Vakti Alarmı / Ezanı (1000 + ID)
           final firstMinutes = settings.getFirstAlarmMinutes(prayerIndex: i);
-          final firstAlarmTime = exactPrayerTime.add(Duration(minutes: firstMinutes));
+          final firstAlarmTime = exactPrayerTime.subtract(Duration(minutes: firstMinutes.abs()));
           if (settings.ezanEnabled && firstAlarmTime.isAfter(now)) {
             String title;
             String body;
@@ -426,21 +444,14 @@ class NotificationService {
                       ? "⏰ $vakitName Namazı Vakti Geldi"
                       : "🔔 $vakitName Namazı Vakti Geldi");
               body = "$vakitName vakti girdi (${dayList[i]}). Haydi namaza!";
-            } else if (firstMinutes < 0) {
-              final m = -firstMinutes;
+            } else {
+              final m = firstMinutes.abs();
               title = isEzanSound
                   ? "🕌 $vakitName Vaktine $m Dakika Kaldı"
                   : (isAlarmSound
                       ? "⏰ $vakitName Vaktine $m Dakika Kaldı"
                       : "🔔 $vakitName Vaktine $m Dakika Kaldı");
               body = "$vakitName vakti saati: ${dayList[i]}. Hazırlık yapmayı unutmayın.";
-            } else {
-              title = isAlarmSound
-                  ? "⏰ $vakitName Namazı (+$firstMinutes dk)"
-                  : (isEzanSound
-                      ? "🕌 $vakitName Ezanı (+$firstMinutes dk)"
-                      : "🔔 $vakitName Namazı (+$firstMinutes dk)");
-              body = "$vakitName vakti gireli $firstMinutes dakika oldu. Namazınızı kılmayı unutmayın!";
             }
             final id = 1000 + (dayOffset * 10) + i;
 
@@ -473,14 +484,32 @@ class NotificationService {
             }
           }
 
-          // 3. İkinci Alarm (Yedek / Uyanma & Erteleme Güvencesi) (3000 + ID)
+          // 3. İkinci Alarm (Yedek / Hatırlatma) (3000 + ID)
           if (settings.isSecondPrayerEnabledForDay(weekday, i)) {
             final secondMinutes = settings.getSecondAlarmMinutes(prayerIndex: i);
-            final secondAlarmTime = exactPrayerTime.add(Duration(minutes: secondMinutes));
+            final secondAlarmTime = exactPrayerTime.subtract(Duration(minutes: secondMinutes.abs()));
             if (secondAlarmTime.isAfter(now)) {
               final isSecondEzan = settings.secondAlarmSoundType == 'ezan';
-              final title = "⏰ 2. Alarm: $vakitName Namazı!";
-              final body = "$vakitName vakti gireli $secondMinutes dakika oldu. Namazınızı kılmayı unutmayın!";
+              final isSecondAlarmTone = settings.secondAlarmSoundType == 'alarm';
+              String title;
+              String body;
+
+              if (secondMinutes == 0) {
+                title = isSecondEzan
+                    ? "🕌 2. Alarm: $vakitName Ezanı Okunuyor"
+                    : (isSecondAlarmTone
+                        ? "⏰ 2. Alarm: $vakitName Namazı Vakti Geldi"
+                        : "🔔 2. Alarm: $vakitName Namazı Vakti Geldi");
+                body = "$vakitName vakti girdi (${dayList[i]}). Haydi namaza!";
+              } else {
+                final m = secondMinutes.abs();
+                title = isSecondEzan
+                    ? "🕌 2. Alarm: $vakitName Vaktine $m Dakika Kaldı"
+                    : (isSecondAlarmTone
+                        ? "⏰ 2. Alarm: $vakitName Vaktine $m Dakika Kaldı"
+                        : "🔔 2. Alarm: $vakitName Vaktine $m Dakika Kaldı");
+                body = "$vakitName vakti saati: ${dayList[i]}. Hazırlık yapmayı unutmayın.";
+              }
               final id = 3000 + (dayOffset * 10) + i;
 
               await schedulePrayerNotification(
@@ -488,7 +517,7 @@ class NotificationService {
                 title: title,
                 body: body,
                 scheduledDate: secondAlarmTime,
-                channelType: isSecondEzan ? 'ezan' : 'standart',
+                channelType: isSecondEzan ? 'ezan' : (isSecondAlarmTone ? 'ezan' : 'standart'),
               );
               totalScheduled++;
             }
