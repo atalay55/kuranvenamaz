@@ -78,6 +78,16 @@
             </intent-filter>
         </receiver>
 
+        <!-- Prayer Alarm Stop Receiver - Handles stopping alarm instantly when 'Durdur' is pressed from notification -->
+        <receiver
+            android:name=".PrayerAlarmStopReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.fatihatalay.kuranvenamaz.ACTION_STOP_ALARM" />
+            </intent-filter>
+        </receiver>
+
         <!-- Prayer Foreground Service for Background Alarms and Xiaomi Keep-Alive -->
         <service
             android:name=".PrayerForegroundService"

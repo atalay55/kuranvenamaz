@@ -167,7 +167,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                "Namaz vakitlerinde ezan okunmasını veya 1 dakika öncesinde hatırlatma bildirimi almayı ister misiniz?",
+                "Namaz vakitlerinde ezan alarmı çalmasını veya yalnızca bildirim almayı ister misiniz?",
                 style: TextStyle(
                     color: Color(0xFF2A2A2A), fontSize: 14, height: 1.4, fontWeight: FontWeight.w500),
               ),
@@ -181,7 +181,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.25)),
                 ),
                 child: const Text(
-                  "• Vaktinden 1 dakika önce uyarı verilebilir.\n• Dilediğiniz zaman Ayarlar sayfasından değiştirebilirsiniz.",
+                  "• Ezan Alarmı: Vakit geldiğinde cihazınızda ezan okunur.\n• Standart Bildirim: Sadece bildirim düşer, ezan okunmaz.\n• Ayarlar sayfasından dilediğiniz vakit için alarmı değiştirebilirsiniz.",
                   style: TextStyle(
                       color: Color(0xFF1B4D3E), // Sarı yerine okunaklı koyu zümrüt tonu
                       fontSize: 12,
@@ -208,7 +208,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   ),
                   icon: const Text("🕌 ", style: TextStyle(fontSize: 16)),
                   label: const Text(
-                    "Evet, Ezan Sesi İle Hatırlat (1 Dk Önce)",
+                    "Evet, Ezan Alarmı Kur",
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                   ),
                   onPressed: () async {
@@ -238,7 +238,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   ),
                   icon: const Text("🔔 ", style: TextStyle(fontSize: 16)),
                   label: const Text(
-                    "Evet, Standart Bildirim Ver (15 Dk Önce)",
+                    "Sadece Standart Bildirim Ver (Ezan Okunmasın)",
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,

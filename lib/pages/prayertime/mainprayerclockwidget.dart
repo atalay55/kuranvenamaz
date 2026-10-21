@@ -24,6 +24,7 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
   late Future<List<NamazVakitleri>> namazVakitleriFuture;
   List<NamazVakitleri> _cachedVakitler = [];
   Timer? _timer;
+  int? _lastUpdatedMinute;
 
   @override
   void initState() {
@@ -66,7 +67,9 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
     sonrakiVakitIsmi = _getSonrakiVakitIsmi(_cachedVakitler);
 
     // Her saniye widget güncellemek yerine dakikada bir veya ilk yüklemede güncelle
-    if (forceWidgetUpdate || kalanSure.inSeconds % 60 == 0) {
+    final currentMinute = DateTime.now().minute;
+    if (forceWidgetUpdate || _lastUpdatedMinute != currentMinute) {
+      _lastUpdatedMinute = currentMinute;
       WidgetService.updateWidgetData(
         cityName: cityName,
         countryName: countryName,

@@ -47,12 +47,11 @@ class PrayerUtilities {
         namazSaatleri = ["04:15", "05:52", "13:12", "16:58", "20:21", "21:51"];
       }
 
-      if (_fetchedTimes != null) {
-        try {
-          await NotificationService().reschedulePrayerNotifications(_fetchedTimes!);
-        } catch (err) {
-          debugPrint("Notification reschedule hatasi: $err");
-        }
+      final timesToSchedule = _fetchedTimes ?? Times(timesByDate: {todayStr: namazSaatleri});
+      try {
+        await NotificationService().reschedulePrayerNotifications(timesToSchedule);
+      } catch (err) {
+        debugPrint("Notification reschedule hatasi: $err");
       }
     } catch (e) {
       debugPrint("initializeData hatası: $e");

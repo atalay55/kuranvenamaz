@@ -1940,6 +1940,34 @@ class _SettingsPageState extends State<SettingsPage>
                       },
                     ),
                     ActionChip(
+                      avatar: const Icon(Icons.timer_outlined,
+                          size: 14, color: AppTheme.primaryEmerald),
+                      label: const Text("10 Sn Sonra Alarmı Test Et"),
+                      backgroundColor:
+                          AppTheme.primaryEmerald.withValues(alpha: 0.12),
+                      side: BorderSide(
+                          color:
+                              AppTheme.primaryEmerald.withValues(alpha: 0.5)),
+                      labelStyle: const TextStyle(
+                        color: AppTheme.primaryEmerald,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      onPressed: () async {
+                        final messenger = ScaffoldMessenger.of(context);
+                        await NotificationService()
+                            .scheduleTestNotificationInSeconds(10);
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                "⏰ Test alarmı kuruldu! 10 saniye sonra çalacak. Ekranınızı kilitleyip test edebilirsiniz."),
+                            backgroundColor: AppTheme.primaryEmerald,
+                            duration: Duration(seconds: 4),
+                          ),
+                        );
+                      },
+                    ),
+                    ActionChip(
                       label: Text(AppTranslations.translate('turn_on_all_first', fallback: "Tüm 1. Vakitleri Aç")),
                       backgroundColor: Colors.white,
                       side: BorderSide(

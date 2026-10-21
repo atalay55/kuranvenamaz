@@ -23,6 +23,11 @@ class MainActivity: FlutterActivity() {
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
+                "stopForegroundAlarm" -> {
+                    PrayerForegroundService.stopAlarm(this)
+                    result.success(true)
+                }
+
                 "updateForegroundNotification" -> {
                     val city = call.argument<String>("city") ?: ""
                     val nextPrayer = call.argument<String>("nextPrayer") ?: ""

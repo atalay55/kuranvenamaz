@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -47,7 +48,7 @@ class NotificationService {
     }
 
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@drawable/ic_notification');
 
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
@@ -90,14 +91,15 @@ class NotificationService {
           debugPrint("Exact alarm permission request failed: $e");
         }
 
-        // 1. Ezan Kanali (v4 - En Yüksek Alarm ve Ses Önceliği)
+        // 1. Ezan Kanali (v6 - Alarm Akışı ve Ses Önceliği)
         const AndroidNotificationChannel ezanChannel = AndroidNotificationChannel(
-          'namaz_vakitleri_ezan_v4',
+          'namaz_vakitleri_ezan_v6',
           'Ezan Vakti Bildirimleri',
           description: 'Namaz vakitlerinde ezan sesi ile yüksek sesli hatırlatma.',
           importance: Importance.max,
           playSound: true,
           sound: RawResourceAndroidNotificationSound('ezan'),
+          audioAttributesUsage: AudioAttributesUsage.alarm,
           enableVibration: true,
         );
 
@@ -135,30 +137,21 @@ class NotificationService {
     if (channelType == 'ezan') {
       return NotificationDetails(
         android: AndroidNotificationDetails(
-          'namaz_vakitleri_ezan_v4',
+          'namaz_vakitleri_ezan_v6',
           'Ezan Vakti Bildirimleri',
           channelDescription: 'Namaz vakitlerinde ezan sesi ile yüksek sesli hatırlatma.',
+          icon: '@drawable/ic_notification',
+          color: const Color(0xFF0D5C3A),
           importance: Importance.max,
           priority: Priority.max,
           playSound: true,
           sound: const RawResourceAndroidNotificationSound('ezan'),
           audioAttributesUsage: AudioAttributesUsage.alarm,
-          fullScreenIntent: true,
           category: AndroidNotificationCategory.alarm,
           visibility: NotificationVisibility.public,
           enableVibration: true,
           showWhen: true,
-          autoCancel: false,
-          ongoing: true,
-          additionalFlags: Int32List.fromList([4]),
-          actions: const <AndroidNotificationAction>[
-            AndroidNotificationAction(
-              'stop_alarm_action',
-              'Durdur',
-              cancelNotification: true,
-              showsUserInterface: false,
-            ),
-          ],
+          autoCancel: true,
         ),
         iOS: const DarwinNotificationDetails(
           presentAlert: true,
@@ -174,6 +167,8 @@ class NotificationService {
           'namaz_vakitleri_hatirlatma_v2',
           'Vakit Öncesi Hatırlatma Bildirimleri',
           channelDescription: 'Namaz vaktinden önce gelen hatırlatma bildirimleri.',
+          icon: '@drawable/ic_notification',
+          color: Color(0xFF0D5C3A),
           importance: Importance.high,
           priority: Priority.high,
           playSound: true,
@@ -196,6 +191,8 @@ class NotificationService {
           'namaz_vakitleri_standart_v2',
           'Standart Namaz Bildirimleri',
           channelDescription: 'Namaz vakitlerinde standart bildirim sesi.',
+          icon: '@drawable/ic_notification',
+          color: Color(0xFF0D5C3A),
           importance: Importance.high,
           priority: Priority.high,
           playSound: true,
@@ -322,8 +319,9 @@ class NotificationService {
       scheduledDate.second,
     );
 
-    if (scheduledTZ.isBefore(nowTz)) {
-      debugPrint("Geçmiş zamanlı bildirim atlandı: $title ($scheduledTZ)");
+    final now = DateTime.now();
+    if (scheduledDate.isBefore(now)) {
+      debugPrint("Geçmiş zamanlı bildirim atlandı: $title ($scheduledDate)");
       return;
     }
 
@@ -406,7 +404,8 @@ class NotificationService {
         }
 
         final dateStr = DateFormat('yyyy-MM-dd').format(targetDay);
-        final dayList = times.timesByDate[dateStr];
+        final dayList = times.timesByDate[dateStr] ??
+            (times.timesByDate.isNotEmpty ? times.timesByDate.values.first : null);
 
         if (dayList == null || dayList.length < 6) continue;
 
@@ -429,28 +428,20 @@ class NotificationService {
             minute,
           );
 
-          // 1. Ana Namaz Vakti Alarmı / Ezanı (1000 + ID)
+          // 1. Ana Namaz Vakti Bildirimi (1000 + ID)
+          // Bildirimde ezan okunmaz; sadece standart bildirim düşer. Alarm kurulduysa ezanı arka plan servisi çalar.
           final firstMinutes = settings.getFirstAlarmMinutes(prayerIndex: i);
           final firstAlarmTime = exactPrayerTime.subtract(Duration(minutes: firstMinutes.abs()));
           if (settings.ezanEnabled && firstAlarmTime.isAfter(now)) {
             String title;
             String body;
-            final isAlarmSound = settings.soundType == 'alarm';
 
             if (firstMinutes == 0) {
-              title = isEzanSound
-                  ? "🕌 $vakitName Ezanı Okunuyor"
-                  : (isAlarmSound
-                      ? "⏰ $vakitName Namazı Vakti Geldi"
-                      : "🔔 $vakitName Namazı Vakti Geldi");
+              title = "🕌 $vakitName Vakti Girdi";
               body = "$vakitName vakti girdi (${dayList[i]}). Haydi namaza!";
             } else {
               final m = firstMinutes.abs();
-              title = isEzanSound
-                  ? "🕌 $vakitName Vaktine $m Dakika Kaldı"
-                  : (isAlarmSound
-                      ? "⏰ $vakitName Vaktine $m Dakika Kaldı"
-                      : "🔔 $vakitName Vaktine $m Dakika Kaldı");
+              title = "🔔 $vakitName Vaktine $m Dakika Kaldı";
               body = "$vakitName vakti saati: ${dayList[i]}. Hazırlık yapmayı unutmayın.";
             }
             final id = 1000 + (dayOffset * 10) + i;
@@ -460,7 +451,7 @@ class NotificationService {
               title: title,
               body: body,
               scheduledDate: firstAlarmTime,
-              channelType: isEzanSound ? 'ezan' : (isAlarmSound ? 'ezan' : 'standart'),
+              channelType: 'standart', // Sadece standart bildirim tonu, ezan okunmaz
             );
             totalScheduled++;
           }
@@ -484,30 +475,20 @@ class NotificationService {
             }
           }
 
-          // 3. İkinci Alarm (Yedek / Hatırlatma) (3000 + ID)
+          // 3. İkinci Alarm Bildirimi (3000 + ID)
           if (settings.isSecondPrayerEnabledForDay(weekday, i)) {
             final secondMinutes = settings.getSecondAlarmMinutes(prayerIndex: i);
             final secondAlarmTime = exactPrayerTime.subtract(Duration(minutes: secondMinutes.abs()));
             if (secondAlarmTime.isAfter(now)) {
-              final isSecondEzan = settings.secondAlarmSoundType == 'ezan';
-              final isSecondAlarmTone = settings.secondAlarmSoundType == 'alarm';
               String title;
               String body;
 
               if (secondMinutes == 0) {
-                title = isSecondEzan
-                    ? "🕌 2. Alarm: $vakitName Ezanı Okunuyor"
-                    : (isSecondAlarmTone
-                        ? "⏰ 2. Alarm: $vakitName Namazı Vakti Geldi"
-                        : "🔔 2. Alarm: $vakitName Namazı Vakti Geldi");
+                title = "⏰ 2. Alarm: $vakitName Namazı Vakti Geldi";
                 body = "$vakitName vakti girdi (${dayList[i]}). Haydi namaza!";
               } else {
                 final m = secondMinutes.abs();
-                title = isSecondEzan
-                    ? "🕌 2. Alarm: $vakitName Vaktine $m Dakika Kaldı"
-                    : (isSecondAlarmTone
-                        ? "⏰ 2. Alarm: $vakitName Vaktine $m Dakika Kaldı"
-                        : "🔔 2. Alarm: $vakitName Vaktine $m Dakika Kaldı");
+                title = "⏰ 2. Alarm: $vakitName Vaktine $m Dakika Kaldı";
                 body = "$vakitName vakti saati: ${dayList[i]}. Hazırlık yapmayı unutmayın.";
               }
               final id = 3000 + (dayOffset * 10) + i;
@@ -517,7 +498,7 @@ class NotificationService {
                 title: title,
                 body: body,
                 scheduledDate: secondAlarmTime,
-                channelType: isSecondEzan ? 'ezan' : (isSecondAlarmTone ? 'ezan' : 'standart'),
+                channelType: 'standart', // Bildirim olarak standart düşer, alarm sesi servisten yönetilir
               );
               totalScheduled++;
             }
