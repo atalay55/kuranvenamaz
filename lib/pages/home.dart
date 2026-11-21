@@ -247,7 +247,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   onPressed: () async {
                     final s = SettingsService();
                     await s.setNotificationsEnabled(true);
-                    await s.setSoundType('notification');
+                    await s.setSoundType('standart');
                     await s.setNotificationTiming(15);
                     await s.setAskedPrompt(true);
                     if (dialogCtx.mounted) {

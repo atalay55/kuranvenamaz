@@ -1,6 +1,4 @@
-import 'package:kuranvenamaz/entity/entity.dart';
-
-class Country implements Entity {
+class Country {
   final String code;
   final String name;
 
@@ -8,5 +6,4 @@ class Country implements Entity {
     required this.code,
     required this.name,
   });
-
 }

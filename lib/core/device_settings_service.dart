@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:disable_battery_optimization/disable_battery_optimization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -56,21 +55,16 @@ class DeviceSettingsService {
   // ─── İzin Durumu Kontrolü ───────────────────────────────────────────────
 
   /// Tüm bildirim izinlerinin durumunu tek seferde kontrol et.
-  /// Pil optimizasyonu için `disable_battery_optimization` paketini kullanır.
   static Future<NotificationPermissionStatus?> checkNotificationPermissions() async {
     if (!Platform.isAndroid) return null;
     try {
-      // 1. disable_battery_optimization paketi ile pil durumu
-      final bool batteryOk =
-          await DisableBatteryOptimization.isBatteryOptimizationDisabled ?? true;
-
-      // 2. Native channel üzerinden diğer bilgiler
       final Map<dynamic, dynamic> result =
           await _channel.invokeMethod('checkNotificationPermissions');
 
       return NotificationPermissionStatus(
         notificationsEnabled: result['notificationsEnabled'] as bool? ?? true,
-        batteryOptimizationIgnored: batteryOk,
+        batteryOptimizationIgnored:
+            result['batteryOptimizationIgnored'] as bool? ?? true,
         exactAlarmAllowed: result['exactAlarmAllowed'] as bool? ?? true,
         manufacturer: result['manufacturer'] as String? ?? 'Unknown',
         model: result['model'] as String? ?? 'Unknown',
@@ -95,7 +89,7 @@ class DeviceSettingsService {
 
   static Future<bool> isIgnoringBatteryOptimizations() async {
     try {
-      return await DisableBatteryOptimization.isBatteryOptimizationDisabled ??
+      return await _channel.invokeMethod<bool>('isIgnoringBatteryOptimizations') ??
           true;
     } catch (e) {
       debugPrint("isIgnoringBatteryOptimizations error: $e");
@@ -106,60 +100,31 @@ class DeviceSettingsService {
   // ─── Ayarlar Açma ───────────────────────────────────────────────────────
 
   /// Xiaomi / OEM otomatik başlatma ayarları.
-  /// disable_battery_optimization paketi kendi dialog + intent zincirini kullanır.
   static Future<void> openAutostartSettings() async {
     try {
-      await DisableBatteryOptimization.showEnableAutoStartSettings(
-        "Otomatik Başlatma",
-        "Kuran ve Namaz uygulamasının arka planda çalışabilmesi için bu ayarı açmanız gerekiyor.",
-      );
+      await _channel.invokeMethod('openAutostartSettings');
     } catch (e) {
       debugPrint("openAutostartSettings error: $e");
-      // Fallback: native channel üzerinden dene
-      try {
-        await _channel.invokeMethod('openAutostartSettings');
-      } catch (_) {}
     }
   }
 
   /// Pil optimizasyonunu kapat.
-  /// Standart Android sistem dialogunu açar (kullanıcı sadece "İzin Ver" der).
   static Future<void> openBatteryOptimizationSettings() async {
     try {
-      await DisableBatteryOptimization.showDisableBatteryOptimizationSettings();
+      await _channel.invokeMethod('openBatteryOptimizationSettings');
     } catch (e) {
       debugPrint("openBatteryOptimizationSettings error: $e");
-      try {
-        await _channel.invokeMethod('openBatteryOptimizationSettings');
-      } catch (_) {}
     }
   }
 
   /// OEM'e özel ek pil kısıtlama ayarları (Xiaomi → Güvenlik Uygulaması vb.)
   static Future<void> openManufacturerBatterySettings() async {
-    try {
-      await DisableBatteryOptimization
-          .showDisableManufacturerBatteryOptimizationSettings(
-        "Pil Kısıtlaması",
-        "Ezanın vaktinde çalabilmesi için cihazınızın ek pil kısıtlamasını kaldırın.",
-      );
-    } catch (e) {
-      debugPrint("openManufacturerBatterySettings error: $e");
-    }
+    await openAutostartSettings();
   }
 
-  /// Tüm pil optimizasyonlarını (standart + OEM) tek seferde göster.
+  /// Tüm pil optimizasyonlarını (standart + OEM) aç.
   static Future<void> showDisableAllOptimizations() async {
-    try {
-      await DisableBatteryOptimization.showDisableAllOptimizationsSettings(
-        "Tüm Pil Kısıtlamalarını Kaldır",
-        "Ezanın tam vaktinde çalabilmesi için aşağıdaki adımları tamamlayın.",
-        "Pil Optimizasyonu",
-        "Sistem pil optimizasyonunu devre dışı bırakın.",
-      );
-    } catch (e) {
-      debugPrint("showDisableAllOptimizations error: $e");
-    }
+    await openBatteryOptimizationSettings();
   }
 
   /// Tam alarm izni ayarları (Android 12+)

@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:kuranvenamaz/core/notificationservice.dart';
 import 'package:kuranvenamaz/core/widget_service.dart';
@@ -7,11 +6,6 @@ import 'package:kuranvenamaz/entity/location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../entity/namazvakitleri.dart';
 import 'httpcontroller.dart';
-
-class Utilities {
-  var width = Get.width;
-  var height = Get.height;
-}
 
 class PrayerUtilities {
   late SharedPreferences prefs;
@@ -28,6 +22,31 @@ class PrayerUtilities {
 
   List<String> namazSaatleri = [];
   Times? _fetchedTimes;
+
+  static const List<String> prayerNames = [
+    "İmsak",
+    "Güneş",
+    "Öğle",
+    "İkindi",
+    "Akşam",
+    "Yatsı",
+  ];
+
+  static List<NamazVakitleri> buildVakitList(List<String> saatler) {
+    final List<NamazVakitleri> list = [];
+    for (int i = 0; i < prayerNames.length && i < saatler.length; i++) {
+      list.add(NamazVakitleri(namazSaati: saatler[i], vakitIsmi: prayerNames[i]));
+    }
+    return list;
+  }
+
+  Map<String, List<String>> get cachedTimesByDate =>
+      Map.unmodifiable(_fetchedTimes?.timesByDate ?? {});
+
+  Future<Map<String, List<String>>> getAllPrayerTimesByDate() async {
+    await initializeData();
+    return Map.unmodifiable(_fetchedTimes?.timesByDate ?? {});
+  }
 
   Future<void> initializeData() async {
     try {

@@ -1,6 +1,4 @@
-import 'entity.dart';
-
-class City implements Entity{
+class City {
   String cityName;
 
   City(this.cityName);

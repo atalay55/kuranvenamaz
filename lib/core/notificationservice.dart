@@ -22,6 +22,17 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
+  static const String ezanChannelId = 'namaz_vakitleri_ezan_v6';
+  static const String hatirlatmaChannelId = 'namaz_vakitleri_hatirlatma_v2';
+  static const String standartChannelId = 'namaz_vakitleri_standart_v2';
+
+  static String resolveChannelType(String soundType) {
+    if (soundType == 'standart' || soundType == 'notification') {
+      return 'standart';
+    }
+    return 'ezan';
+  }
+
   final FlutterLocalNotificationsPlugin notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
@@ -215,14 +226,15 @@ class NotificationService {
   Future<void> showTestNotification() async {
     final settings = SettingsService();
     await settings.initSettings();
-    final isEzan = settings.soundType == 'ezan';
+    final channelType = resolveChannelType(settings.soundType);
+    final isEzan = channelType == 'ezan';
     final timing = settings.notificationTimingMinutes;
 
     await notificationsPlugin.show(
       999,
       isEzan ? "🕌 Ezan Vakti Bildirim Testi" : "🔔 Namaz Vakti Bildirim Testi",
       "Bildirim tercihiniz: ${settings.preNotificationEnabled ? '$timing dk önce hatırlatma +' : ''} ${settings.ezanEnabled ? 'vaktinde ezan' : ''}. Ses ve bildirimler başarıyla çalışıyor!",
-      _getNotificationDetails(isEzan ? 'ezan' : 'standart'),
+      _getNotificationDetails(channelType),
     );
   }
 
@@ -262,11 +274,12 @@ class NotificationService {
   Future<void> scheduleTestNotificationInSeconds(int seconds) async {
     final settings = SettingsService();
     await settings.initSettings();
-    final isEzan = settings.soundType == 'ezan';
+    final channelType = resolveChannelType(settings.soundType);
+    final isEzan = channelType == 'ezan';
     final nowTz = tz.TZDateTime.now(tz.local);
     final targetTz = nowTz.add(Duration(seconds: seconds));
 
-    final details = _getNotificationDetails(isEzan ? 'ezan' : 'standart');
+    final details = _getNotificationDetails(channelType);
 
     try {
       await notificationsPlugin.zonedSchedule(
@@ -390,7 +403,8 @@ class NotificationService {
       final now = DateTime.now();
       final names = ["İmsak", "Güneş", "Öğle", "İkindi", "Akşam", "Yatsı"];
       final timingMinutes = settings.notificationTimingMinutes;
-      final isEzanSound = settings.soundType == 'ezan';
+      final firstChannelType = resolveChannelType(settings.soundType);
+      final secondChannelType = resolveChannelType(settings.secondAlarmSoundType);
 
       // Önümüzdeki 7 gün için bildirimleri kur
       for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
@@ -428,8 +442,7 @@ class NotificationService {
             minute,
           );
 
-          // 1. Ana Namaz Vakti Bildirimi (1000 + ID)
-          // Bildirimde ezan okunmaz; sadece standart bildirim düşer. Alarm kurulduysa ezanı arka plan servisi çalar.
+          // 1. Ana Namaz Vakti Bildirimi / Ezan Alarmı (1000 + ID)
           final firstMinutes = settings.getFirstAlarmMinutes(prayerIndex: i);
           final firstAlarmTime = exactPrayerTime.subtract(Duration(minutes: firstMinutes.abs()));
           if (settings.ezanEnabled && firstAlarmTime.isAfter(now)) {
@@ -451,7 +464,7 @@ class NotificationService {
               title: title,
               body: body,
               scheduledDate: firstAlarmTime,
-              channelType: 'standart', // Sadece standart bildirim tonu, ezan okunmaz
+              channelType: firstChannelType,
             );
             totalScheduled++;
           }
@@ -498,7 +511,7 @@ class NotificationService {
                 title: title,
                 body: body,
                 scheduledDate: secondAlarmTime,
-                channelType: 'standart', // Bildirim olarak standart düşer, alarm sesi servisten yönetilir
+                channelType: secondChannelType,
               );
               totalScheduled++;
             }

@@ -9,17 +9,14 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.SharedPreferences
 import android.content.pm.ServiceInfo
 import android.graphics.Color
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import android.os.PowerManager
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
-import org.json.JSONObject
 import java.util.Calendar
 import java.util.Locale
 
@@ -41,13 +38,9 @@ class PrayerForegroundService : Service() {
 
     companion object {
         const val CHANNEL_ID = "kuran_ve_namaz_foreground_channel"
-        const val ALARM_CHANNEL_ID = "kuran_ve_namaz_alarm_channel_v7"
         const val NOTIFICATION_ID = 777
         const val ALARM_NOTIFICATION_ID = 9999
         const val ACTION_STOP_ALARM = "com.fatihatalay.kuranvenamaz.ACTION_STOP_ALARM"
-
-        private var alarmMediaPlayer: android.media.MediaPlayer? = null
-        private var alarmWakeLock: PowerManager.WakeLock? = null
 
         fun startService(context: Context) {
             try {
@@ -63,25 +56,6 @@ class PrayerForegroundService : Service() {
         }
 
         fun stopAlarm(context: Context) {
-            try {
-                alarmMediaPlayer?.let {
-                    if (it.isPlaying) it.stop()
-                    it.release()
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-            alarmMediaPlayer = null
-
-            try {
-                alarmWakeLock?.let {
-                    if (it.isHeld) it.release()
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-            alarmWakeLock = null
-
             try {
                 val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 manager.cancel(ALARM_NOTIFICATION_ID)
@@ -155,7 +129,6 @@ class PrayerForegroundService : Service() {
     private var watchdogHandler: Handler? = null
     private var watchdogRunnable: Runnable? = null
     private var timeTickReceiver: BroadcastReceiver? = null
-    private var lastTriggeredAlarmTag: String = ""
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -178,10 +151,6 @@ class PrayerForegroundService : Service() {
         if (timeTickReceiver != null) return
         timeTickReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                if (intent?.action == Intent.ACTION_TIME_CHANGED ||
-                    intent?.action == Intent.ACTION_TIMEZONE_CHANGED) {
-                    lastTriggeredAlarmTag = ""
-                }
                 updateNotificationNow()
             }
         }
@@ -218,219 +187,14 @@ class PrayerForegroundService : Service() {
             val notification = buildForegroundNotification()
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.notify(NOTIFICATION_ID, notification)
-            checkAndTriggerPrayerAlarm()
         } catch (e: Exception) {
             e.printStackTrace()
         }
-    }
-
-    private fun isPrayerEnabledForWeekday(prefs: SharedPreferences, weekday: Int, prayerIndex: Int): Boolean {
-        val json = prefs.getString("flutter.settings_day_prayers", null) ?: return prayerIndex != 1
-        return try {
-            val obj = JSONObject(json)
-            val arr = obj.optJSONArray(weekday.toString()) ?: return prayerIndex != 1
-            for (i in 0 until arr.length()) {
-                if (arr.getInt(i) == prayerIndex) return true
-            }
-            false
-        } catch (e: Exception) {
-            prayerIndex != 1
-        }
-    }
-
-    private fun isSecondPrayerEnabledForWeekday(prefs: SharedPreferences, weekday: Int, prayerIndex: Int): Boolean {
-        val json = prefs.getString("flutter.settings_day_second_prayers", null) ?: return prayerIndex == 0
-        return try {
-            val obj = JSONObject(json)
-            val arr = obj.optJSONArray(weekday.toString()) ?: return prayerIndex == 0
-            for (i in 0 until arr.length()) {
-                if (arr.getInt(i) == prayerIndex) return true
-            }
-            false
-        } catch (e: Exception) {
-            prayerIndex == 0
-        }
-    }
-
-    private fun getPrayerFirstAlarmOffset(prefs: SharedPreferences, prayerIndex: Int): Int {
-        val json = prefs.getString("flutter.settings_prayer_first_alarm_minutes", null)
-        if (!json.isNullOrBlank()) {
-            try {
-                val obj = JSONObject(json)
-                if (obj.has(prayerIndex.toString())) {
-                    val v = obj.getInt(prayerIndex.toString())
-                    return if (v > 0) -v else v
-                }
-            } catch (_: Exception) {}
-        }
-        val defaultVal = prefs.getInt("flutter.settings_first_alarm_minutes", 0)
-        return if (defaultVal > 0) -defaultVal else defaultVal
-    }
-
-    private fun getPrayerSecondAlarmOffset(prefs: SharedPreferences, prayerIndex: Int): Int {
-        val json = prefs.getString("flutter.settings_prayer_second_alarm_minutes", null)
-        if (!json.isNullOrBlank()) {
-            try {
-                val obj = JSONObject(json)
-                if (obj.has(prayerIndex.toString())) {
-                    val v = obj.getInt(prayerIndex.toString())
-                    return if (v > 0) -v else v
-                }
-            } catch (_: Exception) {}
-        }
-        val defaultVal = prefs.getInt("flutter.settings_second_alarm_minutes", -15)
-        return if (defaultVal > 0) -defaultVal else defaultVal
-    }
-
-    private fun checkAndTriggerPrayerAlarm() {
-        try {
-            val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-            val notifsEnabled = prefs.getBoolean("flutter.settings_notifications_enabled", true)
-            val ezanEnabled = prefs.getBoolean("flutter.settings_ezan_enabled", true)
-            if (!notifsEnabled || !ezanEnabled) return
-
-            val imsak = prefs.getString("flutter.vakit_imsak", null)
-            val gunes = prefs.getString("flutter.vakit_gunes", null)
-            val ogle = prefs.getString("flutter.vakit_ogle", null)
-            val ikindi = prefs.getString("flutter.vakit_ikindi", null)
-            val aksam = prefs.getString("flutter.vakit_aksam", null)
-            val yatsi = prefs.getString("flutter.vakit_yatsi", null)
-
-            val prayerTimes = listOf(imsak, gunes, ogle, ikindi, aksam, yatsi)
-            val prayerNames = listOf("İmsak", "Güneş", "Öğle", "İkindi", "Akşam", "Yatsı")
-
-            val cal = Calendar.getInstance()
-            val nowMinutes = cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
-            val weekday = when (cal.get(Calendar.DAY_OF_WEEK)) {
-                Calendar.MONDAY -> 1
-                Calendar.TUESDAY -> 2
-                Calendar.WEDNESDAY -> 3
-                Calendar.THURSDAY -> 4
-                Calendar.FRIDAY -> 5
-                Calendar.SATURDAY -> 6
-                Calendar.SUNDAY -> 7
-                else -> 1
-            }
-
-            for (i in 0..5) {
-                val timeStr = prayerTimes[i] ?: continue
-                val prayerSecs = parseTimeToSeconds(timeStr) ?: continue
-                val prayerMinOfDay = prayerSecs / 60
-                val prayerName = prayerNames[i]
-
-                // 1. Ana Alarm (Kullanıcı ezan/alarm seçtiyse çalar, sadece bildirim seçtiyse alarm sesi çalmaz)
-                val soundType = prefs.getString("flutter.settings_sound_type", "ezan") ?: "ezan"
-                if (isPrayerEnabledForWeekday(prefs, weekday, i) && soundType != "notification") {
-                    val offset = getPrayerFirstAlarmOffset(prefs, i)
-                    val targetMin = (prayerMinOfDay + offset + 1440) % 1440
-                    if (nowMinutes == targetMin) {
-                        val tag = "first_${weekday}_${i}_$targetMin"
-                        if (tag != lastTriggeredAlarmTag) {
-                            lastTriggeredAlarmTag = tag
-                            val title = if (offset == 0) "🕌 $prayerName Ezanı Okunuyor" else "⏰ $prayerName Vaktine ${-offset} Dk Kaldı"
-                            playAlarm(prayerName, timeStr, title)
-                            return
-                        }
-                    }
-                }
-
-                // 2. Yedek Alarm
-                val secondSoundType = prefs.getString("flutter.settings_second_alarm_sound_type", "alarm") ?: "alarm"
-                if (isSecondPrayerEnabledForWeekday(prefs, weekday, i) && secondSoundType != "notification") {
-                    val offset2 = getPrayerSecondAlarmOffset(prefs, i)
-                    val target2Min = (prayerMinOfDay + offset2 + 1440) % 1440
-                    if (nowMinutes == target2Min) {
-                        val tag = "second_${weekday}_${i}_$target2Min"
-                        if (tag != lastTriggeredAlarmTag) {
-                            lastTriggeredAlarmTag = tag
-                            val title = if (offset2 == 0) "⏰ 2. Alarm: $prayerName Vakti Geldi" else "⏰ 2. Alarm: $prayerName Vaktine ${-offset2} Dk Kaldı"
-                            playAlarm(prayerName, timeStr, title)
-                            return
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    private fun playAlarm(prayerName: String, prayerTime: String, title: String) {
-        try {
-            stopAlarmInternal()
-
-            // Ekranı aç ve uyandır
-            try {
-                val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-                alarmWakeLock = powerManager.newWakeLock(
-                    PowerManager.FULL_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP or PowerManager.ON_AFTER_RELEASE,
-                    "kuranvenamaz:AlarmWakeLock"
-                ).apply {
-                    acquire(120000)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-
-            val audioAttributes = android.media.AudioAttributes.Builder()
-                .setUsage(android.media.AudioAttributes.USAGE_ALARM)
-                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
-                .build()
-
-            alarmMediaPlayer = android.media.MediaPlayer.create(this, R.raw.ezan)?.apply {
-                setAudioAttributes(audioAttributes)
-                isLooping = false
-                setOnCompletionListener {
-                    stopAlarmInternal()
-                }
-                start()
-            }
-
-            val stopIntent = Intent(this, PrayerAlarmStopReceiver::class.java).apply {
-                action = ACTION_STOP_ALARM
-            }
-            val stopPendingIntent = PendingIntent.getBroadcast(
-                this,
-                9999,
-                stopIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0)
-            )
-
-            val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
-            val contentPendingIntent = PendingIntent.getActivity(
-                this,
-                0,
-                launchIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0)
-            )
-
-            val alarmBuilder = NotificationCompat.Builder(this, ALARM_CHANNEL_ID)
-                .setContentTitle(title)
-                .setContentText("$prayerName vakti saati: $prayerTime. Haydi namaza!")
-                .setSmallIcon(R.drawable.ic_notification)
-                .setColor(0xFF0D5C3A.toInt())
-                .setPriority(NotificationCompat.PRIORITY_MAX)
-                .setCategory(NotificationCompat.CATEGORY_ALARM)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setAutoCancel(false)
-                .setOngoing(true)
-                .setContentIntent(contentPendingIntent)
-                .addAction(android.R.drawable.ic_media_pause, "Durdur", stopPendingIntent)
-
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.notify(ALARM_NOTIFICATION_ID, alarmBuilder.build())
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    private fun stopAlarmInternal() {
-        stopAlarm(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP_ALARM) {
-            stopAlarmInternal()
+            stopAlarm(this)
             return START_STICKY
         }
 
@@ -492,21 +256,8 @@ class PrayerForegroundService : Service() {
                 enableVibration(false)
             }
 
-            val alarmChannel = NotificationChannel(
-                ALARM_CHANNEL_ID,
-                "Namaz Ezanı ve Alarm Bildirimi",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Ezan vakti çalan alarm ve durdurma ekranı bildirimi."
-                setShowBadge(true)
-                // Ses MediaPlayer üzerinden çalındığı için bildirim sesi çift ses yapmasın diye sessiz ayarlanır
-                setSound(null, null)
-                enableVibration(true)
-            }
-
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)
-            manager.createNotificationChannel(alarmChannel)
         }
     }
 

@@ -1,0 +1,500 @@
+{
+  ".vscode/settings.json": {
+    "mtime": 1795288461.6025991,
+    "seen": 1795289547.8270783,
+    "ast_hash": "ec0b2ed52de2c562a43e68e50a137df0",
+    "semantic_hash": ""
+  },
+  "analysis_options.yaml": {
+    "mtime": 1795288461.6036086,
+    "seen": 1795289547.827087,
+    "ast_hash": "5df212687f3997ccd1310b5b19ebfb78",
+    "semantic_hash": ""
+  },
+  "android/app/build.gradle": {
+    "mtime": 1795288461.6066792,
+    "seen": 1795289547.8270907,
+    "ast_hash": "368e1fcaf2e9a05385b9b464226ebc50",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/MainActivity.kt": {
+    "mtime": 1795288461.6107714,
+    "seen": 1795289547.827093,
+    "ast_hash": "6ca0cc00e9312c32e9b2f2a11dce9d9d",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/NamazWidgetProvider.kt": {
+    "mtime": 1795288461.6122937,
+    "seen": 1795289547.8270955,
+    "ast_hash": "49744877388dc78ff2999766a833f576",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/PrayerAlarmStopReceiver.kt": {
+    "mtime": 1795288461.6133025,
+    "seen": 1795289547.8270977,
+    "ast_hash": "e22e5666b1b413f44ccdf412a997fedb",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/PrayerBootReceiver.kt": {
+    "mtime": 1795288461.6133025,
+    "seen": 1795289547.8270996,
+    "ast_hash": "d00ccc2ebd4894ba8d2b148361fa75cb",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/PrayerForegroundService.kt": {
+    "mtime": 1795290975.6527736,
+    "seen": 1795291005.0568752,
+    "ast_hash": "7dc842939eaf14ef4648173500f4b24c",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/PrayerNotificationDismissReceiver.kt": {
+    "mtime": 1795288461.614992,
+    "seen": 1795289547.8271034,
+    "ast_hash": "e3ce5b0e4fc819a493ec1150c4ceb191",
+    "semantic_hash": ""
+  },
+  "android/build.gradle": {
+    "mtime": 1795288461.6778843,
+    "seen": 1795289547.8271053,
+    "ast_hash": "c0056754cd2f9faa065019051f7618ae",
+    "semantic_hash": ""
+  },
+  "android/settings.gradle": {
+    "mtime": 1795288461.6809747,
+    "seen": 1795289547.8271072,
+    "ast_hash": "9830a444452bede06edb24322f6cf455",
+    "semantic_hash": ""
+  },
+  "ios/Runner/AppDelegate.swift": {
+    "mtime": 1795288461.7408957,
+    "seen": 1795289547.827109,
+    "ast_hash": "d3718d69f34d0c49cba801798aae13ba",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json": {
+    "mtime": 1795288461.743462,
+    "seen": 1795289547.827111,
+    "ast_hash": "31a08e429403e265cabfb31b3d65f049",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json": {
+    "mtime": 1795288461.7611804,
+    "seen": 1795289547.827113,
+    "ast_hash": "b9e927ac17345f2d5f052fe68a3487f9",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Runner-Bridging-Header.h": {
+    "mtime": 1795288461.7654514,
+    "seen": 1795289547.8271148,
+    "ast_hash": "7ad7b5cea096132de13ba526b2b9efbe",
+    "semantic_hash": ""
+  },
+  "lib/core/app_translations.dart": {
+    "mtime": 1795288461.7680478,
+    "seen": 1795289547.8271165,
+    "ast_hash": "2e0821eadc220df243834e1a70d04c7e",
+    "semantic_hash": ""
+  },
+  "lib/core/content_data.dart": {
+    "mtime": 1795288461.7680478,
+    "seen": 1795289547.8271186,
+    "ast_hash": "1318f2d9e32b89d73917705a2c10e113",
+    "semantic_hash": ""
+  },
+  "lib/core/device_settings_service.dart": {
+    "mtime": 1795291812.176401,
+    "seen": 1795291881.0043025,
+    "ast_hash": "cb8b690a60f9e33893a6eed0e0a5f4de",
+    "semantic_hash": ""
+  },
+  "lib/core/hadith_data.dart": {
+    "mtime": 1795288461.7695663,
+    "seen": 1795289547.8271222,
+    "ast_hash": "146a3b5742d2383e4dafc1642108a3c3",
+    "semantic_hash": ""
+  },
+  "lib/core/httpcontroller.dart": {
+    "mtime": 1795291703.469769,
+    "seen": 1795291881.0043087,
+    "ast_hash": "65d83182bddad8aae766fa10a8905fab",
+    "semantic_hash": ""
+  },
+  "lib/core/notificationservice.dart": {
+    "mtime": 1795290977.4417818,
+    "seen": 1795291005.0568995,
+    "ast_hash": "b5a23bc19a06fe8b157d5bdf350fd15e",
+    "semantic_hash": ""
+  },
+  "lib/core/quran_service.dart": {
+    "mtime": 1795288461.7710857,
+    "seen": 1795289547.8271277,
+    "ast_hash": "5792c2e4132cd47d3ef50821595429d0",
+    "semantic_hash": ""
+  },
+  "lib/core/settings_service.dart": {
+    "mtime": 1795291704.0066788,
+    "seen": 1795291881.0043192,
+    "ast_hash": "ac0aec66eab9baa02aa770d18841a70e",
+    "semantic_hash": ""
+  },
+  "lib/core/utilities.dart": {
+    "mtime": 1795291549.192145,
+    "seen": 1795291662.7232819,
+    "ast_hash": "a3c3c20c5eac74acd8041daecc2d595a",
+    "semantic_hash": ""
+  },
+  "lib/core/widget_service.dart": {
+    "mtime": 1795288461.7741165,
+    "seen": 1795289547.8271332,
+    "ast_hash": "cc2037f1a87e3acde0dde34fde83d711",
+    "semantic_hash": ""
+  },
+  "lib/entity/city.dart": {
+    "mtime": 1795290978.1779277,
+    "seen": 1795291005.0569074,
+    "ast_hash": "d073189a65942e88ca521301cddf20c8",
+    "semantic_hash": ""
+  },
+  "lib/entity/country.dart": {
+    "mtime": 1795290978.5471117,
+    "seen": 1795291005.056909,
+    "ast_hash": "9c9257e368ad554cd537d8a126731f41",
+    "semantic_hash": ""
+  },
+  "lib/entity/hadith_model.dart": {
+    "mtime": 1795288461.7766647,
+    "seen": 1795289547.8271422,
+    "ast_hash": "e6a7fc72b74d7f081a968f0ccc926b93",
+    "semantic_hash": ""
+  },
+  "lib/entity/location.dart": {
+    "mtime": 1795288461.7766647,
+    "seen": 1795289547.8271441,
+    "ast_hash": "60552bd78cc528a8b5948100e1e0c4c9",
+    "semantic_hash": ""
+  },
+  "lib/entity/namazvakitleri.dart": {
+    "mtime": 1795288461.7785866,
+    "seen": 1795289547.827146,
+    "ast_hash": "743948729b294d57d8f5c878fde4cd6b",
+    "semantic_hash": ""
+  },
+  "lib/entity/quran_model.dart": {
+    "mtime": 1795288461.7785866,
+    "seen": 1795289547.8271477,
+    "ast_hash": "d465d9ea2efd625307df13a2ba859b1e",
+    "semantic_hash": ""
+  },
+  "lib/hijricalendar/hijricalendar.dart": {
+    "mtime": 1795288461.7785866,
+    "seen": 1795289547.82715,
+    "ast_hash": "e82016d4d09c44407172a14b123e2efd",
+    "semantic_hash": ""
+  },
+  "lib/main.dart": {
+    "mtime": 1795288461.7801259,
+    "seen": 1795289547.8271515,
+    "ast_hash": "47ce4e7e37d8c71a0ddac251a4301480",
+    "semantic_hash": ""
+  },
+  "lib/pages/compass_pages/location_error_widget.dart": {
+    "mtime": 1795288461.781654,
+    "seen": 1795289547.8271534,
+    "ast_hash": "b132cff8012ea10366546a67ad099018",
+    "semantic_hash": ""
+  },
+  "lib/pages/compass_pages/qiblah_screen.dart": {
+    "mtime": 1795288461.7831745,
+    "seen": 1795289547.827155,
+    "ast_hash": "917db8e2290686e8e9d889dfc0943817",
+    "semantic_hash": ""
+  },
+  "lib/pages/hadith/hadith_list_page.dart": {
+    "mtime": 1795288461.7842128,
+    "seen": 1795289547.827157,
+    "ast_hash": "860f81a6a352120ed4a86d408459e368",
+    "semantic_hash": ""
+  },
+  "lib/pages/home.dart": {
+    "mtime": 1795290979.0287957,
+    "seen": 1795291005.0569265,
+    "ast_hash": "3ac7a1bb80ab3f2d7efa9efd2de7961f",
+    "semantic_hash": ""
+  },
+  "lib/pages/prayertime/mainprayerclockwidget.dart": {
+    "mtime": 1795291704.4047182,
+    "seen": 1795291881.0043643,
+    "ast_hash": "4604abeb20bfec5b4fb38971509a91a7",
+    "semantic_hash": ""
+  },
+  "lib/pages/quran/surah_detail_page.dart": {
+    "mtime": 1795288461.787257,
+    "seen": 1795289547.8271627,
+    "ast_hash": "43c0578a071f94b24b7ff957c20be91a",
+    "semantic_hash": ""
+  },
+  "lib/pages/quran/surah_list_page.dart": {
+    "mtime": 1795288461.787257,
+    "seen": 1795289547.8271644,
+    "ast_hash": "a1200fe76563317331a6c1bee8227c6d",
+    "semantic_hash": ""
+  },
+  "lib/pages/selectablepage/cityselect.dart": {
+    "mtime": 1795290981.0013664,
+    "seen": 1795291005.0569332,
+    "ast_hash": "2054bd99d3605dd87cc2db6efcb2805f",
+    "semantic_hash": ""
+  },
+  "lib/pages/selectablepage/countryselect.dart": {
+    "mtime": 1795288461.7887735,
+    "seen": 1795289547.8271692,
+    "ast_hash": "586f2f5ee6eecd429a3abedd374cbd6d",
+    "semantic_hash": ""
+  },
+  "lib/pages/settings/settings_page.dart": {
+    "mtime": 1795291634.0870903,
+    "seen": 1795291662.7233155,
+    "ast_hash": "39b9d93d3ed6c01222ac5b1f4088eb4f",
+    "semantic_hash": ""
+  },
+  "lib/pages/zikirmatik_pages/zikirmatik.dart": {
+    "mtime": 1795288461.7902894,
+    "seen": 1795289547.8271725,
+    "ast_hash": "6b44e968ec8984e6ce9dffb12e2a207c",
+    "semantic_hash": ""
+  },
+  "lib/theme/app_theme.dart": {
+    "mtime": 1795288461.7918096,
+    "seen": 1795289547.8271744,
+    "ast_hash": "d93925777f7d2398b237ee91faeb4c29",
+    "semantic_hash": ""
+  },
+  "lib/theme/ayetduahadistheme.dart": {
+    "mtime": 1795288461.7918096,
+    "seen": 1795289547.827176,
+    "ast_hash": "096dbc4ba5f8e7d9e233376618ee8e67",
+    "semantic_hash": ""
+  },
+  "lib/theme/namazvakitlericard.dart": {
+    "mtime": 1795288461.7933285,
+    "seen": 1795289547.827178,
+    "ast_hash": "adf2cfa6d1daf3115ffb2151c7e4aeb5",
+    "semantic_hash": ""
+  },
+  "pubspec.yaml": {
+    "mtime": 1795291809.241685,
+    "seen": 1795291881.0043952,
+    "ast_hash": "d2edf0ef44f77239fefc8cc24a2fe05f",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1795288461.6036086,
+    "seen": 1795289547.8271813,
+    "ast_hash": "b164decd5207919dce482e46f599ffae",
+    "semantic_hash": ""
+  },
+  "assets/README.txt": {
+    "mtime": 1795288461.68351,
+    "seen": 1795289547.827183,
+    "ast_hash": "b427a9ef822e64b62eb7f6d99dbc3b48",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md": {
+    "mtime": 1795288461.763704,
+    "seen": 1795289547.827185,
+    "ast_hash": "f7ee1b402881509d197f34963e569927",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/res/mipmap-hdpi/ic_launcher.png": {
+    "mtime": 1795288461.6282625,
+    "seen": 1795289547.8271866,
+    "ast_hash": "b0dc22c480dbcde418f3d243a91fcf47",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/res/mipmap-mdpi/ic_launcher.png": {
+    "mtime": 1795288461.6297884,
+    "seen": 1795289547.8271887,
+    "ast_hash": "619f66758ace948aecd85be4f9e8ae17",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/res/mipmap-xhdpi/ic_launcher.png": {
+    "mtime": 1795288461.631312,
+    "seen": 1795289547.8271909,
+    "ast_hash": "37b844ca2aafbead8e9b99bdd13b4700",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png": {
+    "mtime": 1795288461.6328285,
+    "seen": 1795289547.8271925,
+    "ast_hash": "4129e8d87712146d2594b3b8bd2d9c9d",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png": {
+    "mtime": 1795288461.6339202,
+    "seen": 1795289547.8271947,
+    "ast_hash": "f01ca60ffa432591fdea8c9246fc3ee2",
+    "semantic_hash": ""
+  },
+  "assets/icon.png": {
+    "mtime": 1795288461.7297516,
+    "seen": 1795289547.8271966,
+    "ast_hash": "9fe61c67b49fa7e037389aa772f4d3a8",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png": {
+    "mtime": 1795288461.7468262,
+    "seen": 1795289547.8271985,
+    "ast_hash": "c6a96e10f09e94af90164366f484a9e0",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png": {
+    "mtime": 1795288461.7483473,
+    "seen": 1795289547.8272002,
+    "ast_hash": "c0d88458828a344f6a0b882593f4b649",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png": {
+    "mtime": 1795288461.7493565,
+    "seen": 1795289547.827202,
+    "ast_hash": "611a1526f2e4a7cd2b2929c8b2d4e45e",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png": {
+    "mtime": 1795288461.7493565,
+    "seen": 1795289547.8272038,
+    "ast_hash": "1a84e5d1e298896fe9879e30cb6f8622",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@1x.png": {
+    "mtime": 1795288461.7493565,
+    "seen": 1795289547.8272054,
+    "ast_hash": "bd29556d9abd038985b871dd55bbe4d3",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@2x.png": {
+    "mtime": 1795288461.7508829,
+    "seen": 1795289547.8272073,
+    "ast_hash": "ca03c3fe91d294f17dd2672b57736681",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@3x.png": {
+    "mtime": 1795288461.7508829,
+    "seen": 1795289547.8272092,
+    "ast_hash": "5e25143d0f46803b8b00f8319a833fd3",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@1x.png": {
+    "mtime": 1795288461.7524009,
+    "seen": 1795289547.827211,
+    "ast_hash": "611a1526f2e4a7cd2b2929c8b2d4e45e",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png": {
+    "mtime": 1795288461.7524009,
+    "seen": 1795289547.8272126,
+    "ast_hash": "56103162c400ebf32fac686b9b415b3d",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png": {
+    "mtime": 1795288461.7534099,
+    "seen": 1795289547.8272142,
+    "ast_hash": "edbcd2694700da32543d0d439f909cd8",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@1x.png": {
+    "mtime": 1795288461.7534099,
+    "seen": 1795289547.8272161,
+    "ast_hash": "d63c76877ef2f242794293c301aa865d",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@2x.png": {
+    "mtime": 1795288461.7550507,
+    "seen": 1795289547.8272178,
+    "ast_hash": "7c4f8878f5dc485db295ce21b3ad1d86",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@1x.png": {
+    "mtime": 1795288461.7550507,
+    "seen": 1795289547.8272197,
+    "ast_hash": "a7675dc9c022da8292dd0a1079713788",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@2x.png": {
+    "mtime": 1795288461.7550507,
+    "seen": 1795289547.8272212,
+    "ast_hash": "242909a792fa632b7dd716bbe2a8e9a0",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png": {
+    "mtime": 1795288461.756572,
+    "seen": 1795289547.827223,
+    "ast_hash": "edbcd2694700da32543d0d439f909cd8",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png": {
+    "mtime": 1795288461.756572,
+    "seen": 1795289547.8272247,
+    "ast_hash": "bc867f2fd959613c1722009ee0910a2e",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@1x.png": {
+    "mtime": 1795288461.758142,
+    "seen": 1795289547.8272266,
+    "ast_hash": "b0dc22c480dbcde418f3d243a91fcf47",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@2x.png": {
+    "mtime": 1795288461.758142,
+    "seen": 1795289547.827228,
+    "ast_hash": "4129e8d87712146d2594b3b8bd2d9c9d",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png": {
+    "mtime": 1795288461.7596633,
+    "seen": 1795289547.82723,
+    "ast_hash": "ecb5bd951b1a902caeb8d53ad22bc2e6",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png": {
+    "mtime": 1795288461.7596633,
+    "seen": 1795289547.827232,
+    "ast_hash": "7167925ad7ee98f960189e7ab5d4647c",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png": {
+    "mtime": 1795288461.7611804,
+    "seen": 1795289547.8272338,
+    "ast_hash": "23dbd4e2a79772a2cb1e64d98e68fbe1",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage.png": {
+    "mtime": 1795288461.7611804,
+    "seen": 1795289547.827236,
+    "ast_hash": "978c1bee49d7ad5fc1a4d81099b13e18",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@2x.png": {
+    "mtime": 1795288461.762696,
+    "seen": 1795289547.8272376,
+    "ast_hash": "978c1bee49d7ad5fc1a4d81099b13e18",
+    "semantic_hash": ""
+  },
+  "ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@3x.png": {
+    "mtime": 1795288461.762696,
+    "seen": 1795289547.8272398,
+    "ast_hash": "978c1bee49d7ad5fc1a4d81099b13e18",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/res/raw/ezan.mp3": {
+    "mtime": 1795288461.6718173,
+    "seen": 1795289547.8272414,
+    "ast_hash": "ed9a77ccf3f93e55ecf90be8860c0234",
+    "semantic_hash": ""
+  },
+  "test/core_logic_test.dart": {
+    "mtime": 1795291704.6140876,
+    "seen": 1795291881.0043983,
+    "ast_hash": "a81450a463b63affd8f4f4bd58ecd6e8",
+    "semantic_hash": ""
+  }
+}

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:kuranvenamaz/core/app_translations.dart';
+import 'package:kuranvenamaz/core/settings_service.dart';
 import 'package:kuranvenamaz/entity/location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -530,7 +531,9 @@ class HttpController {
     return turkeyCities.map((c) => City(c)).toList();
   }
 
-  String _normalizeTurkishCharacters(String input) {
+  static final Map<String, List<dynamic>> _bukhariCache = {};
+
+  static String normalizeTurkish(String input) {
     return input
         .replaceAll('İ', 'I')
         .replaceAll('ı', 'i')
@@ -551,7 +554,7 @@ class HttpController {
     if (city.isEmpty) return 'Istanbul';
     // Parantez içindeki açıklamayı ayır (örn: "Köln (Cologne)" -> "Köln")
     String cleaned = city.contains('(') ? city.split('(')[0].trim() : city;
-    String norm = _normalizeTurkishCharacters(cleaned);
+    String norm = normalizeTurkish(cleaned);
     return norm.isEmpty ? 'Istanbul' : norm;
   }
 
@@ -585,70 +588,226 @@ class HttpController {
     if (lower.contains('kazak') || lower == 'kz') return 'Kazakhstan';
 
     String cleaned = country.contains('(') ? country.split('(')[0].trim() : country;
-    String norm = _normalizeTurkishCharacters(cleaned);
+    String norm = normalizeTurkish(cleaned);
     return norm.isEmpty ? 'Turkey' : norm;
   }
 
-  // Diyanet takvimine göre Namaz Vakitleri Alma (Aladhan Diyanet Method = 13)
-  Future<Times> fetchPrayerTimesData(String country, String city) async {
-    final now = DateTime.now();
-    final todayStr = DateFormat('yyyy-MM-dd').format(now);
-    final cleanCity = _normalizeCityName(city);
-    final cleanCountry = _normalizeCountryName(country);
-    final cacheKey = 'prayer_times_cache_${cleanCountry.toLowerCase().replaceAll(' ', '_')}_${cleanCity.toLowerCase().replaceAll(' ', '_')}';
-    final encodedCity = Uri.encodeComponent(cleanCity);
-    final encodedCountry = Uri.encodeComponent(cleanCountry);
-
-    // 0. Öncelik: Yerel önbellekte bugünün vakitleri varsa ANINDA (0 ms) dön, alarm kurulumunu ve açılışı geciktirme!
-    final cachedFast = await _loadTimesFromCache(cacheKey);
-    if (cachedFast != null && cachedFast.isNotEmpty && cachedFast.containsKey(todayStr)) {
-      debugPrint("⚡ $cleanCity için bugünün namaz vakitleri anında yerel önbellekten okundu.");
-      return Times(timesByDate: cachedFast);
+  /// Resmi Diyanet (ezanvakti.emushaf.net) 30 günlük JSON listesini YYYY-MM-DD haritasına çevirir
+  static Map<String, List<String>> parseDiyanetVakitler(List<dynamic> list) {
+    final Map<String, List<String>> result = {};
+    for (final item in list) {
+      if (item is! Map) continue;
+      final dateRaw = item['MiladiTarihKisa']?.toString().trim(); // DD.MM.YYYY
+      if (dateRaw == null || dateRaw.isEmpty) continue;
+      final parts = dateRaw.split('.');
+      if (parts.length != 3) continue;
+      final dateStr =
+          "${parts[2]}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}";
+      final imsak = (item['Imsak'] ?? '').toString().trim();
+      final gunes = (item['Gunes'] ?? '').toString().trim();
+      final ogle = (item['Ogle'] ?? '').toString().trim();
+      final ikindi = (item['Ikindi'] ?? '').toString().trim();
+      final aksam = (item['Aksam'] ?? '').toString().trim();
+      final yatsi = (item['Yatsi'] ?? item['Yatsı'] ?? '').toString().trim();
+      if (imsak.isNotEmpty && yatsi.isNotEmpty) {
+        result[dateStr] = [imsak, gunes, ogle, ikindi, aksam, yatsi];
+      }
     }
+    return result;
+  }
 
-    // 1. Öncelik: Tüm ayın takvim verisini çekme
+  /// Seçili ülke/şehir için resmi Diyanet (ezanvakti.emushaf.net) 30 günlük vakitlerini çeker
+  Future<Map<String, List<String>>?> _fetchOfficialDiyanetTimes(
+    String cleanCountry,
+    String cleanCity,
+  ) async {
     try {
-      final url = 'https://api.aladhan.com/v1/calendarByCity?city=$encodedCity&country=$encodedCountry&method=13&month=${now.month}&year=${now.year}';
-      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 8));
+      final prefs = await SharedPreferences.getInstance();
+      final ilceCacheKey =
+          'diyanet_ilce_id_${cleanCountry.toLowerCase().replaceAll(' ', '_')}_${cleanCity.toLowerCase().replaceAll(' ', '_')}';
+      String? ilceId = prefs.getString(ilceCacheKey);
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonData = json.decode(response.body);
-        if (jsonData['data'] != null && jsonData['data'] is List) {
-          final List<dynamic> daysList = jsonData['data'];
-          Map<String, List<String>> timesByDate = {};
+      if (ilceId == null || ilceId.isEmpty) {
+        final normCountry = normalizeTurkish(cleanCountry).toLowerCase();
+        final normCity = normalizeTurkish(cleanCity).toLowerCase();
 
-          for (var dayData in daysList) {
-            final timings = dayData['timings'];
-            final dateObj = dayData['date']?['gregorian']?['date']; // DD-MM-YYYY
-            if (timings != null && dateObj != null) {
-              final parts = dateObj.toString().split('-'); // [DD, MM, YYYY]
-              if (parts.length == 3) {
-                final dateStr = "${parts[2]}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}";
-                timesByDate[dateStr] = [
-                  _cleanTime(timings['Fajr']),
-                  _cleanTime(timings['Sunrise']),
-                  _cleanTime(timings['Dhuhr']),
-                  _cleanTime(timings['Asr']),
-                  _cleanTime(timings['Maghrib']),
-                  _cleanTime(timings['Isha']),
-                ];
-              }
-            }
-          }
+        // 1. Ülke ID bul
+        final ulkeRes = await http
+            .get(Uri.parse('https://ezanvakti.emushaf.net/ulkeler'))
+            .timeout(const Duration(seconds: 6));
+        if (ulkeRes.statusCode != 200) return null;
+        final List<dynamic> ulkeler = json.decode(ulkeRes.body);
+        final ulkeMatch = ulkeler.cast<Map<String, dynamic>>().firstWhere(
+          (u) {
+            final tr = normalizeTurkish((u['UlkeAdi'] ?? '').toString()).toLowerCase();
+            final en = normalizeTurkish((u['UlkeAdiEn'] ?? '').toString()).toLowerCase();
+            return tr == normCountry || en == normCountry || en.contains(normCountry) || tr.contains(normCountry);
+          },
+          orElse: () => <String, dynamic>{},
+        );
+        final ulkeId = ulkeMatch['UlkeID']?.toString();
+        if (ulkeId == null || ulkeId.isEmpty) return null;
 
-          if (timesByDate.isNotEmpty) {
-            _saveTimesToCache(cacheKey, timesByDate);
-            return Times(timesByDate: timesByDate);
-          }
+        // 2. Şehir ID bul
+        final sehirRes = await http
+            .get(Uri.parse('https://ezanvakti.emushaf.net/sehirler/$ulkeId'))
+            .timeout(const Duration(seconds: 6));
+        if (sehirRes.statusCode != 200) return null;
+        final List<dynamic> sehirler = json.decode(sehirRes.body);
+        final sehirMatch = sehirler.cast<Map<String, dynamic>>().firstWhere(
+          (s) {
+            final tr = normalizeTurkish((s['SehirAdi'] ?? '').toString()).toLowerCase();
+            final en = normalizeTurkish((s['SehirAdiEn'] ?? '').toString()).toLowerCase();
+            return tr == normCity || en == normCity;
+          },
+          orElse: () => sehirler.cast<Map<String, dynamic>>().firstWhere(
+            (s) {
+              final tr = normalizeTurkish((s['SehirAdi'] ?? '').toString()).toLowerCase();
+              final en = normalizeTurkish((s['SehirAdiEn'] ?? '').toString()).toLowerCase();
+              return tr.contains(normCity) || en.contains(normCity);
+            },
+            orElse: () => <String, dynamic>{},
+          ),
+        );
+        final sehirId = sehirMatch['SehirID']?.toString();
+        if (sehirId == null || sehirId.isEmpty) return null;
+
+        // 3. İlçe ID bul (merkez ilçe veya şehir adıyla eşleşen)
+        final ilceRes = await http
+            .get(Uri.parse('https://ezanvakti.emushaf.net/ilceler/$sehirId'))
+            .timeout(const Duration(seconds: 6));
+        if (ilceRes.statusCode != 200) return null;
+        final List<dynamic> ilceler = json.decode(ilceRes.body);
+        if (ilceler.isEmpty) return null;
+        final ilceMatch = ilceler.cast<Map<String, dynamic>>().firstWhere(
+          (d) {
+            final tr = normalizeTurkish((d['IlceAdi'] ?? '').toString()).toLowerCase();
+            final en = normalizeTurkish((d['IlceAdiEn'] ?? '').toString()).toLowerCase();
+            return tr == normCity || en == normCity || tr == 'merkez';
+          },
+          orElse: () => ilceler.first as Map<String, dynamic>,
+        );
+        ilceId = ilceMatch['IlceID']?.toString();
+        if (ilceId == null || ilceId.isEmpty) return null;
+        await prefs.setString(ilceCacheKey, ilceId);
+      }
+
+      // 4. 30 Günlük Vakitleri çek
+      final vakitRes = await http
+          .get(Uri.parse('https://ezanvakti.emushaf.net/vakitler/$ilceId'))
+          .timeout(const Duration(seconds: 8));
+      if (vakitRes.statusCode == 200) {
+        final List<dynamic> list = json.decode(vakitRes.body);
+        final parsed = parseDiyanetVakitler(list);
+        if (parsed.isNotEmpty) {
+          debugPrint("✅ Resmi Diyanet API (IlceID=$ilceId) ${parsed.length} günlük vakit alındı.");
+          return parsed;
         }
       }
     } catch (e) {
-      debugPrint("Diyanet Aylık Namaz Vakti API hatası ($cleanCity): $e");
+      debugPrint("⚠️ Resmi Diyanet API hatası ($cleanCity): $e");
+    }
+    return null;
+  }
+
+  Future<Map<String, List<String>>> _fetchAladhanMonth(
+    String encodedCity,
+    String encodedCountry,
+    int month,
+    int year,
+    String methodQuery,
+  ) async {
+    final Map<String, List<String>> timesByDate = {};
+    final url =
+        'https://api.aladhan.com/v1/calendarByCity?city=$encodedCity&country=$encodedCountry&$methodQuery&month=$month&year=$year';
+    final response =
+        await http.get(Uri.parse(url)).timeout(const Duration(seconds: 8));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> jsonData = json.decode(response.body);
+      if (jsonData['data'] != null && jsonData['data'] is List) {
+        for (final dayData in (jsonData['data'] as List)) {
+          final timings = dayData['timings'];
+          final dateObj = dayData['date']?['gregorian']?['date'];
+          if (timings != null && dateObj != null) {
+            final parts = dateObj.toString().split('-');
+            if (parts.length == 3) {
+              final dateStr =
+                  "${parts[2]}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}";
+              timesByDate[dateStr] = [
+                _cleanTime(timings['Fajr']),
+                _cleanTime(timings['Sunrise']),
+                _cleanTime(timings['Dhuhr']),
+                _cleanTime(timings['Asr']),
+                _cleanTime(timings['Maghrib']),
+                _cleanTime(timings['Isha']),
+              ];
+            }
+          }
+        }
+      }
+    }
+    return timesByDate;
+  }
+
+  // Diyanet veya Fazilet (Temkinli) takvimine göre Namaz Vakitleri Alma
+  Future<Times> fetchPrayerTimesData(String country, String city, {String? calculationMethod}) async {
+    final now = DateTime.now();
+    final todayStr = DateFormat('yyyy-MM-dd').format(now);
+    final settings = SettingsService();
+    await settings.initSettings();
+    final method = calculationMethod ?? settings.calculationMethod;
+    final cleanCity = _normalizeCityName(city);
+    final cleanCountry = _normalizeCountryName(country);
+    final cacheKey = 'prayer_times_cache_${method}_${cleanCountry.toLowerCase().replaceAll(' ', '_')}_${cleanCity.toLowerCase().replaceAll(' ', '_')}';
+    final encodedCity = Uri.encodeComponent(cleanCity);
+    final encodedCountry = Uri.encodeComponent(cleanCountry);
+
+    // 0. Öncelik: Yerel önbellekte bugünün vakitleri varsa ANINDA (0 ms) dön
+    final cachedFast = await _loadTimesFromCache(cacheKey);
+    if (cachedFast != null && cachedFast.isNotEmpty && cachedFast.containsKey(todayStr)) {
+      debugPrint("⚡ $cleanCity ($method) için namaz vakitleri yerel önbellekten okundu.");
+      return Times(timesByDate: cachedFast);
     }
 
-    // 2. Öncelik: Tek günlük vakit çekme fallback
+    // 1. Öncelik (Diyanet seçiliyse): Resmi Diyanet 30 Günlük API (ezanvakti.emushaf.net)
+    if (method == 'diyanet') {
+      final officialTimes = await _fetchOfficialDiyanetTimes(cleanCountry, cleanCity);
+      if (officialTimes != null && officialTimes.containsKey(todayStr)) {
+        await _saveTimesToCache(cacheKey, officialTimes);
+        return Times(timesByDate: officialTimes);
+      }
+    }
+
+    // Aladhan sorgu parametreleri:
+    // - Fazilet (Temkinli): -19° İmsak, -17° Yatsı + geleneksel temkin dakikaları
+    // - Diyanet yedek: method=13
+    final methodQuery = method == 'fazilet'
+        ? 'method=99&methodSettings=19,null,17&tune=-7,-7,7,5,7,2'
+        : 'method=13';
+
+    // 2. Öncelik: Aladhan Aylık Takvim (+ ay sonundaysa gelecek ayı da çek)
     try {
-      final url = 'https://api.aladhan.com/v1/timingsByCity?city=$encodedCity&country=$encodedCountry&method=13';
+      final timesByDate = await _fetchAladhanMonth(
+          encodedCity, encodedCountry, now.month, now.year, methodQuery);
+      if (now.day >= 24) {
+        final nextMonthDate = DateTime(now.year, now.month + 1, 1);
+        try {
+          final nextMonthTimes = await _fetchAladhanMonth(
+              encodedCity, encodedCountry, nextMonthDate.month, nextMonthDate.year, methodQuery);
+          timesByDate.addAll(nextMonthTimes);
+        } catch (_) {}
+      }
+      if (timesByDate.isNotEmpty) {
+        await _saveTimesToCache(cacheKey, timesByDate);
+        return Times(timesByDate: timesByDate);
+      }
+    } catch (e) {
+      debugPrint("Aylık Namaz Vakti API hatası ($cleanCity - $method): $e");
+    }
+
+    // 3. Öncelik: Tek günlük vakit çekme fallback
+    try {
+      final url = 'https://api.aladhan.com/v1/timingsByCity?city=$encodedCity&country=$encodedCountry&$methodQuery';
       final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
@@ -666,17 +825,17 @@ class HttpController {
           ];
 
           final Map<String, List<String>> singleDayMap = {todayStr: prayerTimes};
-          _saveTimesToCache(cacheKey, singleDayMap);
+          await _saveTimesToCache(cacheKey, singleDayMap);
           return Times(timesByDate: singleDayMap);
         }
       }
     } catch (e) {
-      debugPrint("Diyanet Tek Günlük Namaz Vakti API hatası ($cleanCity): $e");
+      debugPrint("Tek Günlük Namaz Vakti API hatası ($cleanCity - $method): $e");
     }
 
     // 3. Öncelik: İnternet yoksa Önbellekten (SharedPreferences) yükleme
     debugPrint("Offline mode: $cleanCity için önbellek kontrol ediliyor.");
-    final cachedTimesMap = await _loadTimesFromCache(cacheKey);
+    final cachedTimesMap = await _loadTimesFromCache(cacheKey, allowLatestFallback: true);
     if (cachedTimesMap != null && cachedTimesMap.isNotEmpty) {
       if (cachedTimesMap.containsKey(todayStr)) {
         debugPrint("Offline mode: $cleanCity için bugünün önbellek vakitleri başarıyla yüklendi.");
@@ -723,11 +882,16 @@ class HttpController {
     }
   }
 
-  Future<Map<String, List<String>>?> _loadTimesFromCache(String cacheKey) async {
+  Future<Map<String, List<String>>?> _loadTimesFromCache(
+    String cacheKey, {
+    bool allowLatestFallback = false,
+  }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       String? cachedJson = prefs.getString(cacheKey);
-      cachedJson ??= prefs.getString('prayer_times_cache_latest');
+      if (cachedJson == null && allowLatestFallback) {
+        cachedJson = prefs.getString('prayer_times_cache_latest');
+      }
 
       if (cachedJson != null && cachedJson.isNotEmpty) {
         final Map<String, dynamic> decoded = jsonDecode(cachedJson);
@@ -1014,29 +1178,35 @@ class HttpController {
     // 2. Canlı Buhârî Hadis API'si (jsDelivr CDN API)
     try {
       final editionName = (language == 'en') ? 'eng-bukhari.json' : 'tur-bukhari.json';
-      final url = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$editionName';
-      debugPrint("🚀 [ENGELSİZ CANLI HADİS API] İstek atılıyor (Sayfa $page, $editionName): $url");
-      final response = await http.get(Uri.parse(url), headers: _apiHeaders).timeout(const Duration(seconds: 6));
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonMap = json.decode(response.body);
-        if (jsonMap['hadiths'] != null && jsonMap['hadiths'] is List) {
-          final List<dynamic> rawHadiths = jsonMap['hadiths'];
-          final offset = (page - 1) * 20 + 1;
-          final items = rawHadiths.skip(offset).take(20).toList();
-          final result = items.map((item) => {
-            'id': item['hadithnumber'].toString(),
-            'turkish': item['text'].toString(),
-            'arabic': '',
-            'source': "Sahîh-i Buhârî, No: ${item['hadithnumber']}",
-            'explanation': '',
-          }).toList();
-
-          debugPrint("✅ [ENGELSİZ CANLI HADİS API] ${result.length} adet CANLI HADİS çekildi (Sayfa $page)!");
-          if (result.isNotEmpty) {
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('cached_popular_hadiths_${language}_p$page', jsonEncode(result));
-            return result;
+      List<dynamic>? rawHadiths = _bukhariCache[editionName];
+      if (rawHadiths == null) {
+        final url = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$editionName';
+        debugPrint("🚀 [ENGELSİZ CANLI HADİS API] İstek atılıyor (Sayfa $page, $editionName): $url");
+        final response = await http.get(Uri.parse(url), headers: _apiHeaders).timeout(const Duration(seconds: 6));
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> jsonMap = json.decode(response.body);
+          if (jsonMap['hadiths'] != null && jsonMap['hadiths'] is List) {
+            rawHadiths = jsonMap['hadiths'] as List<dynamic>;
+            _bukhariCache[editionName] = rawHadiths;
           }
+        }
+      }
+      if (rawHadiths != null) {
+        final offset = (page - 1) * 20 + 1;
+        final items = rawHadiths.skip(offset).take(20).toList();
+        final result = items.map((item) => {
+          'id': item['hadithnumber'].toString(),
+          'turkish': item['text'].toString(),
+          'arabic': '',
+          'source': "Sahîh-i Buhârî, No: ${item['hadithnumber']}",
+          'explanation': '',
+        }).toList();
+
+        debugPrint("✅ [ENGELSİZ CANLI HADİS API] ${result.length} adet CANLI HADİS çekildi (Sayfa $page)!");
+        if (result.isNotEmpty) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('cached_popular_hadiths_${language}_p$page', jsonEncode(result));
+          return result;
         }
       }
     } catch (e) {

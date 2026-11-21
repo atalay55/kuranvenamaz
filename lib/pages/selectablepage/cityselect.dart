@@ -45,19 +45,7 @@ class _CitySelectPageState extends State<CitySelectPage> {
     await prefs.setString('country', country);
   }
 
-  String _normalize(String s) {
-    return s
-        .toLowerCase()
-        .trim()
-        .replaceAll('İ', 'i')
-        .replaceAll('I', 'i')
-        .replaceAll('ı', 'i')
-        .replaceAll('ö', 'o')
-        .replaceAll('ü', 'u')
-        .replaceAll('ş', 's')
-        .replaceAll('ç', 'c')
-        .replaceAll('ğ', 'g');
-  }
+  String _normalize(String s) => HttpController.normalizeTurkish(s).toLowerCase();
 
   @override
   Widget build(BuildContext context) {

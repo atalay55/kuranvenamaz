@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:kuranvenamaz/core/settings_service.dart';
 import 'package:kuranvenamaz/pages/selectablepage/countryselect.dart';
 import 'package:kuranvenamaz/theme/app_theme.dart';
 import '../../core/utilities.dart';
@@ -23,17 +25,32 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
   String sonrakiVakitIsmi = "Vakit";
   late Future<List<NamazVakitleri>> namazVakitleriFuture;
   List<NamazVakitleri> _cachedVakitler = [];
+  Map<String, List<String>> _timesByDate = {};
+  List<String> _sortedDates = [];
+  String _selectedDateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+  String _calculationMethod = SettingsService().calculationMethod;
   Timer? _timer;
   int? _lastUpdatedMinute;
 
   @override
   void initState() {
     super.initState();
+    SettingsService().calculationMethodNotifier.addListener(_onMethodChanged);
     _loadData();
   }
 
+  void _onMethodChanged() {
+    if (!mounted) return;
+    setState(() {
+      _calculationMethod = SettingsService().calculationMethod;
+      _loadData();
+    });
+  }
+
   void _loadData() {
-    namazVakitleriFuture = PrayerUtilities().getNamazVakitleri();
+    final utils = PrayerUtilities();
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    namazVakitleriFuture = utils.getNamazVakitleri();
 
     PrayerUtilities().getCityAndCountry().then((value) {
       if (mounted) {
@@ -46,13 +63,24 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
 
     namazVakitleriFuture.then((vakitler) {
       if (mounted) {
+        final allDates = utils.cachedTimesByDate;
+        final sorted = allDates.keys.toList()..sort();
         setState(() {
           _cachedVakitler = vakitler;
+          _timesByDate = allDates;
+          _sortedDates = sorted;
+          if (!allDates.containsKey(_selectedDateStr)) {
+            _selectedDateStr = allDates.containsKey(todayStr)
+                ? todayStr
+                : (sorted.isNotEmpty ? sorted.first : todayStr);
+          }
+          _calculationMethod = SettingsService().calculationMethod;
           _updateTimer(forceWidgetUpdate: true);
         });
       }
     });
 
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted && _cachedVakitler.isNotEmpty) {
         setState(() {
@@ -62,9 +90,41 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
     });
   }
 
+  String get _todayStr => DateFormat('yyyy-MM-dd').format(DateTime.now());
+  bool get _isViewingToday => _selectedDateStr == _todayStr;
+
+  List<NamazVakitleri> _vakitlerForSelectedDate(List<NamazVakitleri> fallbackToday) {
+    final raw = _timesByDate[_selectedDateStr];
+    if (raw != null && raw.length >= 6) {
+      return PrayerUtilities.buildVakitList(raw);
+    }
+    return fallbackToday;
+  }
+
+  void _stepDay(int delta) {
+    if (_sortedDates.isEmpty) return;
+    final idx = _sortedDates.indexOf(_selectedDateStr);
+    if (idx < 0) return;
+    final nextIdx = idx + delta;
+    if (nextIdx >= 0 && nextIdx < _sortedDates.length) {
+      setState(() {
+        _selectedDateStr = _sortedDates[nextIdx];
+      });
+    }
+  }
+
+  String _formatDateLabel(String dateStr) {
+    final dt = DateTime.tryParse(dateStr);
+    if (dt == null) return dateStr;
+    final locale = Get.locale?.languageCode ?? 'tr';
+    final formatted = DateFormat('d MMM EEE', locale).format(dt);
+    return dateStr == _todayStr ? "Bugün • $formatted" : formatted;
+  }
+
   void _updateTimer({bool forceWidgetUpdate = false}) {
-    kalanSure = PrayerUtilities().kalanZamanHesapla(_cachedVakitler, kalanSure);
-    sonrakiVakitIsmi = _getSonrakiVakitIsmi(_cachedVakitler);
+    final utils = PrayerUtilities();
+    kalanSure = utils.kalanZamanHesapla(_cachedVakitler, kalanSure);
+    sonrakiVakitIsmi = utils.getSonrakiVakitIsmi(_cachedVakitler);
 
     // Her saniye widget güncellemek yerine dakikada bir veya ilk yüklemede güncelle
     final currentMinute = DateTime.now().minute;
@@ -80,24 +140,9 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
     }
   }
 
-  String _getSonrakiVakitIsmi(List<NamazVakitleri> vakitler) {
-    if (vakitler.isEmpty) return "Vakit";
-    final now = DateTime.now();
-    final currentSeconds = now.hour * 3600 + now.minute * 60 + now.second;
-
-    for (var vakit in vakitler) {
-      final parts = vakit.namazSaati.split(':').map((e) => int.tryParse(e) ?? 0).toList();
-      if (parts.length < 2) continue;
-      final vakitSeconds = parts[0] * 3600 + parts[1] * 60;
-      if (vakitSeconds > currentSeconds) {
-        return vakit.vakitIsmi;
-      }
-    }
-    return vakitler.first.vakitIsmi; // If all passed today, next is tomorrow's first
-  }
-
   @override
   void dispose() {
+    SettingsService().calculationMethodNotifier.removeListener(_onMethodChanged);
     _timer?.cancel();
     super.dispose();
   }
@@ -228,7 +273,13 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
               _buildTimeUnit(displaySaniye, 'seconds'.tr),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
+
+          // Gün Değiştirici + Aylık İmsakiye Çubuğu
+          if (_sortedDates.isNotEmpty) ...[
+            _buildDateNavigationBar(context),
+            const SizedBox(height: 10),
+          ],
 
           // Prayer Times Grid / Chips
           FutureBuilder<List<NamazVakitleri>>(
@@ -243,10 +294,12 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
                 );
               }
 
-              final List<NamazVakitleri> namazVakitleriList =
+              final List<NamazVakitleri> todayList =
                   (snapshot.hasData && snapshot.data!.isNotEmpty)
                       ? snapshot.data!
                       : _cachedVakitler;
+              final List<NamazVakitleri> namazVakitleriList =
+                  _vakitlerForSelectedDate(todayList);
 
               if (namazVakitleriList.isNotEmpty) {
                 return LayoutBuilder(
@@ -260,7 +313,8 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
                               padding: const EdgeInsets.symmetric(horizontal: 2.0),
                               child: namazVakitleriKucuk(
                                 namazVakitleriList[index],
-                                isNextVakit: namazVakitleriList[index].vakitIsmi == sonrakiVakitIsmi,
+                                isNextVakit: _isViewingToday &&
+                                    namazVakitleriList[index].vakitIsmi == sonrakiVakitIsmi,
                               ),
                             ),
                           ),
@@ -313,6 +367,281 @@ class _MainPrayerClockWidgetState extends State<MainPrayerClockWidget> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDateNavigationBar(BuildContext context) {
+    final idx = _sortedDates.indexOf(_selectedDateStr);
+    final canPrev = idx > 0;
+    final canNext = idx >= 0 && idx < _sortedDates.length - 1;
+    final methodLabel = _calculationMethod == 'fazilet' ? 'Fazilet' : 'Diyanet';
+
+    return Row(
+      children: [
+        IconButton(
+          onPressed: canPrev ? () => _stepDay(-1) : null,
+          icon: Icon(
+            Icons.chevron_left_rounded,
+            color: canPrev ? AppTheme.goldAccent : Colors.white24,
+            size: 22,
+          ),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          tooltip: 'Önceki Gün',
+        ),
+        Expanded(
+          child: InkWell(
+            onTap: () => _showMonthlyCalendarSheet(context),
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white10,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppTheme.goldAccent.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.calendar_month_rounded,
+                      color: AppTheme.goldAccent, size: 15),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      _formatDateLabel(_selectedDateStr),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppTheme.goldAccent.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      methodLabel,
+                      style: const TextStyle(
+                        color: AppTheme.goldLight,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        IconButton(
+          onPressed: canNext ? () => _stepDay(1) : null,
+          icon: Icon(
+            Icons.chevron_right_rounded,
+            color: canNext ? AppTheme.goldAccent : Colors.white24,
+            size: 22,
+          ),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          tooltip: 'Sonraki Gün',
+        ),
+      ],
+    );
+  }
+
+  void _showMonthlyCalendarSheet(BuildContext context) {
+    final locale = Get.locale?.languageCode ?? 'tr';
+    final methodLabel = _calculationMethod == 'fazilet'
+        ? 'Fazilet (Temkinli)'
+        : 'Diyanet İşleri';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surfaceDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.72,
+          minChildSize: 0.45,
+          maxChildSize: 0.92,
+          expand: false,
+          builder: (_, scrollController) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.textSecondaryDark.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_month_rounded,
+                          color: AppTheme.primaryEmerald, size: 22),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "$cityName • Aylık İmsakiye",
+                              style: const TextStyle(
+                                color: AppTheme.primaryEmerald,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              "Kaynak: $methodLabel",
+                              style: const TextStyle(
+                                color: AppTheme.textSecondaryDark,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!_isViewingToday)
+                        TextButton(
+                          onPressed: () {
+                            setState(() => _selectedDateStr = _todayStr);
+                            Navigator.pop(ctx);
+                          },
+                          child: const Text(
+                            "Bugün",
+                            style: TextStyle(
+                              color: AppTheme.primaryEmerald,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryEmerald,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: Text("Tarih",
+                              style: TextStyle(
+                                  color: AppTheme.goldLight,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold)),
+                        ),
+                        Expanded(child: Text("İms", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
+                        Expanded(child: Text("Gün", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
+                        Expanded(child: Text("Öğl", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
+                        Expanded(child: Text("İkn", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
+                        Expanded(child: Text("Akş", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
+                        Expanded(child: Text("Yat", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Expanded(
+                    child: ListView.builder(
+                      controller: scrollController,
+                      itemCount: _sortedDates.length,
+                      itemBuilder: (_, i) {
+                        final dateStr = _sortedDates[i];
+                        final times = _timesByDate[dateStr] ?? const [];
+                        if (times.length < 6) return const SizedBox.shrink();
+                        final isToday = dateStr == _todayStr;
+                        final isSelected = dateStr == _selectedDateStr;
+                        final dt = DateTime.tryParse(dateStr);
+                        final label = dt != null
+                            ? DateFormat('d MMM', locale).format(dt)
+                            : dateStr;
+
+                        return InkWell(
+                          onTap: () {
+                            setState(() => _selectedDateStr = dateStr);
+                            Navigator.pop(ctx);
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 9),
+                            decoration: BoxDecoration(
+                              color: isToday
+                                  ? AppTheme.primaryEmerald.withValues(alpha: 0.14)
+                                  : (isSelected
+                                      ? AppTheme.goldAccent.withValues(alpha: 0.18)
+                                      : (i.isEven
+                                          ? Colors.black.withValues(alpha: 0.025)
+                                          : Colors.transparent)),
+                              borderRadius: BorderRadius.circular(8),
+                              border: isToday
+                                  ? Border.all(
+                                      color: AppTheme.primaryEmerald, width: 1)
+                                  : null,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    isToday ? "$label ★" : label,
+                                    style: TextStyle(
+                                      color: isToday
+                                          ? AppTheme.primaryEmerald
+                                          : AppTheme.textPrimaryDark,
+                                      fontSize: 11,
+                                      fontWeight: isToday
+                                          ? FontWeight.bold
+                                          : FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                for (int c = 0; c < 6; c++)
+                                  Expanded(
+                                    child: Text(
+                                      times[c],
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: isToday
+                                            ? AppTheme.primaryEmerald
+                                            : AppTheme.textPrimaryDark,
+                                        fontSize: 11,
+                                        fontWeight: isToday
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

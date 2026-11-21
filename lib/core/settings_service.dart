@@ -11,7 +11,8 @@ class SettingsService {
   static const String keyEzanEnabled = 'settings_ezan_enabled';
   static const String keyPreNotificationEnabled = 'settings_pre_notification_enabled';
   static const String keyNotificationTiming = 'settings_notification_timing'; // minutes before prayer time
-  static const String keySoundType = 'settings_sound_type'; // 'ezan' or 'notification'
+  static const String keySoundType = 'settings_sound_type'; // 'ezan' or 'standart'
+  static const String keyCalculationMethod = 'settings_calculation_method'; // 'diyanet' or 'fazilet'
   static const String keyAskedPrompt = 'settings_asked_notification_prompt';
   static const String keyOemBannerDismissed = 'settings_oem_banner_dismissed';
   static const String keyDayPrayers = 'settings_day_prayers'; // json string: {"1":[0,2,3,4,5], ...}
@@ -30,6 +31,8 @@ class SettingsService {
   int _firstAlarmMinutes = 0; // Default 0: Tam vakit girişi (negatif: önce, pozitif: sonra)
   Map<int, int> _prayerFirstAlarmMinutes = {}; // Vakit bazlı 1. alarm dakikaları
   String _soundType = 'ezan'; // Default Ezan
+  String _calculationMethod = 'diyanet'; // 'diyanet' or 'fazilet'
+  final ValueNotifier<String> calculationMethodNotifier = ValueNotifier<String>('diyanet');
   bool _askedPrompt = false;
   bool _oemBannerDismissed = false;
 
@@ -68,6 +71,7 @@ class SettingsService {
   int get firstAlarmMinutes => _firstAlarmMinutes;
   Map<int, int> get prayerFirstAlarmMinutes => Map.unmodifiable(_prayerFirstAlarmMinutes);
   String get soundType => _soundType;
+  String get calculationMethod => _calculationMethod;
   bool get askedPrompt => _askedPrompt;
   bool get oemBannerDismissed => _oemBannerDismissed;
   Map<int, Set<int>> get dayPrayers => Map.unmodifiable(_dayPrayers);
@@ -116,7 +120,11 @@ class SettingsService {
     _ezanEnabled = prefs.getBool(keyEzanEnabled) ?? true;
     _preNotificationEnabled = prefs.getBool(keyPreNotificationEnabled) ?? true;
     _notificationTimingMinutes = prefs.getInt(keyNotificationTiming) ?? 15;
-    _soundType = prefs.getString(keySoundType) ?? 'ezan';
+    final rawSoundType = prefs.getString(keySoundType) ?? 'ezan';
+    _soundType = rawSoundType == 'notification' ? 'standart' : rawSoundType;
+    final rawMethod = prefs.getString(keyCalculationMethod) ?? 'diyanet';
+    _calculationMethod = (rawMethod == 'fazilet') ? 'fazilet' : 'diyanet';
+    calculationMethodNotifier.value = _calculationMethod;
     _askedPrompt = prefs.getBool(keyAskedPrompt) ?? false;
     _oemBannerDismissed = prefs.getBool(keyOemBannerDismissed) ?? false;
 
@@ -264,9 +272,18 @@ class SettingsService {
   }
 
   Future<void> setSoundType(String soundType) async {
-    _soundType = soundType;
+    final normalized = soundType == 'notification' ? 'standart' : soundType;
+    _soundType = normalized;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(keySoundType, soundType);
+    await prefs.setString(keySoundType, normalized);
+  }
+
+  Future<void> setCalculationMethod(String method) async {
+    final normalized = (method == 'fazilet') ? 'fazilet' : 'diyanet';
+    _calculationMethod = normalized;
+    calculationMethodNotifier.value = normalized;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(keyCalculationMethod, normalized);
   }
 
   Future<void> setSecondAlarmEnabled(bool enabled) async {

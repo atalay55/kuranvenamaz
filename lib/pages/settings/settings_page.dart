@@ -23,6 +23,7 @@ class _SettingsPageState extends State<SettingsPage>
   int _notificationTiming = 15;
   String _soundType = 'ezan';
   String _secondAlarmSoundType = 'alarm';
+  String _calculationMethod = 'diyanet';
   int _selectedWeekday = DateTime.now().weekday;
   Map<int, Set<int>> _dayPrayers = {
     1: {0, 2, 3, 4, 5},
@@ -81,6 +82,7 @@ class _SettingsPageState extends State<SettingsPage>
       _notificationTiming = _settings.notificationTimingMinutes;
       _soundType = _settings.soundType;
       _secondAlarmSoundType = _settings.secondAlarmSoundType;
+      _calculationMethod = _settings.calculationMethod;
       _selectedWeekday = DateTime.now().weekday;
       _dayPrayers = {};
       _daySecondPrayers = {};
@@ -251,6 +253,173 @@ class _SettingsPageState extends State<SettingsPage>
                       Navigator.pop(ctx);
                       await AppTranslations.changeLocale(lang['code']!);
                       if (mounted) setState(() {});
+                    },
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCalculationMethodCard() {
+    final isFazilet = _calculationMethod == 'fazilet';
+    return Container(
+      decoration: AppTheme.cardDecoration(color: AppTheme.surfaceDark),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: AppTheme.goldAccent.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppTheme.goldAccent.withValues(alpha: 0.3)),
+          ),
+          alignment: Alignment.center,
+          child: Text(isFazilet ? '📿' : '🕌', style: const TextStyle(fontSize: 20)),
+        ),
+        title: const Text(
+          'Vakit Hesaplama Yöntemi',
+          style: TextStyle(
+            color: AppTheme.textPrimaryDark,
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+          ),
+        ),
+        subtitle: Text(
+          isFazilet
+              ? 'Fazilet Takvimi (Temkinli • -19° / -17°)'
+              : 'Diyanet İşleri Başkanlığı (Resmi)',
+          style: const TextStyle(
+            color: AppTheme.primaryEmerald,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        trailing: const Icon(
+          Icons.arrow_forward_ios_rounded,
+          color: AppTheme.goldAccent,
+          size: 16,
+        ),
+        onTap: _showCalculationMethodSheet,
+      ),
+    );
+  }
+
+  void _showCalculationMethodSheet() {
+    final options = [
+      {
+        'id': 'diyanet',
+        'icon': '🕌',
+        'title': 'Diyanet İşleri Başkanlığı',
+        'desc': 'Resmi 30 günlük Diyanet vakit tablosu (ezanvakti.emushaf.net).',
+      },
+      {
+        'id': 'fazilet',
+        'icon': '📿',
+        'title': 'Fazilet Takvimi (Temkinli)',
+        'desc': 'Geleneksel -19° İmsak, -17° Yatsı ve temkin dakikaları ile hesaplanır.',
+      },
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          decoration: const BoxDecoration(
+            color: AppTheme.surfaceDark,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade400,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Vakit Hesaplama Yöntemi',
+                  style: TextStyle(
+                    color: AppTheme.textPrimaryDark,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 17,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...options.map((opt) {
+                final isSelected = opt['id'] == _calculationMethod;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: BorderSide(
+                        color: isSelected
+                            ? AppTheme.goldAccent
+                            : AppTheme.goldAccent.withValues(alpha: 0.2),
+                        width: isSelected ? 1.5 : 1,
+                      ),
+                    ),
+                    tileColor: isSelected
+                        ? AppTheme.goldAccent.withValues(alpha: 0.12)
+                        : Colors.black.withValues(alpha: 0.03),
+                    leading: Text(opt['icon']!, style: const TextStyle(fontSize: 24)),
+                    title: Text(
+                      opt['title']!,
+                      style: TextStyle(
+                        color: isSelected
+                            ? AppTheme.primaryEmerald
+                            : AppTheme.textPrimaryDark,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    subtitle: Text(
+                      opt['desc']!,
+                      style: const TextStyle(
+                        color: AppTheme.textSecondaryDark,
+                        fontSize: 12,
+                      ),
+                    ),
+                    trailing: isSelected
+                        ? const Icon(Icons.check_circle_rounded,
+                            color: AppTheme.primaryEmerald)
+                        : null,
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      final nextMethod = opt['id']!;
+                      await _settings.setCalculationMethod(nextMethod);
+                      if (mounted) {
+                        setState(() => _calculationMethod = nextMethod);
+                      }
+                      await PrayerUtilities().getNamazVakitleri();
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              nextMethod == 'fazilet'
+                                  ? 'Fazilet (Temkinli) vakitleri ve alarmlar güncellendi.'
+                                  : 'Resmi Diyanet vakitleri ve alarmlar güncellendi.',
+                            ),
+                            backgroundColor: AppTheme.primaryEmerald,
+                            duration: const Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
                     },
                   ),
                 );
@@ -1434,9 +1603,9 @@ class _SettingsPageState extends State<SettingsPage>
                       ),
                     ),
                     _buildDeviceCustomSoundBanner(
-                      channelId: selectedSoundType == 'ezan'
-                          ? 'namaz_vakitleri_ezan_v4'
-                          : 'namaz_vakitleri_standart_v2',
+                      channelId: NotificationService.resolveChannelType(selectedSoundType) == 'ezan'
+                          ? NotificationService.ezanChannelId
+                          : NotificationService.standartChannelId,
                     ),
 
                     if (prayerIndex != null) ...[
@@ -2337,6 +2506,10 @@ class _SettingsPageState extends State<SettingsPage>
             children: [
               // Dil Seçimi Kartı
               _buildLanguageCard(),
+              const SizedBox(height: 12),
+
+              // Hesaplama Yöntemi Kartı (Diyanet / Fazilet)
+              _buildCalculationMethodCard(),
               const SizedBox(height: 16),
 
               // Header Card
