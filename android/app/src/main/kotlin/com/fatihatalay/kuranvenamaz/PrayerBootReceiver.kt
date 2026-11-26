@@ -15,6 +15,7 @@ class PrayerBootReceiver : BroadcastReceiver() {
             action == Intent.ACTION_TIMEZONE_CHANGED
         ) {
             // Telefon yeniden başladığında veya saat değiştiğinde servisi ve alarmları otomatik başlat
+            PrayerAlarmReceiver.rescheduleSavedAlarmsOnBoot(context)
             PrayerForegroundService.startService(context)
         }
     }

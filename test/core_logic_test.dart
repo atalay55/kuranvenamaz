@@ -5,6 +5,7 @@ import 'package:kuranvenamaz/core/httpcontroller.dart';
 import 'package:kuranvenamaz/core/notificationservice.dart';
 import 'package:kuranvenamaz/core/settings_service.dart';
 import 'package:kuranvenamaz/core/utilities.dart';
+import 'package:kuranvenamaz/entity/location.dart';
 import 'package:kuranvenamaz/entity/namazvakitleri.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -17,6 +18,40 @@ void main() {
       expect(NotificationService.resolveChannelType('alarm'), 'ezan');
       expect(NotificationService.resolveChannelType('standart'), 'standart');
       expect(NotificationService.resolveChannelType('notification'), 'standart');
+    });
+    test('schedules 2nd alarms even when all 1st alarms are turned off (regression test)', () async {
+      SharedPreferences.setMockInitialValues({
+        SettingsService.keyNotificationsEnabled: true,
+        SettingsService.keySecondAlarmSoundType: 'ezan',
+        SettingsService.keyDayPrayers: jsonEncode({
+          '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': [],
+        }),
+        SettingsService.keyDaySecondPrayers: jsonEncode({
+          '1': [1], '2': [1], '3': [1], '4': [1], '5': [1], '6': [1], '7': [1],
+        }),
+        SettingsService.keyPrayerSecondAlarmMinutes: jsonEncode({'1': -20}),
+      });
+
+      final settings = SettingsService();
+      await settings.initSettings();
+
+      final now = DateTime(2026, 11, 26, 12, 0);
+      final times = Times(timesByDate: {
+        '2026-11-26': ['05:54', '07:42', '12:12', '14:11', '16:32', '18:15'],
+        '2026-11-27': ['05:55', '07:43', '12:13', '14:11', '16:32', '18:14'],
+      });
+
+      final plan = NotificationService.buildSevenDaySchedulePlan(
+        times: times,
+        settings: settings,
+        now: now,
+      );
+
+      // Today's 07:22 is in the past relative to 12:00, so remaining 6 days (days 1..6) must be scheduled!
+      expect(plan.length, 6);
+      expect(plan.first['id'], 3011); // 3000 + dayOffset(1)*10 + prayerIndex(1=Güneş)
+      expect(plan.first['channelType'], 'ezan');
+      expect(plan.first['scheduledDate'], DateTime(2026, 11, 27, 7, 23));
     });
   });
 

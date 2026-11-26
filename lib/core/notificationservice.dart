@@ -1,6 +1,6 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -25,6 +25,11 @@ class NotificationService {
   static const String ezanChannelId = 'namaz_vakitleri_ezan_v6';
   static const String hatirlatmaChannelId = 'namaz_vakitleri_hatirlatma_v2';
   static const String standartChannelId = 'namaz_vakitleri_standart_v2';
+  static const MethodChannel _deviceChannel =
+      MethodChannel('com.fatihatalay.kuranvenamaz/device_settings');
+
+  static bool get _isAndroidNative =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
   static String resolveChannelType(String soundType) {
     if (soundType == 'standart' || soundType == 'notification') {
@@ -37,6 +42,7 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   bool _isInitialized = false;
+  Future<int>? _activeReschedule;
 
   Future<void> initNotification() async {
     if (_isInitialized) return;
@@ -229,11 +235,22 @@ class NotificationService {
     final channelType = resolveChannelType(settings.soundType);
     final isEzan = channelType == 'ezan';
     final timing = settings.notificationTimingMinutes;
+    final title = isEzan ? "🕌 Ezan Vakti Bildirim Testi" : "🔔 Namaz Vakti Bildirim Testi";
+    final body =
+        "Bildirim tercihiniz: ${settings.preNotificationEnabled ? '$timing dk önce hatırlatma +' : ''} ${settings.ezanEnabled ? 'vaktinde ezan' : ''}.";
+
+    if (isEzan && _isAndroidNative) {
+      await _deviceChannel.invokeMethod('playForegroundAlarm', {
+        'title': title,
+        'body': body,
+      });
+      return;
+    }
 
     await notificationsPlugin.show(
       999,
-      isEzan ? "🕌 Ezan Vakti Bildirim Testi" : "🔔 Namaz Vakti Bildirim Testi",
-      "Bildirim tercihiniz: ${settings.preNotificationEnabled ? '$timing dk önce hatırlatma +' : ''} ${settings.ezanEnabled ? 'vaktinde ezan' : ''}. Ses ve bildirimler başarıyla çalışıyor!",
+      title,
+      body,
       _getNotificationDetails(channelType),
     );
   }
@@ -241,18 +258,18 @@ class NotificationService {
   /// Seçilen ses tipini anında önizleme/dinleme (Ayarlar modalında dinlemek için)
   Future<void> playPreviewSound(String soundType) async {
     await stopPreviewSound();
-    if (soundType == 'ezan') {
+    if ((soundType == 'ezan' || soundType == 'alarm') && _isAndroidNative) {
+      await _deviceChannel.invokeMethod('playForegroundAlarm', {
+        'title': soundType == 'ezan' ? "🕌 Ezan Sesi Önizleme" : "⏰ Çalar Saat Tonu Önizleme",
+        'body': "Dinlemeyi durdurmak için 'Ezanı Durdur'a veya ses tuşuna basın.",
+      });
+      return;
+    }
+    if (soundType == 'ezan' || soundType == 'alarm') {
       await notificationsPlugin.show(
         888,
-        "🕌 Ezan Sesi Önizleme",
-        "Ezan sesi çalınıyor... Dinlemeyi durdurmak için 'Durdur'a dokunabilirsiniz.",
-        _getNotificationDetails('ezan'),
-      );
-    } else if (soundType == 'alarm') {
-      await notificationsPlugin.show(
-        888,
-        "⏰ Çalar Saat Tonu Önizleme",
-        "Yüksek sesli alarm sesi çalınıyor...",
+        soundType == 'ezan' ? "🕌 Ezan Sesi Önizleme" : "⏰ Çalar Saat Tonu Önizleme",
+        "Ezan sesi çalınıyor...",
         _getNotificationDetails('ezan'),
       );
     } else {
@@ -267,25 +284,46 @@ class NotificationService {
 
   /// Önizleme bildirimini ve sesini durdurma
   Future<void> stopPreviewSound() async {
+    if (_isAndroidNative) {
+      try {
+        await _deviceChannel.invokeMethod('stopForegroundAlarm');
+      } catch (_) {}
+    }
     await notificationsPlugin.cancel(888);
   }
 
   /// Gelecekteki X saniye sonrasına zamanlanmış test ezanı/bildirimi kurma (Uygulama kapalıyken test etmek için)
   Future<void> scheduleTestNotificationInSeconds(int seconds) async {
+    if (!_isInitialized) {
+      await initNotification();
+    }
     final settings = SettingsService();
     await settings.initSettings();
     final channelType = resolveChannelType(settings.soundType);
     final isEzan = channelType == 'ezan';
-    final nowTz = tz.TZDateTime.now(tz.local);
-    final targetTz = nowTz.add(Duration(seconds: seconds));
+    final targetDate = DateTime.now().add(Duration(seconds: seconds));
+    final title = isEzan ? "🕌 Ezan Alarmı Testi ($seconds Sn)" : "🔔 Bildirim Testi ($seconds Sn)";
+    const body = "Uygulama kapalıyken zamanlanmış ezan ve bildirim testi başarıyla çalıştı!";
 
+    if (isEzan && _isAndroidNative) {
+      await _deviceChannel.invokeMethod('scheduleNativeAlarm', {
+        'id': 998,
+        'triggerAtMillis': targetDate.millisecondsSinceEpoch,
+        'title': title,
+        'body': body,
+      });
+      debugPrint("✅ Native ezan test alarmı kuruldu: $seconds sn sonra ($targetDate)");
+      return;
+    }
+
+    final targetTz = tz.TZDateTime.from(targetDate, tz.local);
     final details = _getNotificationDetails(channelType);
 
     try {
       await notificationsPlugin.zonedSchedule(
         998,
-        isEzan ? "🕌 Ezan Alarmı Testi ($seconds Sn)" : "🔔 Bildirim Testi ($seconds Sn)",
-        "Uygulama kapalıyken zamanlanmış ezan ve bildirim testi başarıyla çalıştı!",
+        title,
+        body,
         targetTz,
         details,
         androidScheduleMode: AndroidScheduleMode.alarmClock,
@@ -298,15 +336,14 @@ class NotificationService {
       try {
         await notificationsPlugin.zonedSchedule(
           998,
-          isEzan ? "🕌 Ezan Alarmı Testi ($seconds Sn)" : "🔔 Bildirim Testi ($seconds Sn)",
-          "Uygulama kapalıyken zamanlanmış ezan ve bildirim testi başarıyla çalıştı!",
+          title,
+          body,
           targetTz,
           details,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.absoluteTime,
         );
-        debugPrint("✅ Test alarmı kuruldu (exactAllowWhileIdle): $seconds saniye sonra ($targetTz)");
       } catch (err) {
         debugPrint("❌ Test alarmı kurulamadı: $err");
       }
@@ -321,23 +358,32 @@ class NotificationService {
     required DateTime scheduledDate,
     String channelType = 'ezan',
   }) async {
-    final nowTz = tz.TZDateTime.now(tz.local);
-    final scheduledTZ = tz.TZDateTime(
-      tz.local,
-      scheduledDate.year,
-      scheduledDate.month,
-      scheduledDate.day,
-      scheduledDate.hour,
-      scheduledDate.minute,
-      scheduledDate.second,
-    );
-
+    if (!_isInitialized) {
+      await initNotification();
+    }
     final now = DateTime.now();
-    if (scheduledDate.isBefore(now)) {
+    if (!scheduledDate.isAfter(now)) {
       debugPrint("Geçmiş zamanlı bildirim atlandı: $title ($scheduledDate)");
       return;
     }
 
+    // Android'de ezan/alarm seçiliyse doğrudan native AlarmManager + MediaPlayer (USAGE_ALARM) + Üst Bildirim kullan
+    if (channelType == 'ezan' && _isAndroidNative) {
+      try {
+        await _deviceChannel.invokeMethod('scheduleNativeAlarm', {
+          'id': id,
+          'triggerAtMillis': scheduledDate.millisecondsSinceEpoch,
+          'title': title,
+          'body': body,
+        });
+        debugPrint("✅ Native ezan alarmı kuruldu: $title - $scheduledDate (ID: $id)");
+        return;
+      } catch (e) {
+        debugPrint("⚠️ Native alarm kurulamadı, local_notifications yedeğine düşülüyor: $e");
+      }
+    }
+
+    final scheduledTZ = tz.TZDateTime.from(scheduledDate, tz.local);
     final details = _getNotificationDetails(channelType);
 
     try {
@@ -386,10 +432,150 @@ class NotificationService {
     }
   }
 
+  /// Hangi vakitlerin zamanlanacağını hesaplar (birim testlerde de doğrudan doğrulanabilir)
+  static List<Map<String, dynamic>> buildSevenDaySchedulePlan({
+    required Times times,
+    required SettingsService settings,
+    required DateTime now,
+  }) {
+    if (!settings.notificationsEnabled) return const [];
+
+    final List<Map<String, dynamic>> plan = [];
+    const names = ["İmsak", "Güneş", "Öğle", "İkindi", "Akşam", "Yatsı"];
+    final timingMinutes = settings.notificationTimingMinutes;
+    final firstChannelType = resolveChannelType(settings.soundType);
+    final secondChannelType = resolveChannelType(settings.secondAlarmSoundType);
+
+    for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
+      final targetDay = now.add(Duration(days: dayOffset));
+      final weekday = targetDay.weekday;
+      final enabledFirstForDay = settings.getPrayersForDay(weekday);
+      final enabledSecondForDay = settings.getSecondPrayersForDay(weekday);
+
+      if (enabledFirstForDay.isEmpty && enabledSecondForDay.isEmpty) {
+        continue;
+      }
+
+      final dateStr = DateFormat('yyyy-MM-dd').format(targetDay);
+      final dayList = times.timesByDate[dateStr] ??
+          (times.timesByDate.isNotEmpty ? times.timesByDate.values.first : null);
+      if (dayList == null || dayList.length < 6) continue;
+
+      for (int i = 0; i < names.length; i++) {
+        final isFirstSelected = enabledFirstForDay.contains(i);
+        final isSecondSelected = enabledSecondForDay.contains(i);
+        if (!isFirstSelected && !isSecondSelected) continue;
+
+        final vakitName = names[i];
+        final timeParts = dayList[i].split(':');
+        if (timeParts.length < 2) continue;
+
+        final hour = int.tryParse(timeParts[0]) ?? 0;
+        final minute = int.tryParse(timeParts[1]) ?? 0;
+        final exactPrayerTime = DateTime(
+          targetDay.year,
+          targetDay.month,
+          targetDay.day,
+          hour,
+          minute,
+        );
+
+        // 1. Ana Namaz Vakti Bildirimi / Ezan Alarmı (1000 + ID)
+        if (isFirstSelected) {
+          final firstMinutes = settings.getFirstAlarmMinutes(prayerIndex: i);
+          final firstAlarmTime =
+              exactPrayerTime.subtract(Duration(minutes: firstMinutes.abs()));
+          if (settings.ezanEnabled && firstAlarmTime.isAfter(now)) {
+            final String title;
+            final String body;
+            if (firstMinutes == 0) {
+              title = "🕌 $vakitName Vakti Girdi";
+              body = "$vakitName vakti girdi (${dayList[i]}). Haydi namaza!";
+            } else {
+              final m = firstMinutes.abs();
+              title = "🔔 $vakitName Vaktine $m Dakika Kaldı";
+              body = "$vakitName vakti saati: ${dayList[i]}. Hazırlık yapmayı unutmayın.";
+            }
+            plan.add({
+              'id': 1000 + (dayOffset * 10) + i,
+              'title': title,
+              'body': body,
+              'scheduledDate': firstAlarmTime,
+              'channelType': firstChannelType,
+            });
+          }
+
+          // 2. Vaktinden Önce Hatırlatma Bildirimi (2000 + ID)
+          if (settings.preNotificationEnabled && timingMinutes > 0) {
+            final preTime =
+                exactPrayerTime.subtract(Duration(minutes: timingMinutes));
+            if (preTime.isAfter(now)) {
+              plan.add({
+                'id': 2000 + (dayOffset * 10) + i,
+                'title': "🔔 $vakitName Namazına $timingMinutes Dakika Kaldı!",
+                'body': "$vakitName vakti saati: ${dayList[i]}. Hazırlık yapmayı unutmayın.",
+                'scheduledDate': preTime,
+                'channelType': 'hatirlatma',
+              });
+            }
+          }
+        }
+
+        // 3. İkinci Alarm Bildirimi (3000 + ID) — 1. alarm kapalı olsa bile bağımsız çalışır!
+        if (isSecondSelected) {
+          final secondMinutes = settings.getSecondAlarmMinutes(prayerIndex: i);
+          final secondAlarmTime =
+              exactPrayerTime.subtract(Duration(minutes: secondMinutes.abs()));
+          if (secondAlarmTime.isAfter(now)) {
+            final String title;
+            final String body;
+            if (secondMinutes == 0) {
+              title = "⏰ 2. Alarm: $vakitName Namazı Vakti Geldi";
+              body = "$vakitName vakti girdi (${dayList[i]}). Haydi namaza!";
+            } else {
+              final m = secondMinutes.abs();
+              title = "⏰ 2. Alarm: $vakitName Vaktine $m Dakika Kaldı";
+              body = "$vakitName vakti saati: ${dayList[i]}. Hazırlık yapmayı unutmayın.";
+            }
+            plan.add({
+              'id': 3000 + (dayOffset * 10) + i,
+              'title': title,
+              'body': body,
+              'scheduledDate': secondAlarmTime,
+              'channelType': secondChannelType,
+            });
+          }
+        }
+      }
+    }
+    return plan;
+  }
+
   /// Çok Günlük Namaz Vakitlerini Otomatik Zamanlama (Önümüzdeki 7 gün)
   Future<int> reschedulePrayerNotifications(Times times) async {
+    // Eşzamanlı çağrılarda cancelAllNotifications çakışmasını önle
+    while (_activeReschedule != null) {
+      try {
+        await _activeReschedule;
+      } catch (_) {}
+    }
+    final future = _doReschedulePrayerNotifications(times);
+    _activeReschedule = future;
+    try {
+      return await future;
+    } finally {
+      if (identical(_activeReschedule, future)) {
+        _activeReschedule = null;
+      }
+    }
+  }
+
+  Future<int> _doReschedulePrayerNotifications(Times times) async {
     int totalScheduled = 0;
     try {
+      if (!_isInitialized) {
+        await initNotification();
+      }
       await cancelAllNotifications();
 
       final settings = SettingsService();
@@ -400,123 +586,21 @@ class NotificationService {
         return 0;
       }
 
-      final now = DateTime.now();
-      final names = ["İmsak", "Güneş", "Öğle", "İkindi", "Akşam", "Yatsı"];
-      final timingMinutes = settings.notificationTimingMinutes;
-      final firstChannelType = resolveChannelType(settings.soundType);
-      final secondChannelType = resolveChannelType(settings.secondAlarmSoundType);
+      final plan = buildSevenDaySchedulePlan(
+        times: times,
+        settings: settings,
+        now: DateTime.now(),
+      );
 
-      // Önümüzdeki 7 gün için bildirimleri kur
-      for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
-        final targetDay = now.add(Duration(days: dayOffset));
-        final weekday = targetDay.weekday; // 1: Pazartesi ... 7: Pazar
-        final enabledPrayersForDay = settings.getPrayersForDay(weekday);
-
-        // Bu gün için hiçbir vakit seçilmediyse o günü atla
-        if (enabledPrayersForDay.isEmpty) {
-          continue;
-        }
-
-        final dateStr = DateFormat('yyyy-MM-dd').format(targetDay);
-        final dayList = times.timesByDate[dateStr] ??
-            (times.timesByDate.isNotEmpty ? times.timesByDate.values.first : null);
-
-        if (dayList == null || dayList.length < 6) continue;
-
-        for (int i = 0; i < names.length; i++) {
-          // O güne özel vakit filtresi (Kullanıcının o gün için seçtiği namazlar)
-          if (!enabledPrayersForDay.contains(i)) continue;
-
-          final vakitName = names[i];
-          final timeParts = dayList[i].split(':');
-          if (timeParts.length < 2) continue;
-
-          final hour = int.tryParse(timeParts[0]) ?? 0;
-          final minute = int.tryParse(timeParts[1]) ?? 0;
-
-          final exactPrayerTime = DateTime(
-            targetDay.year,
-            targetDay.month,
-            targetDay.day,
-            hour,
-            minute,
-          );
-
-          // 1. Ana Namaz Vakti Bildirimi / Ezan Alarmı (1000 + ID)
-          final firstMinutes = settings.getFirstAlarmMinutes(prayerIndex: i);
-          final firstAlarmTime = exactPrayerTime.subtract(Duration(minutes: firstMinutes.abs()));
-          if (settings.ezanEnabled && firstAlarmTime.isAfter(now)) {
-            String title;
-            String body;
-
-            if (firstMinutes == 0) {
-              title = "🕌 $vakitName Vakti Girdi";
-              body = "$vakitName vakti girdi (${dayList[i]}). Haydi namaza!";
-            } else {
-              final m = firstMinutes.abs();
-              title = "🔔 $vakitName Vaktine $m Dakika Kaldı";
-              body = "$vakitName vakti saati: ${dayList[i]}. Hazırlık yapmayı unutmayın.";
-            }
-            final id = 1000 + (dayOffset * 10) + i;
-
-            await schedulePrayerNotification(
-              id: id,
-              title: title,
-              body: body,
-              scheduledDate: firstAlarmTime,
-              channelType: firstChannelType,
-            );
-            totalScheduled++;
-          }
-
-          // 2. Vaktinden Önce Hatırlatma Bildirimi (2000 + ID)
-          if (settings.preNotificationEnabled && timingMinutes > 0) {
-            final preTime = exactPrayerTime.subtract(Duration(minutes: timingMinutes));
-            if (preTime.isAfter(now)) {
-              final title = "🔔 $vakitName Namazına $timingMinutes Dakika Kaldı!";
-              final body = "$vakitName vakti saati: ${dayList[i]}. Hazırlık yapmayı unutmayın.";
-              final id = 2000 + (dayOffset * 10) + i;
-
-              await schedulePrayerNotification(
-                id: id,
-                title: title,
-                body: body,
-                scheduledDate: preTime,
-                channelType: 'hatirlatma',
-              );
-              totalScheduled++;
-            }
-          }
-
-          // 3. İkinci Alarm Bildirimi (3000 + ID)
-          if (settings.isSecondPrayerEnabledForDay(weekday, i)) {
-            final secondMinutes = settings.getSecondAlarmMinutes(prayerIndex: i);
-            final secondAlarmTime = exactPrayerTime.subtract(Duration(minutes: secondMinutes.abs()));
-            if (secondAlarmTime.isAfter(now)) {
-              String title;
-              String body;
-
-              if (secondMinutes == 0) {
-                title = "⏰ 2. Alarm: $vakitName Namazı Vakti Geldi";
-                body = "$vakitName vakti girdi (${dayList[i]}). Haydi namaza!";
-              } else {
-                final m = secondMinutes.abs();
-                title = "⏰ 2. Alarm: $vakitName Vaktine $m Dakika Kaldı";
-                body = "$vakitName vakti saati: ${dayList[i]}. Hazırlık yapmayı unutmayın.";
-              }
-              final id = 3000 + (dayOffset * 10) + i;
-
-              await schedulePrayerNotification(
-                id: id,
-                title: title,
-                body: body,
-                scheduledDate: secondAlarmTime,
-                channelType: secondChannelType,
-              );
-              totalScheduled++;
-            }
-          }
-        }
+      for (final item in plan) {
+        await schedulePrayerNotification(
+          id: item['id'] as int,
+          title: item['title'] as String,
+          body: item['body'] as String,
+          scheduledDate: item['scheduledDate'] as DateTime,
+          channelType: item['channelType'] as String,
+        );
+        totalScheduled++;
       }
 
       debugPrint("Toplam $totalScheduled adet namaz vakti bildirimi zamanlandı (7 günlük).");
@@ -527,6 +611,11 @@ class NotificationService {
   }
 
   Future<void> cancelAllNotifications() async {
+    if (_isAndroidNative) {
+      try {
+        await _deviceChannel.invokeMethod('cancelAllNativeAlarms');
+      } catch (_) {}
+    }
     await notificationsPlugin.cancelAll();
   }
 

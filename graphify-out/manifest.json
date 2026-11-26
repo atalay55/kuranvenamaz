@@ -18,9 +18,9 @@
     "semantic_hash": ""
   },
   "android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/MainActivity.kt": {
-    "mtime": 1795288461.6107714,
-    "seen": 1795289547.827093,
-    "ast_hash": "6ca0cc00e9312c32e9b2f2a11dce9d9d",
+    "mtime": 1795695962.9290097,
+    "seen": 1795696090.1192691,
+    "ast_hash": "2129207bb4bfdebfe3119d6d1627b499",
     "semantic_hash": ""
   },
   "android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/NamazWidgetProvider.kt": {
@@ -36,15 +36,15 @@
     "semantic_hash": ""
   },
   "android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/PrayerBootReceiver.kt": {
-    "mtime": 1795288461.6133025,
-    "seen": 1795289547.8270996,
-    "ast_hash": "d00ccc2ebd4894ba8d2b148361fa75cb",
+    "mtime": 1795695952.6621418,
+    "seen": 1795696090.119279,
+    "ast_hash": "5288e307fce0487f5aae89c089fcbc62",
     "semantic_hash": ""
   },
   "android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/PrayerForegroundService.kt": {
-    "mtime": 1795290975.6527736,
-    "seen": 1795291005.0568752,
-    "ast_hash": "7dc842939eaf14ef4648173500f4b24c",
+    "mtime": 1795695958.3281753,
+    "seen": 1795696090.1192803,
+    "ast_hash": "c9971ff5b7a69a29e978a5f74cd6babf",
     "semantic_hash": ""
   },
   "android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/PrayerNotificationDismissReceiver.kt": {
@@ -102,8 +102,8 @@
     "semantic_hash": ""
   },
   "lib/core/device_settings_service.dart": {
-    "mtime": 1795291812.176401,
-    "seen": 1795291881.0043025,
+    "mtime": 1795292724.486869,
+    "seen": 1795693614.761907,
     "ast_hash": "cb8b690a60f9e33893a6eed0e0a5f4de",
     "semantic_hash": ""
   },
@@ -120,9 +120,9 @@
     "semantic_hash": ""
   },
   "lib/core/notificationservice.dart": {
-    "mtime": 1795290977.4417818,
-    "seen": 1795291005.0568995,
-    "ast_hash": "b5a23bc19a06fe8b157d5bdf350fd15e",
+    "mtime": 1795696038.4730806,
+    "seen": 1795696090.1193056,
+    "ast_hash": "f1f778fb1ec65495e99f55f08ec56386",
     "semantic_hash": ""
   },
   "lib/core/quran_service.dart": {
@@ -252,9 +252,9 @@
     "semantic_hash": ""
   },
   "lib/pages/settings/settings_page.dart": {
-    "mtime": 1795291634.0870903,
-    "seen": 1795291662.7233155,
-    "ast_hash": "39b9d93d3ed6c01222ac5b1f4088eb4f",
+    "mtime": 1795694169.0548553,
+    "seen": 1795696090.119346,
+    "ast_hash": "1d2280af42b5f824ee3673a009827a26",
     "semantic_hash": ""
   },
   "lib/pages/zikirmatik_pages/zikirmatik.dart": {
@@ -282,9 +282,9 @@
     "semantic_hash": ""
   },
   "pubspec.yaml": {
-    "mtime": 1795291809.241685,
-    "seen": 1795291881.0043952,
-    "ast_hash": "d2edf0ef44f77239fefc8cc24a2fe05f",
+    "mtime": 1795292724.486869,
+    "seen": 1795693614.7619598,
+    "ast_hash": "6cbb009327cce67d2638c8a384462707",
     "semantic_hash": ""
   },
   "README.md": {
@@ -492,9 +492,15 @@
     "semantic_hash": ""
   },
   "test/core_logic_test.dart": {
-    "mtime": 1795291704.6140876,
-    "seen": 1795291881.0043983,
-    "ast_hash": "a81450a463b63affd8f4f4bd58ecd6e8",
+    "mtime": 1795693592.327577,
+    "seen": 1795693614.7619615,
+    "ast_hash": "768b384088a1e4ffd1c9748148eb5883",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/PrayerAlarmReceiver.kt": {
+    "mtime": 1795695950.076916,
+    "seen": 1795696090.1192741,
+    "ast_hash": "6a177f4054ac975cf3d453601f5cedc2",
     "semantic_hash": ""
   }
 }

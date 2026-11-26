@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import android.view.KeyEvent
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -23,6 +24,27 @@ class MainActivity: FlutterActivity() {
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
+                "scheduleNativeAlarm" -> {
+                    val id = call.argument<Int>("id") ?: 1000
+                    val triggerAtMillis = call.argument<Number>("triggerAtMillis")?.toLong() ?: 0L
+                    val title = call.argument<String>("title") ?: "🕌 Namaz Vakti"
+                    val body = call.argument<String>("body") ?: "Haydi namaza!"
+                    PrayerAlarmReceiver.scheduleAlarm(this, id, triggerAtMillis, title, body)
+                    result.success(true)
+                }
+
+                "cancelAllNativeAlarms" -> {
+                    PrayerAlarmReceiver.cancelAllScheduledAlarms(this)
+                    result.success(true)
+                }
+
+                "playForegroundAlarm" -> {
+                    val title = call.argument<String>("title") ?: "🕌 Ezan Sesi Önizleme"
+                    val body = call.argument<String>("body") ?: "Ezan okunuyor..."
+                    PrayerForegroundService.startAlarm(this, 888, title, body)
+                    result.success(true)
+                }
+
                 "stopForegroundAlarm" -> {
                     PrayerForegroundService.stopAlarm(this)
                     result.success(true)
@@ -271,6 +293,16 @@ class MainActivity: FlutterActivity() {
         } catch (e: Exception) {
             false
         }
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if ((keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP) &&
+            PrayerForegroundService.isAlarmPlaying()
+        ) {
+            PrayerForegroundService.stopAlarm(this)
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
     }
 
     private fun openAppDetailsSettings() {

@@ -11,10 +11,15 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.graphics.Color
+import android.media.AudioAttributes
+import android.media.AudioManager
+import android.media.MediaPlayer
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager
+import android.os.SystemClock
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import java.util.Calendar
@@ -38,9 +43,25 @@ class PrayerForegroundService : Service() {
 
     companion object {
         const val CHANNEL_ID = "kuran_ve_namaz_foreground_channel"
+        const val ALARM_HEADS_UP_CHANNEL_ID = "kuran_ve_namaz_ezan_heads_up_v8"
         const val NOTIFICATION_ID = 777
         const val ALARM_NOTIFICATION_ID = 9999
+        const val ACTION_PLAY_ALARM = "com.fatihatalay.kuranvenamaz.ACTION_PLAY_ALARM"
         const val ACTION_STOP_ALARM = "com.fatihatalay.kuranvenamaz.ACTION_STOP_ALARM"
+        private const val VOLUME_CHANGED_ACTION = "android.media.VOLUME_CHANGED_ACTION"
+
+        private var alarmMediaPlayer: MediaPlayer? = null
+        private var alarmWakeLock: PowerManager.WakeLock? = null
+        private var savedAlarmVolume: Int? = null
+        private var alarmArmedAtElapsedMs: Long = 0L
+
+        fun isAlarmPlaying(): Boolean {
+            return try {
+                alarmMediaPlayer?.isPlaying == true
+            } catch (_: Exception) {
+                false
+            }
+        }
 
         fun startService(context: Context) {
             try {
@@ -55,7 +76,58 @@ class PrayerForegroundService : Service() {
             }
         }
 
+        fun startAlarm(context: Context, alarmId: Int, title: String, body: String) {
+            try {
+                val intent = Intent(context, PrayerForegroundService::class.java).apply {
+                    action = ACTION_PLAY_ALARM
+                    putExtra("EXTRA_ALARM_ID", alarmId)
+                    putExtra("EXTRA_ALARM_TITLE", title)
+                    putExtra("EXTRA_ALARM_BODY", body)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
         fun stopAlarm(context: Context) {
+            try {
+                alarmMediaPlayer?.let { player ->
+                    try {
+                        if (player.isPlaying) player.stop()
+                    } catch (_: Exception) {}
+                    try {
+                        player.release()
+                    } catch (_: Exception) {}
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            alarmMediaPlayer = null
+            alarmArmedAtElapsedMs = 0L
+
+            // Ses tuşuyla durdurulduğunda kullanıcının orijinal alarm ses seviyesini geri yükle
+            savedAlarmVolume?.let { origVol ->
+                try {
+                    val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                    audioManager.setStreamVolume(AudioManager.STREAM_ALARM, origVol, 0)
+                } catch (_: Exception) {}
+            }
+            savedAlarmVolume = null
+
+            try {
+                alarmWakeLock?.let {
+                    if (it.isHeld) it.release()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            alarmWakeLock = null
+
             try {
                 val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 manager.cancel(ALARM_NOTIFICATION_ID)
@@ -129,6 +201,7 @@ class PrayerForegroundService : Service() {
     private var watchdogHandler: Handler? = null
     private var watchdogRunnable: Runnable? = null
     private var timeTickReceiver: BroadcastReceiver? = null
+    private var hardwareKeyStopReceiver: BroadcastReceiver? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -136,6 +209,7 @@ class PrayerForegroundService : Service() {
         super.onCreate()
         createNotificationChannel()
         registerTimeReceiver()
+        registerHardwareKeyStopReceiver()
 
         watchdogHandler = Handler(Looper.getMainLooper())
         watchdogRunnable = object : Runnable {
@@ -145,6 +219,43 @@ class PrayerForegroundService : Service() {
             }
         }
         watchdogHandler?.postDelayed(watchdogRunnable!!, 30000)
+    }
+
+    private fun registerHardwareKeyStopReceiver() {
+        if (hardwareKeyStopReceiver != null) return
+        hardwareKeyStopReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (!isAlarmPlaying()) return
+                // Alarmın ilk 650ms'sindeki sistem ses hazırlığını yoksay; sonrasında ses veya güç tuşu alarmı anında durdurur
+                if (SystemClock.elapsedRealtime() - alarmArmedAtElapsedMs < 650L) return
+                val act = intent?.action ?: return
+                if (act == VOLUME_CHANGED_ACTION || act == Intent.ACTION_SCREEN_OFF) {
+                    stopAlarm(this@PrayerForegroundService)
+                }
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(VOLUME_CHANGED_ACTION)
+            addAction(Intent.ACTION_SCREEN_OFF)
+        }
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(hardwareKeyStopReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                registerReceiver(hardwareKeyStopReceiver, filter)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun unregisterHardwareKeyStopReceiver() {
+        hardwareKeyStopReceiver?.let {
+            try {
+                unregisterReceiver(it)
+            } catch (_: Exception) {}
+            hardwareKeyStopReceiver = null
+        }
     }
 
     private fun registerTimeReceiver() {
@@ -192,6 +303,88 @@ class PrayerForegroundService : Service() {
         }
     }
 
+    private fun playEzanHeadsUpAlarm(title: String, body: String) {
+        try {
+            stopAlarm(this)
+            registerHardwareKeyStopReceiver()
+
+            val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
+            alarmWakeLock = powerManager?.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK,
+                "kuranvenamaz:EzanPlaybackWakeLock"
+            )?.apply {
+                acquire(6 * 60 * 1000L)
+            }
+
+            // Alarm ses seviyesini kontrol et: 0 ise duyulabilir yap; tam maksimumda ise 1 kademe düşür ki Ses Açma tuşu da VOLUME_CHANGED üretsin
+            try {
+                val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                val maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+                val curVol = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
+                savedAlarmVolume = curVol
+                if (curVol <= 0) {
+                    val target = (maxVol * 0.7).toInt().coerceAtLeast(1)
+                    audioManager.setStreamVolume(AudioManager.STREAM_ALARM, target, 0)
+                } else if (curVol >= maxVol && maxVol > 2) {
+                    audioManager.setStreamVolume(AudioManager.STREAM_ALARM, maxVol - 1, 0)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            val afd = resources.openRawResourceFd(R.raw.ezan)
+            val attrs = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+
+            alarmMediaPlayer = MediaPlayer().apply {
+                setAudioAttributes(attrs)
+                setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                afd.close()
+                isLooping = false
+                setWakeMode(applicationContext, PowerManager.PARTIAL_WAKE_LOCK)
+                setOnCompletionListener {
+                    stopAlarm(this@PrayerForegroundService)
+                }
+                prepare()
+                start()
+            }
+            alarmArmedAtElapsedMs = SystemClock.elapsedRealtime()
+
+            val stopIntent = Intent(this, PrayerAlarmStopReceiver::class.java).apply {
+                action = ACTION_STOP_ALARM
+            }
+            val piFlags = PendingIntent.FLAG_UPDATE_CURRENT or
+                (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0)
+            val stopPendingIntent = PendingIntent.getBroadcast(this, 9999, stopIntent, piFlags)
+
+            // Uygulamayı AÇMAZ! Üstten kayan (heads-up) bildirim düşer; bildirime, "Ezanı Durdur" butonuna, kaydırmaya veya ses tuşuna basınca durur.
+            val alarmNotification = NotificationCompat.Builder(this, ALARM_HEADS_UP_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setColor(0xFF0D5C3A.toInt())
+                .setContentTitle(title)
+                .setContentText(body)
+                .setStyle(NotificationCompat.BigTextStyle().bigText("$body\nDurdurmak için 'Ezanı Durdur'a dokunun veya ses tuşuna basın."))
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setSound(null)
+                .setVibrate(longArrayOf(0, 400, 200, 400))
+                .setAutoCancel(true)
+                .setOngoing(false)
+                .setContentIntent(stopPendingIntent)
+                .setDeleteIntent(stopPendingIntent)
+                .addAction(android.R.drawable.ic_media_pause, "Ezanı Durdur", stopPendingIntent)
+                .build()
+
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.notify(ALARM_NOTIFICATION_ID, alarmNotification)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP_ALARM) {
             stopAlarm(this)
@@ -199,6 +392,7 @@ class PrayerForegroundService : Service() {
         }
 
         registerTimeReceiver()
+        registerHardwareKeyStopReceiver()
         val notification = buildForegroundNotification(intent)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(
@@ -208,6 +402,12 @@ class PrayerForegroundService : Service() {
             )
         } else {
             startForeground(NOTIFICATION_ID, notification)
+        }
+
+        if (intent?.action == ACTION_PLAY_ALARM) {
+            val title = intent.getStringExtra("EXTRA_ALARM_TITLE") ?: "🕌 Namaz Vakti"
+            val body = intent.getStringExtra("EXTRA_ALARM_BODY") ?: "Haydi namaza!"
+            playEzanHeadsUpAlarm(title, body)
         }
 
         return START_STICKY
@@ -238,6 +438,7 @@ class PrayerForegroundService : Service() {
 
     override fun onDestroy() {
         unregisterTimeReceiver()
+        unregisterHardwareKeyStopReceiver()
         watchdogRunnable?.let { watchdogHandler?.removeCallbacks(it) }
         super.onDestroy()
         startService(applicationContext)
@@ -256,8 +457,21 @@ class PrayerForegroundService : Service() {
                 enableVibration(false)
             }
 
+            val headsUpAlarmChannel = NotificationChannel(
+                ALARM_HEADS_UP_CHANNEL_ID,
+                "Ezan Alarmı Üst Bildirimi",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Ezan okunurken üstten düşen bildirim ve durdurma kontrolü."
+                setShowBadge(true)
+                setSound(null, null)
+                enableVibration(true)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+            }
+
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)
+            manager.createNotificationChannel(headsUpAlarmChannel)
         }
     }
 

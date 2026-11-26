@@ -78,6 +78,16 @@
             </intent-filter>
         </receiver>
 
+        <!-- Prayer Alarm Receiver - Triggers native MediaPlayer Ezan + Heads-Up notification without opening MainActivity -->
+        <receiver
+            android:name=".PrayerAlarmReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.fatihatalay.kuranvenamaz.ACTION_TRIGGER_PRAYER_ALARM" />
+            </intent-filter>
+        </receiver>
+
         <!-- Prayer Alarm Stop Receiver - Handles stopping alarm instantly when 'Durdur' is pressed from notification -->
         <receiver
             android:name=".PrayerAlarmStopReceiver"

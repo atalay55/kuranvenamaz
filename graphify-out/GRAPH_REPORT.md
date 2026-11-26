@@ -1,17 +1,17 @@
-# Graph Report - kuranvenamaz  (2026-11-21)
+# Graph Report - kuranvenamaz  (2026-11-26)
 
 ## Corpus Check
-- 51 files · ~40,405 words
+- 52 files · ~42,123 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 38 file(s) not represented in the graph (top: .xml 17, (none) 4, .plist 4)
+- Unclassified: 39 file(s) not represented in the graph (top: .xml 18, (none) 4, .plist 4)
 
 ## Summary
-- 821 nodes · 1037 edges · 36 communities (25 shown, 11 thin omitted)
+- 857 nodes · 1112 edges · 44 communities (31 shown, 13 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1592bfcc`
+- Built from commit: `af4f9587`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -37,22 +37,30 @@
 - widget_service.dart
 - AppTranslations
 - cityselect.dart
+- surah_list_page.dart
+- countryselect.dart
 - MainActivity.kt
 - country.dart
 - AppDelegate.swift
 - main.dart
+- package:flutter/material.dart
+- hadith_model.dart
+- PrayerAlarmStopReceiver.kt
+- ayetduahadistheme.dart
+- .onReceive
 - analysis_options.yaml
 - Map
 - namazvakitleri.dart
+- PrayerNotificationDismissReceiver.kt
 - kuranvenamaz
 - city.dart
 - LaunchImage.imageset/README.md
 
 ## God Nodes (most connected - your core abstractions)
-1. `PrayerForegroundService` - 24 edges
+1. `PrayerForegroundService` - 31 edges
 2. `dependencies` - 16 edges
-3. `BroadcastReceiver` - 12 edges
-4. `MainActivity` - 6 edges
+3. `PrayerAlarmReceiver` - 8 edges
+4. `MainActivity` - 7 edges
 5. `flutter_launcher_icons` - 5 edges
 6. `Runnable` - 4 edges
 7. `_HomePageState` - 4 edges
@@ -61,29 +69,33 @@
 10. `NamazWidgetProvider` - 3 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `PrayerAlarmStopReceiver` --inherits--> `BroadcastReceiver`  [EXTRACTED]
-  android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/PrayerAlarmStopReceiver.kt → android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/PrayerForegroundService.kt
-- `PrayerBootReceiver` --inherits--> `BroadcastReceiver`  [EXTRACTED]
-  android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/PrayerBootReceiver.kt → android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/PrayerForegroundService.kt
-- `PrayerNotificationDismissReceiver` --inherits--> `BroadcastReceiver`  [EXTRACTED]
-  android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/PrayerNotificationDismissReceiver.kt → android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/PrayerForegroundService.kt
+- `PrayerForegroundService` --references--> `PowerManager`  [EXTRACTED]
+  android/app/src/main/kotlin/com/fatihatalay/kuranvenamaz/PrayerForegroundService.kt →   _Bridges community 1 → community 23_
+- `HadithListPage` --inherits--> `StatefulWidget`  [EXTRACTED]
+  lib/pages/hadith/hadith_list_page.dart → None  _Bridges community 2 → community 9_
+- `HomePage` --inherits--> `StatefulWidget`  [EXTRACTED]
+  lib/pages/home.dart → None  _Bridges community 2 → community 7_
+- `MainPrayerClockWidget` --inherits--> `StatefulWidget`  [EXTRACTED]
+  lib/pages/prayertime/mainprayerclockwidget.dart → None  _Bridges community 2 → community 11_
+- `SurahDetailPage` --inherits--> `StatefulWidget`  [EXTRACTED]
+  lib/pages/quran/surah_detail_page.dart → None  _Bridges community 2 → community 3_
 
 ## Import Cycles
 - None detected.
 
-## Communities (36 total, 11 thin omitted)
+## Communities (44 total, 13 thin omitted)
 
 ### Community 0 - "settings_service.dart"
 Cohesion: 0.03
 Nodes (66): _askedPrompt, _calculationMethod, calculationMethodNotifier, copyDayToAll, copyDayToWeekdays, copyDayToWeekend, _dayPrayers, _daySecondPrayers (+58 more)
 
 ### Community 1 - "PrayerForegroundService"
-Cohesion: 0.07
-Nodes (8): PrayerAlarmStopReceiver, PrayerBootReceiver, LivePrayerStatus, PrayerForegroundService, Runnable, BroadcastReceiver, PrayerScheduleItem, PrayerNotificationDismissReceiver
+Cohesion: 0.08
+Nodes (6): LivePrayerStatus, PrayerForegroundService, Runnable, BroadcastReceiver, BroadcastReceiver, PrayerScheduleItem
 
 ### Community 2 - "qiblah_screen.dart"
 Cohesion: 0.05
-Nodes (34): build, _buildBottomStatsRow, _buildCompassStack, _buildHeaderCard, _buildStatItem, _calculateQiblaBearing, _checkLocationStatus, createState (+26 more)
+Nodes (34): HijriCalendarWidget, _HijriCalendarWidgetState, build, _buildBottomStatsRow, _buildCompassStack, _buildHeaderCard, _buildStatItem, _calculateQiblaBearing (+26 more)
 
 ### Community 3 - "surah_detail_page.dart"
 Cohesion: 0.05
@@ -111,7 +123,7 @@ Nodes (30): _adjustTimesByOffset, _apiHeaders, _bukhariCache, _cleanTime, _fetch
 
 ### Community 9 - "hadith_list_page.dart"
 Cohesion: 0.07
-Nodes (26): _apiCategories, _applyFilter, build, _copyToClipboard, createState, _currentPage, dispose, _favoriteHadithIds (+18 more)
+Nodes (28): _apiCategories, _applyFilter, build, _copyToClipboard, createState, _currentPage, dispose, _favoriteHadithIds (+20 more)
 
 ### Community 10 - "content_data.dart"
 Cohesion: 0.07
@@ -122,8 +134,8 @@ Cohesion: 0.05
 Nodes (30): build, _buildDateNavigationBar, _buildTimeUnit, _cachedVakitler, _calculationMethod, cityName, countryName, createState (+22 more)
 
 ### Community 12 - "hijricalendar.dart"
-Cohesion: 0.07
-Nodes (24): build, createState, date, DiniGunItem, diniGunler, dispose, _formatHijriDate, getGregorianDate (+16 more)
+Cohesion: 0.08
+Nodes (22): build, createState, date, DiniGunItem, diniGunler, dispose, _formatHijriDate, getGregorianDate (+14 more)
 
 ### Community 13 - "device_settings_service.dart"
 Cohesion: 0.08
@@ -134,8 +146,8 @@ Cohesion: 0.09
 Nodes (17): changeLocale, currentLanguageCode, currentLocaleNotifier, defaultLocale, getLocalizedCardTitle, getLocalizedCountryName, getLocalizedPrayerName, getPrayerScheduleName (+9 more)
 
 ### Community 15 - "notificationservice.dart"
-Cohesion: 0.07
-Nodes (19): cancelAllNotifications, cancelNotification, ezanChannelId, _getNotificationDetails, hatirlatmaChannelId, initNotification, _instance, _isInitialized (+11 more)
+Cohesion: 0.06
+Nodes (24): _activeReschedule, buildSevenDaySchedulePlan, cancelAllNotifications, cancelNotification, _deviceChannel, _doReschedulePrayerNotifications, ezanChannelId, _getNotificationDetails (+16 more)
 
 ### Community 16 - "app_theme.dart"
 Cohesion: 0.10
@@ -150,8 +162,20 @@ Cohesion: 0.20
 Nodes (5): androidWidgetProvider, _getVakitKey, iosWidgetName, updateWidgetData, WidgetService
 
 ### Community 20 - "cityselect.dart"
-Cohesion: 0.05
-Nodes (35): build, createState, dispose, filteredSurahs, _filterSurahs, initState, lastReadBookmark, _loadBookmark (+27 more)
+Cohesion: 0.13
+Nodes (14): _allCities, build, cities, CitySelectPage, _CitySelectPageState, controller, country, createState (+6 more)
+
+### Community 21 - "surah_list_page.dart"
+Cohesion: 0.13
+Nodes (11): build, createState, dispose, filteredSurahs, _filterSurahs, initState, lastReadBookmark, _loadBookmark (+3 more)
+
+### Community 22 - "countryselect.dart"
+Cohesion: 0.14
+Nodes (10): _allCountries, build, controller, countries, CountrySelectPage, _CountrySelectPageState, createState, dispose (+2 more)
+
+### Community 23 - "MainActivity.kt"
+Cohesion: 0.07
+Nodes (3): MainActivity, NamazWidgetProvider, PrayerAlarmReceiver
 
 ### Community 24 - "country.dart"
 Cohesion: 0.50
@@ -161,9 +185,21 @@ Nodes (3): code, Country, name
 Cohesion: 0.20
 Nodes (4): Flutter, flutter_local_notifications, AppDelegate, UIKit
 
-### Community 30 - "main.dart"
-Cohesion: 0.06
-Nodes (25): arabic, category, HadithItem, id, source, topic, turkish, build (+17 more)
+### Community 26 - "main.dart"
+Cohesion: 0.17
+Nodes (5): build, initializeDateFormatting, initialLocale, isFirstRun, main
+
+### Community 27 - "package:flutter/material.dart"
+Cohesion: 0.20
+Nodes (5): build, callback, error, _getVakitIcon, namazVakitleriKucuk
+
+### Community 28 - "hadith_model.dart"
+Cohesion: 0.22
+Nodes (7): arabic, category, HadithItem, id, source, topic, turkish
+
+### Community 30 - "ayetduahadistheme.dart"
+Cohesion: 0.17
+Nodes (8): MyApp, LocationErrorWidget, arabicText, AyetDuaHadisTheme, build, description, kaynakca, title
 
 ### Community 32 - "analysis_options.yaml"
 Cohesion: 0.50
@@ -174,24 +210,24 @@ Cohesion: 0.50
 Nodes (3): namazSaati, NamazVakitleri, vakitIsmi
 
 ## Knowledge Gaps
-- **503 isolated node(s):** `UIKit`, `Flutter`, `flutter_local_notifications`, `keyAppLocale`, `defaultLocale` (+498 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 625 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **11 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **508 isolated node(s):** `UIKit`, `Flutter`, `flutter_local_notifications`, `keyAppLocale`, `defaultLocale` (+503 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 634 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **13 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
+- **Why does `PrayerForegroundService` connect `PrayerForegroundService` to `MainActivity.kt`?**
+  _High betweenness centrality (0.068) - this node is a cross-community bridge._
 - **What connects `UIKit`, `Flutter`, `flutter_local_notifications` to the rest of the system?**
-  _503 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _508 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `settings_service.dart` be split into smaller, more focused modules?**
   _Cohesion score 0.02857142857142857 - nodes in this community are weakly interconnected._
+- **Why does `SettingsService` connect `settings_page.dart` to `settings_service.dart`?**
+  _High betweenness centrality (0.007) - this node is a cross-community bridge._
 - **Should `PrayerForegroundService` be split into smaller, more focused modules?**
-  _Cohesion score 0.06558441558441558 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07755102040816327 - nodes in this community are weakly interconnected._
 - **Should `qiblah_screen.dart` be split into smaller, more focused modules?**
   _Cohesion score 0.04810360777058279 - nodes in this community are weakly interconnected._
 - **Should `surah_detail_page.dart` be split into smaller, more focused modules?**
   _Cohesion score 0.047619047619047616 - nodes in this community are weakly interconnected._
-- **Should `settings_page.dart` be split into smaller, more focused modules?**
-  _Cohesion score 0.045454545454545456 - nodes in this community are weakly interconnected._
-- **Should `dependencies` be split into smaller, more focused modules?**
-  _Cohesion score 0.05263157894736842 - nodes in this community are weakly interconnected._

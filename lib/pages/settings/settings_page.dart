@@ -1804,6 +1804,7 @@ class _SettingsPageState extends State<SettingsPage>
     final activeDayName = activeDayData['full'] as String;
     final activePrayers = _dayPrayers[_selectedWeekday] ?? <int>{};
     final activeSecondPrayers = _daySecondPrayers[_selectedWeekday] ?? <int>{};
+    final totalActiveForDay = activePrayers.union(activeSecondPrayers).length;
 
     return Container(
       decoration: AppTheme.cardDecoration(color: AppTheme.surfaceDark),
@@ -1830,23 +1831,23 @@ class _SettingsPageState extends State<SettingsPage>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: activePrayers.isNotEmpty
+                  color: totalActiveForDay > 0
                       ? AppTheme.primaryEmerald.withValues(alpha: 0.12)
                       : Colors.black.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: activePrayers.isNotEmpty
+                    color: totalActiveForDay > 0
                         ? AppTheme.primaryEmerald.withValues(alpha: 0.3)
                         : Colors.black26,
                   ),
                 ),
                 child: Text(
-                  activePrayers.isNotEmpty
+                  totalActiveForDay > 0
                       ? AppTranslations.translate('prayer_count_badge', fallback: "@count Vakit")
-                          .replaceAll('@count', "${activePrayers.length}")
+                          .replaceAll('@count', "$totalActiveForDay")
                       : AppTranslations.translate('alarms_off', fallback: "Alarmlar Kapalı"),
                   style: TextStyle(
-                    color: activePrayers.isNotEmpty
+                    color: totalActiveForDay > 0
                         ? AppTheme.primaryEmerald
                         : AppTheme.textSecondaryDark,
                     fontSize: 11,
@@ -1873,7 +1874,9 @@ class _SettingsPageState extends State<SettingsPage>
               final id = day['id'] as int;
               final short = day['short'] as String;
               final isCurrentTab = id == _selectedWeekday;
-              final dayCount = _dayPrayers[id]?.length ?? 0;
+              final dayCount = (_dayPrayers[id] ?? <int>{})
+                  .union(_daySecondPrayers[id] ?? <int>{})
+                  .length;
 
               return GestureDetector(
                 onTap: () {
